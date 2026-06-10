@@ -38,6 +38,10 @@ function getAIClient(): GoogleGenAI {
 }
 
 // AI API endpoints
+app.get("/api/instalar", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "instalar.py"));
+});
+
 app.post("/api/ai/translate", async (req, res) => {
   try {
     const { pythonCode } = req.body;
