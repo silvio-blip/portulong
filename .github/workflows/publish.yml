@@ -36,7 +36,7 @@ jobs:
       run: python -m twine check dist/*
 
     - name: Publicar no PyPI via Trusted Publisher 🚀
-      uses: pypa/github-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         packages-dir: dist/
 
