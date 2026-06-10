@@ -17,6 +17,9 @@
     },
     {
       "include": "#builtin-functions"
+    },
+    {
+      "include": "#discord"
     }
   ],
   "repository": {
@@ -58,7 +61,11 @@
       "patterns": [
         {
           "name": "keyword.control.portulong",
-          "match": "\\b(se|senao|enquanto|para|retornar|esperar|assincrono)\\b"
+          "match": "\\b(se|senao|senaose|para|enquanto|definir|funcao|classe|importar|de|como|retornar|tentar|exceto|finalmente|com|lambda|passar|parar|continuar|global|naolocal|levantar|produzir|assincrono|aguardar)\\b"
+        },
+        {
+          "name": "keyword.operator.logical.portulong",
+          "match": "\\b(e|ou|nao|em|eh|nao_eh)\\b"
         }
       ]
     },
@@ -66,7 +73,7 @@
       "patterns": [
         {
           "name": "constant.language.portulong",
-          "match": "\\b(verdadeiro|falso|nulo)\\b"
+          "match": "\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\b"
         }
       ]
     },
@@ -74,7 +81,23 @@
       "patterns": [
         {
           "name": "support.function.builtin.portulong",
-          "match": "\\b(presente|importar|de)\\b"
+          "match": "\\b(escrever|mostrar|ler|tamanho|inteiro|texto|real|decimal|boleano|lista|dicionario|conjunto|tupla|intervalo|abrir|tipo|somar|absoluto|maximo|minimo|arredondar|mapear|filtrar|ordenado|super|propriedade|zipar|enumerar|objeto|qualquer|todos|ajuda|identidade|reversivel|formatar|obter_atributo|definir_atributo|tem_atributo|excluir_atributo|representacao|proximo|iterador|eh_instancia|eh_subclasse)\\b"
+        },
+        {
+          "name": "support.type.exception.portulong",
+          "match": "\\b(Excessao|ErroDeValor|ErroDeTipo|ErroDeNome|ErroDeIndice|ErroDeChave|ErroDeImportacao|ErroDeAtributo|ErroDivisaoPorZero|FaltaDeMemoria|ParadaDeIteracao|ErroDoSistema|ArquivoNaoEncontrado|InterrupcaoPeloTeclado|ErroDeAsseveracao|ErroDeExecucao|ErroNaoImplementado)\\b"
+        }
+      ]
+    },
+    "discord": {
+      "patterns": [
+        {
+          "name": "support.class.discord.portulong",
+          "match": "\\b(Robo|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
+        },
+        {
+          "name": "support.function.discord.portulong",
+          "match": "\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\b"
         }
       ]
     }

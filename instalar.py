@@ -11,6 +11,8 @@ package_json = {
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
   "version": "1.0.0",
   "publisher": "silvio-blip",
+  "icon": "portulong.png",
+  "homepage": "https://portulong.vercel.app/",
   "repository": {
     "type": "git",
     "url": "https://github.com/silvio-blip/portulong"
@@ -117,6 +119,9 @@ tmlanguage_json = {
     },
     {
       "include": "#builtin-functions"
+    },
+    {
+      "include": "#discord"
     }
   ],
   "repository": {
@@ -158,7 +163,11 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "keyword.control.portulong",
-          "match": "\\\\b(se|senao|enquanto|para|retornar|esperar|assincrono)\\\\b"
+          "match": "\\\\b(se|senao|senaose|para|enquanto|definir|funcao|classe|importar|de|como|retornar|tentar|exceto|finalmente|com|lambda|passar|parar|continuar|global|naolocal|levantar|produzir|assincrono|aguardar)\\\\b"
+        },
+        {
+          "name": "keyword.operator.logical.portulong",
+          "match": "\\\\b(e|ou|nao|em|eh|nao_eh)\\\\b"
         }
       ]
     },
@@ -166,7 +175,7 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "constant.language.portulong",
-          "match": "\\\\b(verdadeiro|falso|nulo)\\\\b"
+          "match": "\\\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\\\b"
         }
       ]
     },
@@ -174,7 +183,23 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.function.builtin.portulong",
-          "match": "\\\\b(presente|importar|de)\\\\b"
+          "match": "\\\\b(escrever|mostrar|ler|tamanho|inteiro|texto|real|decimal|boleano|lista|dicionario|conjunto|tupla|intervalo|abrir|tipo|somar|absoluto|maximo|minimo|arredondar|mapear|filtrar|ordenado|super|propriedade|zipar|enumerar|objeto|qualquer|todos|ajuda|identidade|reversivel|formatar|obter_atributo|definir_atributo|tem_atributo|excluir_atributo|representacao|proximo|iterador|eh_instancia|eh_subclasse)\\\\b"
+        },
+        {
+          "name": "support.type.exception.portulong",
+          "match": "\\\\b(Excessao|ErroDeValor|ErroDeTipo|ErroDeNome|ErroDeIndice|ErroDeChave|ErroDeImportacao|ErroDeAtributo|ErroDivisaoPorZero|FaltaDeMemoria|ParadaDeIteracao|ErroDoSistema|ArquivoNaoEncontrado|InterrupcaoPeloTeclado|ErroDeAsseveracao|ErroDeExecucao|ErroNaoImplementado)\\\\b"
+        }
+      ]
+    },
+    "discord": {
+      "patterns": [
+        {
+          "name": "support.class.discord.portulong",
+          "match": "\\\\b(Robo|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\b"
+        },
+        {
+          "name": "support.function.discord.portulong",
+          "match": "\\\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\\\b"
         }
       ]
     }
@@ -283,6 +308,11 @@ def main():
 
     with open(os.path.join(ext_dir, "src", "extension.js"), "w", encoding="utf-8") as f:
         f.write(extension_js)
+
+    # Se houver portulong.png localmente, copia para a extensão!
+    if os.path.exists("portulong.png"):
+        shutil.copy("portulong.png", os.path.join(ext_dir, "portulong.png"))
+        info("Ícone 'portulong.png' copiado com absoluto êxito para a extensão!")
 
     success("Estrutura de ficheiros da extensão VS Code criada com perfeição!")
 

@@ -816,6 +816,17 @@ async def greet(ctx):
     addTerminalLog("info", "Compilando e empacotando distribuição para o PIP/PyPI...");
     const zip = new JSZip();
 
+    // Tenta obter o logo portulong.png para empacotar
+    let logoBlob: Blob | null = null;
+    try {
+      const logoRes = await fetch("/portulong.png");
+      if (logoRes.ok) {
+        logoBlob = await logoRes.blob();
+      }
+    } catch (e) {
+      console.warn("Não foi possível carregar o portulong.png para o ZIP:", e);
+    }
+
     // 1. Root files
     zip.file("setup.py", `from setuptools import setup, find_packages
 
@@ -1214,6 +1225,8 @@ package_json = {
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
   "version": "1.0.0",
   "publisher": "silvio-blip",
+  "icon": "portulong.png",
+  "homepage": "https://portulong.vercel.app/",
   "repository": {
     "type": "git",
     "url": "https://github.com/silvio-blip/portulong"
@@ -1320,6 +1333,9 @@ tmlanguage_json = {
     },
     {
       "include": "#builtin-functions"
+    },
+    {
+      "include": "#discord"
     }
   ],
   "repository": {
@@ -1361,7 +1377,11 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "keyword.control.portulong",
-          "match": "\\\\\\\\b(se|senao|enquanto|para|retornar|esperar|assincrono)\\\\\\\\b"
+          "match": "\\\\\\\\b(se|senao|senaose|para|enquanto|definir|funcao|classe|importar|de|como|retornar|tentar|exceto|finalmente|com|lambda|passar|parar|continuar|global|naolocal|levantar|produzir|assincrono|aguardar)\\\\\\\\b"
+        },
+        {
+          "name": "keyword.operator.logical.portulong",
+          "match": "\\\\\\\\b(e|ou|nao|em|eh|nao_eh)\\\\\\\\b"
         }
       ]
     },
@@ -1369,7 +1389,7 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "constant.language.portulong",
-          "match": "\\\\\\\\b(verdadeiro|falso|nulo)\\\\\\\\b"
+          "match": "\\\\\\\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\\\\\\\b"
         }
       ]
     },
@@ -1377,7 +1397,23 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.function.builtin.portulong",
-          "match": "\\\\\\\\b(presente|importar|de)\\\\\\\\b"
+          "match": "\\\\\\\\b(escrever|mostrar|ler|tamanho|inteiro|texto|real|decimal|boleano|lista|dicionario|conjunto|tupla|intervalo|abrir|tipo|somar|absoluto|maximo|minimo|arredondar|mapear|filtrar|ordenado|super|propriedade|zipar|enumerar|objeto|qualquer|todos|ajuda|identidade|reversivel|formatar|obter_atributo|definir_atributo|tem_atributo|excluir_atributo|representacao|proximo|iterador|eh_instancia|eh_subclasse)\\\\\\\\b"
+        },
+        {
+          "name": "support.type.exception.portulong",
+          "match": "\\\\\\\\b(Excessao|ErroDeValor|ErroDeTipo|ErroDeNome|ErroDeIndice|ErroDeChave|ErroDeImportacao|ErroDeAtributo|ErroDivisaoPorZero|FaltaDeMemoria|ParadaDeIteracao|ErroDoSistema|ArquivoNaoEncontrado|InterrupcaoPeloTeclado|ErroDeAsseveracao|ErroDeExecucao|ErroNaoImplementado)\\\\\\\\b"
+        }
+      ]
+    },
+    "discord": {
+      "patterns": [
+        {
+          "name": "support.class.discord.portulong",
+          "match": "\\\\\\\\b(Robo|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\\\\\b"
+        },
+        {
+          "name": "support.function.discord.portulong",
+          "match": "\\\\\\\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\\\\\\\b"
         }
       ]
     }
@@ -1487,6 +1523,10 @@ def main():
     with open(os.path.join(ext_dir, "src", "extension.js"), "w", encoding="utf-8") as f:
         f.write(extension_js)
 
+    if os.path.exists("portulong.png"):
+        shutil.copy("portulong.png", os.path.join(ext_dir, "portulong.png"))
+        info("Ícone 'portulong.png' copiado com absoluto êxito para a extensão!")
+
     success("Estrutura de ficheiros da extensão VS Code criada com perfeição!")
 
     # 3. Compilar a Extensão para .vsix utilizando npx de forma leve
@@ -1541,12 +1581,21 @@ if __name__ == '__main__':
 
     // VS Code Extension directories structure inside Zip
     const extFolder = zip.folder("portulong-vscode")!;
+
+    // Adiciona o logo da extensão se disponível
+    if (logoBlob) {
+      zip.file("portulong.png", logoBlob);
+      extFolder.file("portulong.png", logoBlob);
+    }
+
     extFolder.file("package.json", JSON.stringify({
       name: "portulong-vscode",
       displayName: "Portulong support",
       description: "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
       version: "1.0.0",
       publisher: "silvio-blip",
+      icon: "portulong.png",
+      homepage: "https://portulong.vercel.app/",
       repository: {
         type: "git",
         url: "https://github.com/silvio-blip/portulong"
@@ -1615,7 +1664,8 @@ if __name__ == '__main__':
         { include: "#strings" },
         { include: "#keywords" },
         { include: "#constants" },
-        { include: "#builtin-functions" }
+        { include: "#builtin-functions" },
+        { include: "#discord" }
       ],
       repository: {
         comments: {
@@ -1647,22 +1697,46 @@ if __name__ == '__main__':
           ]
         },
         keywords: {
-          patterns: [{
-            name: "keyword.control.portulong",
-            match: "\\b(se|senao|enquanto|para|retornar|esperar|assincrono)\\b"
-          }]
+          patterns: [
+            {
+              name: "keyword.control.portulong",
+              match: "\\b(se|senao|senaose|para|enquanto|definir|funcao|classe|importar|de|como|retornar|tentar|exceto|finalmente|com|lambda|passar|parar|continuar|global|naolocal|levantar|produzir|assincrono|aguardar)\\b"
+            },
+            {
+              name: "keyword.operator.logical.portulong",
+              match: "\\b(e|ou|nao|em|eh|nao_eh)\\b"
+            }
+          ]
         },
         constants: {
           patterns: [{
             name: "constant.language.portulong",
-            match: "\\b(verdadeiro|falso|nulo)\\b"
+            match: "\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\b"
           }]
         },
         "builtin-functions": {
-          patterns: [{
-            name: "support.function.builtin.portulong",
-            match: "\\b(presente|importar|de)\\b"
-          }]
+          patterns: [
+            {
+              name: "support.function.builtin.portulong",
+              match: "\\b(escrever|mostrar|ler|tamanho|inteiro|texto|real|decimal|boleano|lista|dicionario|conjunto|tupla|intervalo|abrir|tipo|somar|absoluto|maximo|minimo|arredondar|mapear|filtrar|ordenado|super|propriedade|zipar|enumerar|objeto|qualquer|todos|ajuda|identidade|reversivel|formatar|obter_atributo|definir_atributo|tem_atributo|excluir_atributo|representacao|proximo|iterador|eh_instancia|eh_subclasse)\\b"
+            },
+            {
+              name: "support.type.exception.portulong",
+              match: "\\b(Excessao|ErroDeValor|ErroDeTipo|ErroDeNome|ErroDeIndice|ErroDeChave|ErroDeImportacao|ErroDeAtributo|ErroDivisaoPorZero|FaltaDeMemoria|ParadaDeIteracao|ErroDoSistema|ArquivoNaoEncontrado|InterrupcaoPeloTeclado|ErroDeAsseveracao|ErroDeExecucao|ErroNaoImplementado)\\b"
+            }
+          ]
+        },
+        discord: {
+          patterns: [
+            {
+              name: "support.class.discord.portulong",
+              match: "\\b(Robo|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
+            },
+            {
+              name: "support.function.discord.portulong",
+              match: "\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\b"
+            }
+          ]
         }
       }
     }, null, 2));
@@ -1738,8 +1812,8 @@ module.exports = {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
             </div>
-            <p className="text-xs text-slate-400 tracking-tight">
-              Criador de Bots do Discord em Português
+            <p className="text-xs text-slate-400 tracking-tight flex items-center gap-1.5 flex-wrap">
+              Criador de Bots do Discord em Português • <a id="main-header-vercel-link" href="https://portulong.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 font-mono font-medium">portulong.vercel.app</a>
             </p>
           </div>
         </div>

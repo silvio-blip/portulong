@@ -42,6 +42,10 @@ app.get("/api/instalar", (req, res) => {
   res.sendFile(path.join(process.cwd(), "instalar.py"));
 });
 
+app.get("/portulong.png", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "portulong.png"));
+});
+
 app.post("/api/ai/translate", async (req, res) => {
   try {
     const { pythonCode } = req.body;

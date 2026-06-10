@@ -4,6 +4,8 @@
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
   "version": "1.0.0",
   "publisher": "silvio-blip",
+  "icon": "portulong.png",
+  "homepage": "https://portulong.vercel.app/",
   "repository": {
     "type": "git",
     "url": "https://github.com/silvio-blip/portulong"
