@@ -221,9 +221,13 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
     "decimal", "boleano", "lista", "dicionario", "conjunto", "tupla", 
     "intervalo", "abrir", "tipo", "somar", "absoluto", "maximo", "minimo", 
     "arredondar", "mapear", "filtrar", "ordenado", "super", "propriedade", 
-    "zipar", "enumerar", "objeto", "Excessao", "ErroDeValor", "ErroDeTipo", 
-    "ErroDeNome", "ErroDeIndice", "ErroDeChave", "ErroDeImportacao", 
-    "ErroDeAtributo", "ErroDivisaoPorZero", "FaltaDeMemoria", "ParadaDeIteracao", "ErroDoSistema"
+    "zipar", "enumerar", "objeto", "qualquer", "todos", "ajuda", "identidade", 
+    "reversivel", "formatar", "obter_atributo", "definir_atributo", "tem_atributo", 
+    "excluir_atributo", "representacao", "proximo", "iterador", "eh_instancia", "eh_subclasse",
+    "Excessao", "ErroDeValor", "ErroDeTipo", "ErroDeNome", "ErroDeIndice", 
+    "ErroDeChave", "ErroDeImportacao", "ErroDeAtributo", "ErroDivisaoPorZero", 
+    "FaltaDeMemoria", "ParadaDeIteracao", "ErroDoSistema", "ArquivoNaoEncontrado", 
+    "InterrupcaoPeloTeclado", "ErroDeAsseveracao", "ErroDeExecucao", "ErroNaoImplementado"
   ]);
 
   const DISCORD = new Set([
@@ -439,6 +443,7 @@ async def greet(ctx):
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const discordEndRef = useRef<HTMLDivElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
 
   // Transpile portulong changes instantly
   useEffect(() => {
@@ -1350,12 +1355,15 @@ class Robo(commands.Bot):
               <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-xl">
                 <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                    <span className="text-xs text-slate-400 font-mono ml-2 font-medium">
-                      {TEMPLATES.find(t => t.id === activePreset)?.filename || "meu_bot.ptg"}
-                    </span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <div className="flex items-center gap-1.5 ml-2">
+                      <PortulongLogo size={15} />
+                      <span className="text-xs text-emerald-400 font-mono font-bold">
+                        {TEMPLATES.find(t => t.id === activePreset)?.filename || "meu_bot.ptg"}
+                      </span>
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -1377,10 +1385,16 @@ class Robo(commands.Bot):
                 {/* Editor Content Area */}
                 <div id="editor-wrapper" className="relative flex-1 flex bg-slate-900 font-mono text-sm leading-relaxed overflow-hidden">
                   {/* Fake Row line counters gutter */}
-                  <div className="bg-slate-950/60 p-4 text-right select-none text-slate-600 font-mono text-xs w-12 border-r border-slate-800/50 flex flex-col gap-[3px] py-4">
-                    {Array.from({ length: Math.max(code.split("\n").length, 12) }).map((_, i) => (
-                      <div key={i} className="font-mono h-5 flex items-center justify-end">{i + 1}</div>
-                    ))}
+                  <div
+                    ref={gutterRef}
+                    className="bg-slate-950/60 p-4 text-right select-none text-slate-600 font-mono text-xs w-12 border-r border-slate-800/50 overflow-hidden flex flex-col py-4"
+                    style={{ height: "100%", maxHeight: "500px" }}
+                  >
+                    <div className="flex flex-col gap-[3px]">
+                      {Array.from({ length: Math.max(code.split("\n").length, 12) }).map((_, i) => (
+                        <div key={i} className="font-mono h-5 flex items-center justify-end">{i + 1}</div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Real-time colorized interactive code canvas */}
@@ -1405,6 +1419,9 @@ class Robo(commands.Bot):
                         if (preRef.current) {
                           preRef.current.scrollTop = e.currentTarget.scrollTop;
                           preRef.current.scrollLeft = e.currentTarget.scrollLeft;
+                        }
+                        if (gutterRef.current) {
+                          gutterRef.current.scrollTop = e.currentTarget.scrollTop;
                         }
                       }}
                       className="absolute inset-0 bg-transparent p-4 text-transparent caret-white font-mono text-xs leading-5 focus:outline-none resize-none w-full h-full whitespace-pre overflow-auto font-medium border-0 m-0"
@@ -1990,7 +2007,11 @@ class Robo(commands.Bot):
                   <div className="flex items-center gap-2 pl-8 text-amber-300">📄 transpiler.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Core de tradução Python</span></div>
                   <div className="flex items-center gap-2 pl-8 text-amber-300">📄 cli.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Executor terminal (portulong script.ptg)</span></div>
                   <div className="flex items-center gap-2 pl-8 text-amber-300">📄 discordia.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Wrapper Discord.py em PT</span></div>
-                  <div className="flex items-center gap-2 pl-4 text-slate-400">📄 meu_bot.ptg <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Seu código ativo no editor</span></div>
+                  <div className="flex items-center gap-2 pl-4 text-emerald-400">
+                    <PortulongLogo size={14} />
+                    <span>meu_bot.ptg</span>
+                    <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Seu código ativo no editor</span>
+                  </div>
                 </div>
 
                 <div className="mt-6 border-t border-slate-850 pt-5 flex flex-col gap-3">

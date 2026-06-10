@@ -71,6 +71,21 @@ BUILTINS_MAP = {
     "zipar": "zip",
     "enumerar": "enumerate",
     "objeto": "object",
+    "qualquer": "any",
+    "todos": "all",
+    "ajuda": "help",
+    "identidade": "id",
+    "reversivel": "reversed",
+    "formatar": "format",
+    "obter_atributo": "getattr",
+    "definir_atributo": "setattr",
+    "tem_atributo": "hasattr",
+    "excluir_atributo": "delattr",
+    "representacao": "repr",
+    "proximo": "next",
+    "iterador": "iter",
+    "eh_instancia": "isinstance",
+    "eh_subclasse": "issubclass",
     
     # Python Core Exceptions
     "Excessao": "Exception",
@@ -85,6 +100,11 @@ BUILTINS_MAP = {
     "FaltaDeMemoria": "MemoryError",
     "ParadaDeIteracao": "StopIteration",
     "ErroDoSistema": "OSError",
+    "ArquivoNaoEncontrado": "FileNotFoundError",
+    "InterrupcaoPeloTeclado": "KeyboardInterrupt",
+    "ErroDeAsseveracao": "AssertionError",
+    "ErroDeExecucao": "RuntimeError",
+    "ErroNaoImplementado": "NotImplementedError",
 }
 
 DISCORD_MAP = {

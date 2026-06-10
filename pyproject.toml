@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/silviok5000/portulong"
+Homepage = "https://github.com/silvio-blip/portulong"
 
 [project.scripts]
 portulong = "portulong.cli:main"

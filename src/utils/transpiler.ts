@@ -74,6 +74,21 @@ export const BUILTINS_MAP: Record<string, string> = {
   "zipar": "zip",
   "enumerar": "enumerate",
   "objeto": "object",
+  "qualquer": "any",
+  "todos": "all",
+  "ajuda": "help",
+  "identidade": "id",
+  "reversivel": "reversed",
+  "formatar": "format",
+  "obter_atributo": "getattr",
+  "definir_atributo": "setattr",
+  "tem_atributo": "hasattr",
+  "excluir_atributo": "delattr",
+  "representacao": "repr",
+  "proximo": "next",
+  "iterador": "iter",
+  "eh_instancia": "isinstance",
+  "eh_subclasse": "issubclass",
   
   // Python Core Exceptions / Erros base
   "Excessao": "Exception",
@@ -88,6 +103,11 @@ export const BUILTINS_MAP: Record<string, string> = {
   "FaltaDeMemoria": "MemoryError",
   "ParadaDeIteracao": "StopIteration",
   "ErroDoSistema": "OSError",
+  "ArquivoNaoEncontrado": "FileNotFoundError",
+  "InterrupcaoPeloTeclado": "KeyboardInterrupt",
+  "ErroDeAsseveracao": "AssertionError",
+  "ErroDeExecucao": "RuntimeError",
+  "ErroNaoImplementado": "NotImplementedError",
 };
 
 // Object/Property and Method maps for Discord.py wrapper
