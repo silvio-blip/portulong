@@ -12,7 +12,6 @@ jobs:
   build-n-publish:
     name: Build & Publish to PyPI
     runs-on: ubuntu-latest
-    environment: v1.0.0  # Alinhado com o ambiente configurado no GitHub e PyPI
     permissions:
       id-token: write    # REQUISITO CRÍTICO: Necessário para autenticação OIDC do Trusted Publisher
       contents: read     # Necessário para fazer o checkout do repositório
