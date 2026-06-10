@@ -1523,6 +1523,16 @@ def main():
     with open(os.path.join(ext_dir, "src", "extension.js"), "w", encoding="utf-8") as f:
         f.write(extension_js)
 
+    # Se não houver portulong.png localmente, tenta baixar do servidor oficial para não falhar a compilação da extensão
+    if not os.path.exists("portulong.png"):
+        info("Ícone 'portulong.png' não encontrado localmente. Baixando do servidor oficial...")
+        try:
+            import urllib.request
+            urllib.request.urlretrieve("https://portulong.vercel.app/portulong.png", "portulong.png")
+            success("Ícone 'portulong.png' transferido com sucesso!")
+        except Exception as e_dl:
+            warn(f"Não foi possível transferir o ícone automaticamente: {e_dl}")
+
     if os.path.exists("portulong.png"):
         shutil.copy("portulong.png", os.path.join(ext_dir, "portulong.png"))
         info("Ícone 'portulong.png' copiado com absoluto êxito para a extensão!")
