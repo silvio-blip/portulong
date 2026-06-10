@@ -1,0 +1,63 @@
+{
+  "name": "portulong-vscode",
+  "displayName": "Portulong support",
+  "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
+  "version": "1.0.0",
+  "publisher": "silvio-blip",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:portulong"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "portulong",
+        "aliases": [
+          "Portulong",
+          "portulong"
+        ],
+        "extensions": [
+          ".ptg"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "portulong",
+        "scopeName": "source.portulong",
+        "path": "./syntaxes/portulong.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "portulong.executar",
+        "title": "Portulong: Executar Ficheiro",
+        "icon": "$(play)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceExtname == .ptg",
+          "command": "portulong.executar",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "portulong.executar",
+        "key": "ctrl+f5",
+        "mac": "cmd+f5",
+        "when": "editorTextFocus && editorLangId == portulong"
+      }
+    ]
+  }
+}
