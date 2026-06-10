@@ -873,7 +873,7 @@ Baseada diretamente no interpretador do **Python** e construída sobre a bibliot
 Para instalar o compilador e ambiente de execução do Portulong, basta rodar o comando abaixo no seu terminal (requer Python 3.8+ instalado):
 
 \`\`\`bash
-pip install portulong
+pip install portulong.ptg
 \`\`\`
 
 ## 💻 Como usar
@@ -1981,10 +1981,10 @@ class Robo(commands.Bot):
             <div className="border-b border-slate-800 pb-5">
               <h2 className="text-lg font-black font-mono tracking-tight text-white flex items-center gap-2">
                 <Cpu size={18} className="text-emerald-400" />
-                Empacotador Oficial para PyPI (pip install portulong)
+                Empacotador Oficial para PyPI (pip install portulong.ptg)
               </h2>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Você quer que qualquer pessoa no mundo hospede e use sua nova linguagem de programação em português no terminal rodando <code className="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded font-mono">pip install portulong</code>? Nós criamos toda a estrutura necessária para você subir isso com facilidade para o PyPI!
+                Você quer que qualquer pessoa no mundo hospede e use sua nova linguagem de programação em português no terminal rodando <code className="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded font-mono">pip install portulong.ptg</code>? Nós criamos toda a estrutura necessária para você subir isso com facilidade para o PyPI!
               </p>
             </div>
 
