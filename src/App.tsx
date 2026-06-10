@@ -198,12 +198,199 @@ definir assincrono multiplicar_numeros(contexto, n1: real, n2: real):
   }
 ];
 
+// Função de realce de sintaxe robusta para Portulong (.ptg)
+function highlightPortulong(rawCode: string): React.ReactNode[] {
+  const regex = /(\s+)|(#.*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')|(\b[a-zA-Z_0-9ñáéíóúçãõâêîôûüãõàèìòù_]+\b)|([()[\]{}!@#$%^&*+\-=|\\:;<>,.?/]+)/g;
+  
+  let match;
+  const elements: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let key = 0;
+
+  const KEYWORDS = new Set([
+    "se", "senao", "senaose", "para", "enquanto", "definir", "funcao", 
+    "classe", "importar", "de", "como", "retornar", "tentar", "exceto", 
+    "finalmente", "com", "lambda", "passar", "parar", "continuar", 
+    "Verdadeiro", "Falso", "Nulo", "e", "ou", "nao", "em", "eh", "nao_eh",
+    "asseverar", "global", "naolocal", "levantar", "produzir", 
+    "assincrono", "aguardar"
+  ]);
+
+  const BUILTINS = new Set([
+    "escrever", "mostrar", "ler", "tamanho", "inteiro", "texto", "real", 
+    "decimal", "boleano", "lista", "dicionario", "conjunto", "tupla", 
+    "intervalo", "abrir", "tipo", "somar", "absoluto", "maximo", "minimo", 
+    "arredondar", "mapear", "filtrar", "ordenado", "super", "propriedade", 
+    "zipar", "enumerar", "objeto", "Excessao", "ErroDeValor", "ErroDeTipo", 
+    "ErroDeNome", "ErroDeIndice", "ErroDeChave", "ErroDeImportacao", 
+    "ErroDeAtributo", "ErroDivisaoPorZero", "FaltaDeMemoria", "ParadaDeIteracao", "ErroDoSistema"
+  ]);
+
+  const DISCORD = new Set([
+    "Robo", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem", "discordia",
+    "comando", "evento", "contexto", "membro", "canal", "servidor", "mensagem", 
+    "usuario", "enviar", "responder", "deletar", "adicionar_reacao", 
+    "remover_reacao", "expulsar", "banir", "limpar", "conteudo", "autor", 
+    "id", "canal_sistema", "permissoes", "expulsar_membros", "gerenciar_mensagens"
+  ]);
+
+  while ((match = regex.exec(rawCode)) !== null) {
+    if (match.index > lastIndex) {
+      elements.push(<span key={key++}>{rawCode.slice(lastIndex, match.index)}</span>);
+    }
+
+    const [full, whitespace, comment, str, word, operator] = match;
+
+    if (whitespace) {
+      elements.push(<span key={key++}>{whitespace}</span>);
+    } else if (comment) {
+      elements.push(<span key={key++} className="text-slate-500 italic font-mono">{comment}</span>);
+    } else if (str) {
+      elements.push(<span key={key++} className="text-amber-300 font-mono">{str}</span>);
+    } else if (word) {
+      if (KEYWORDS.has(word)) {
+        elements.push(<span key={key++} className="text-pink-400 font-bold font-mono">{word}</span>);
+      } else if (BUILTINS.has(word)) {
+        elements.push(<span key={key++} className="text-cyan-400 font-medium font-mono">{word}</span>);
+      } else if (DISCORD.has(word)) {
+        elements.push(<span key={key++} className="text-indigo-400 font-semibold font-mono">{word}</span>);
+      } else if (/^\d+$/.test(word)) {
+        elements.push(<span key={key++} className="text-purple-400 font-mono">{word}</span>);
+      } else if (rawCode[match.index + word.length] === '(') {
+        elements.push(<span key={key++} className="text-emerald-400 font-mono font-medium">{word}</span>);
+      } else {
+        elements.push(<span key={key++} className="text-slate-200 font-mono">{word}</span>);
+      }
+    } else if (operator) {
+      if (operator.includes('@')) {
+        elements.push(<span key={key++} className="text-amber-500 font-bold font-mono">{operator}</span>);
+      } else {
+        elements.push(<span key={key++} className="text-emerald-500 font-mono">{operator}</span>);
+      }
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < rawCode.length) {
+    elements.push(<span key={key++}>{rawCode.slice(lastIndex)}</span>);
+  }
+
+  return elements;
+}
+
+// Catálogo de Abreviaturas e Snippets do Portulong (Auto-completar)
+const PORTULONG_SNIPPETS = [
+  {
+    key: "se",
+    displayName: "se (condição)",
+    snippet: "se condicao:\n    # bloco\n",
+    description: "Estrutura condicional 'se' (if)"
+  },
+  {
+    key: "senao",
+    displayName: "senao",
+    snippet: "senao:\n    # bloco\n",
+    description: "Estrutura condicional 'senao' (else)"
+  },
+  {
+    key: "senaose",
+    displayName: "senaose",
+    snippet: "senaose outra_condicao:\n    # bloco\n",
+    description: "Estrutura condicional 'senaose' (elif)"
+  },
+  {
+    key: "para",
+    displayName: "para i em intervalo(...)",
+    snippet: "para i em intervalo(0, 10):\n    escrever(i)\n",
+    description: "Laço de repetição determinado 'para' (for)"
+  },
+  {
+    key: "enquanto",
+    displayName: "enquanto (condição)",
+    snippet: "enquanto condicao:\n    # bloco\n",
+    description: "Laço de repetição condicional 'enquanto' (while)"
+  },
+  {
+    key: "definir",
+    displayName: "definir assincrono comando",
+    snippet: "definir assincrono nome_funcao(contexto):\n    aguardar contexto.enviar(\"Texto\")\n",
+    description: "Define uma nova função assíncrona portuguesa"
+  },
+  {
+    key: "funcao",
+    displayName: "funcao (definir)",
+    snippet: "definir assincrono minha_funcao():\n    # código aqui\n",
+    description: "Declaração de uma função em português (def)"
+  },
+  {
+    key: "robo",
+    displayName: "robo = discordia.Robo(...)",
+    snippet: "robo = discordia.Robo(prefixo=\"!\")\n",
+    description: "Instancia e configura um novo robô do Discord"
+  },
+  {
+    key: "comando",
+    displayName: "@robo.comando (Comando do Chat)",
+    snippet: "@robo.comando(nome=\"ping\", ajuda=\"Comando de resposta rápida\")\ndefinir assincrono resposta_ping(contexto):\n    aguardar contexto.enviar(\"🏓 Pong!\")\n",
+    description: "Cria um comando de texto interativo !ping para o bot"
+  },
+  {
+    key: "evento",
+    displayName: "@robo.evento (Conexão e Inicialização)",
+    snippet: "@robo.evento\ndefinir assincrono ao_iniciar():\n    escrever(f\"Robô {robo.usuario} está online! 🚀\")\n",
+    description: "Trata o evento de conexão inicial (on_ready)"
+  },
+  {
+    key: "ao_mensagem",
+    displayName: "@robo.evento ao_mensagem (Filtros)",
+    snippet: "@robo.evento\ndefinir assincrono ao_mensagem(mensagem):\n    se mensagem.autor == robo.usuario:\n        retornar\n    \n    se \"bom dia\" em mensagem.conteudo.lower():\n        aguardar mensagem.canal.enviar(f\"Bom dia, {mensagem.autor.nome}! 🐉\")\n",
+    description: "Intercede e processa toda mensagem recebida"
+  },
+  {
+    key: "enviar",
+    displayName: "contexto.enviar(...)",
+    snippet: "aguardar contexto.enviar(\"Sua mensagem aqui!\")",
+    description: "Envia uma mensagem de texto simples ao canal ativo"
+  },
+  {
+    key: "responder",
+    displayName: "contexto.responder(...)",
+    snippet: "aguardar contexto.responder(\"Sua resposta!\")",
+    description: "Responde de forma encadeada diretamente à mensagem original"
+  },
+  {
+    key: "escrever",
+    displayName: "escrever(... / print)",
+    snippet: "escrever(\"Logs de monitoramento!\")",
+    description: "Imprime valores informativos na área de logs do painel"
+  },
+  {
+    key: "importar",
+    displayName: "importar portulong.discord_pt",
+    snippet: "importar portulong.discord_pt como discordia\n",
+    description: "Importa a ponte adaptada em português para o discord.py"
+  },
+  {
+    key: "tentar",
+    displayName: "tentar ... exceto (Segurança)",
+    snippet: "tentar:\n    # bloco propício a erros\nexceto ErroDeValor como e:\n    escrever(f\"Ocorreu um erro: {e}\")\n",
+    description: "Estrutura para tratamento e interceptação de erros"
+  }
+];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<"ide" | "translator" | "docs" | "pypi">("ide");
   const [code, setCode] = useState(TEMPLATES[0].code);
   const [pythonEquivalent, setPythonEquivalent] = useState("");
   const [activePreset, setActivePreset] = useState(TEMPLATES[0].id);
   const [copiedKeyword, setCopiedKeyword] = useState<string | null>(null);
+
+  // Estados de Abreviatura e Auto-completar inteligente
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<typeof PORTULONG_SNIPPETS>([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [activeWord, setActiveWord] = useState("");
 
   // Simulator State
   const [simulatedChannel, setSimulatedChannel] = useState("geral");
@@ -251,6 +438,7 @@ async def greet(ctx):
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const discordEndRef = useRef<HTMLDivElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
 
   // Transpile portulong changes instantly
   useEffect(() => {
@@ -278,6 +466,163 @@ async def greet(ctx):
       setCode(selected.code);
       setActivePreset(presetId);
       addTerminalLog("success", `Carregado template '${selected.name}' (.ptg)`);
+    }
+  };
+
+  // Aplica o snippet escolhido substituindo a abreviação digitada
+  const applySnippet = (item: typeof PORTULONG_SNIPPETS[0]) => {
+    const textarea = document.getElementById("code-editor-textarea") as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const currentCode = code;
+
+    // Encontra a palavra sendo escrita imediatamente antes do cursor
+    const textBeforeCaret = currentCode.slice(0, start);
+    const match = textBeforeCaret.match(/[\w_@]+$/);
+
+    let newCode = "";
+    let newCursorPos = 0;
+
+    if (match) {
+      const wordBeingTyped = match[0];
+      const matchStart = start - wordBeingTyped.length;
+
+      // Substitui o prefixo pelo snippet completo
+      newCode = currentCode.slice(0, matchStart) + item.snippet + currentCode.slice(start);
+      newCursorPos = matchStart + item.snippet.length;
+    } else {
+      // Caso não haja termo detectado, insere na posição do cursor
+      newCode = currentCode.slice(0, start) + item.snippet + currentCode.slice(start);
+      newCursorPos = start + item.snippet.length;
+    }
+
+    setCode(newCode);
+    setShowSuggestions(false);
+
+    // Foca novamente o editor e define o cursor ao final do snippet
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+      if (preRef.current) {
+        preRef.current.scrollTop = textarea.scrollTop;
+        preRef.current.scrollLeft = textarea.scrollLeft;
+      }
+    }, 50);
+  };
+
+  // Monitora alterações de texto para habilitar/filtrar sugestões
+  const handleEditorChange = (value: string) => {
+    setCode(value);
+
+    const textarea = document.getElementById("code-editor-textarea") as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    // Aguarda um ciclo de render para obter a posição real do selectionStart
+    setTimeout(() => {
+      const start = textarea.selectionStart;
+      const textBeforeCaret = value.slice(0, start);
+      const match = textBeforeCaret.match(/[\w_@]+$/);
+
+      if (match) {
+        const word = match[0].toLowerCase();
+        setActiveWord(word);
+
+        // Filtra os templates que começam com a abreviação digitada
+        const filtered = PORTULONG_SNIPPETS.filter(item =>
+          item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
+        );
+
+        if (filtered.length > 0 && word.length >= 1) {
+          setSuggestions(filtered);
+          setShowSuggestions(true);
+          setSelectedIndex(0);
+        } else {
+          setShowSuggestions(false);
+        }
+      } else {
+        setShowSuggestions(false);
+        setActiveWord("");
+      }
+    }, 0);
+  };
+
+  // Monitora clique ou navegação por seta para saber onde está o cursor
+  const handleCursorCheck = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const value = textarea.value;
+    const textBeforeCaret = value.slice(0, start);
+    const match = textBeforeCaret.match(/[\w_@]+$/);
+
+    if (match) {
+      const word = match[0].toLowerCase();
+      setActiveWord(word);
+      const filtered = PORTULONG_SNIPPETS.filter(item =>
+        item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
+      );
+
+      if (filtered.length > 0 && word.length >= 1) {
+        setSuggestions(filtered);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
+    } else {
+      setShowSuggestions(false);
+      setActiveWord("");
+    }
+  };
+
+  // Tratamento de teclas especiais (Escape, ArrowUp, ArrowDown, Tab e Enter)
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+    const valueStr = textarea.value;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    // 1. ESC: Fecha sugestões
+    if (e.key === "Escape") {
+      if (showSuggestions) {
+        e.preventDefault();
+        setShowSuggestions(false);
+      }
+      return;
+    }
+
+    // 2. SETAS: Navega no menu de sugestões se estiver visível
+    if (showSuggestions && suggestions.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev + 1) % suggestions.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+        return;
+      }
+    }
+
+    // 3. TAB ou ENTER: Insere a abreviação selecionada
+    if (e.key === "Tab" || e.key === "Enter") {
+      if (showSuggestions && suggestions.length > 0) {
+        e.preventDefault();
+        applySnippet(suggestions[selectedIndex]);
+        return;
+      }
+
+      // Se for TAB regular (sem menu de autocompletar ativo), faz indentação clássica com 4 espaços
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const newCode = valueStr.substring(0, start) + "    " + valueStr.substring(end);
+        setCode(newCode);
+
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 4;
+        }, 0);
+        return;
+      }
     }
   };
 
@@ -1030,23 +1375,86 @@ class Robo(commands.Bot):
                 </div>
 
                 {/* Editor Content Area */}
-                <div className="relative flex-1 flex bg-slate-900 font-mono text-sm leading-relaxed">
+                <div id="editor-wrapper" className="relative flex-1 flex bg-slate-900 font-mono text-sm leading-relaxed overflow-hidden">
                   {/* Fake Row line counters gutter */}
                   <div className="bg-slate-950/60 p-4 text-right select-none text-slate-600 font-mono text-xs w-12 border-r border-slate-800/50 flex flex-col gap-[3px] py-4">
                     {Array.from({ length: Math.max(code.split("\n").length, 12) }).map((_, i) => (
-                      <div key={i} className="font-mono">{i + 1}</div>
+                      <div key={i} className="font-mono h-5 flex items-center justify-end">{i + 1}</div>
                     ))}
                   </div>
 
-                  {/* actual code textarea */}
-                  <textarea
-                    id="code-editor-textarea"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    className="flex-1 bg-transparent p-4 text-emerald-400 font-mono font-medium focus:outline-none resize-none min-h-[380px] text-xs leading-5"
-                    placeholder="Escreva seu código Portulong aqui..."
-                    spellCheck="false"
-                  />
+                  {/* Real-time colorized interactive code canvas */}
+                  <div className="flex-1 relative min-h-[380px] overflow-hidden">
+                    {/* Rendered Colored Text (Underlay) */}
+                    <pre
+                      ref={preRef}
+                      className="absolute inset-0 p-4 text-slate-300 font-mono text-xs leading-5 whitespace-pre pointer-events-none select-none overflow-auto border-0 m-0 bg-transparent scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent"
+                    >
+                      {highlightPortulong(code)}
+                    </pre>
+
+                    {/* Actual Interactive Textarea (Overlay) */}
+                    <textarea
+                      id="code-editor-textarea"
+                      value={code}
+                      onChange={(e) => handleEditorChange(e.target.value)}
+                      onKeyDown={handleEditorKeyDown}
+                      onKeyUp={handleCursorCheck}
+                      onSelect={handleCursorCheck}
+                      onScroll={(e) => {
+                        if (preRef.current) {
+                          preRef.current.scrollTop = e.currentTarget.scrollTop;
+                          preRef.current.scrollLeft = e.currentTarget.scrollLeft;
+                        }
+                      }}
+                      className="absolute inset-0 bg-transparent p-4 text-transparent caret-white font-mono text-xs leading-5 focus:outline-none resize-none w-full h-full whitespace-pre overflow-auto font-medium border-0 m-0"
+                      placeholder="Escreva seu código Portulong aqui..."
+                      spellCheck="false"
+                    />
+
+                    {/* Floating Autocomplete Suggestions Panel */}
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="absolute bottom-4 right-4 z-50 max-w-sm w-80 bg-slate-950/95 border border-emerald-500/30 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden animate-fade-in divide-y divide-slate-800/60 flex flex-col font-mono text-[11px]">
+                        {/* Header bar */}
+                        <div className="bg-emerald-950/40 px-3 py-1.5 flex items-center justify-between text-[10px] text-emerald-400 font-bold tracking-wide uppercase border-b border-emerald-500/10">
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Auto-completar Inteligente ({suggestions.length})
+                          </span>
+                          <span className="text-slate-500 lowercase font-medium text-[9px]">
+                            [setas] navegar • [tab / enter] aplicar
+                          </span>
+                        </div>
+                        {/* List items */}
+                        <div className="max-h-48 overflow-y-auto scrollbar-thin">
+                          {suggestions.map((item, index) => (
+                            <button
+                              key={item.key}
+                              onClick={() => applySnippet(item)}
+                              onMouseMove={() => setSelectedIndex(index)}
+                              className={`w-full text-left p-2.5 transition-all flex flex-col gap-0.5 focus:outline-none ${
+                                index === selectedIndex
+                                  ? "bg-emerald-500/10 text-slate-100 border-l-2 border-emerald-400 pl-2 text-gold-300"
+                                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between font-bold">
+                                <span className={index === selectedIndex ? "text-emerald-300" : "text-sky-300"}>
+                                  {item.displayName}
+                                </span>
+                                <span className="bg-slate-900 border border-slate-800 text-slate-500 text-[9px] px-1 rounded font-normal uppercase">
+                                  {item.key}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-400/80 leading-normal font-sans">
+                                {item.description}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="bg-slate-950/90 px-4 py-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
@@ -1614,6 +2022,47 @@ class Robo(commands.Bot):
 
                 {/* Steps Accordion */}
                 <div className="flex flex-col gap-4">
+                  
+                  {/* Passo 0: Trusted Publisher */}
+                  <div className="bg-slate-950 border border-emerald-500/20 rounded-xl p-4 shadow-md bg-gradient-to-r from-emerald-950/10 to-transparent">
+                    <h4 className="text-xs font-black font-mono text-emerald-400 uppercase tracking-widest gap-2 flex items-center">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-mono font-bold text-[10px]">0</span>
+                      Configurar Trusted Publisher (Como no seu Print 📸)
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-2 leading-relaxed font-semibold">
+                      Na página do PyPI que você está visualizando no seu print, preencha os campos exatamente desta forma:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 bg-slate-900/60 p-3.5 border border-slate-800 rounded-lg text-xs leading-normal font-mono text-slate-400">
+                      <div>
+                        <span className="text-emerald-400 font-bold block mb-1">🔹 PyPI Project Name:</span>
+                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">portulong</code>
+                        <span className="text-[10px] text-slate-500 block mt-1">(Nome do pacote no PyPI. Se já estiver em uso, utilize um sufixo como portulong-bot)</span>
+                      </div>
+                      <div>
+                        <span className="text-emerald-400 font-bold block mb-1">🔹 Owner (Dono):</span>
+                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">SeuUsuarioDoGitHub</code>
+                        <span className="text-[10px] text-slate-500 block mt-1">(Seu apelido do GitHub que é dono do código do repositório)</span>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-emerald-400 font-bold block mb-1">🔹 Repository name:</span>
+                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">portulong</code>
+                        <span className="text-[10px] text-slate-500 block mt-1">(O nome exato do seu repositório no seu GitHub)</span>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-emerald-400 font-bold block mb-1">🔹 Workflow name:</span>
+                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">publish.yml</code>
+                        <span className="text-[10px] text-slate-500 block mt-1">(O arquivo de ações automático que criamos na pasta .github/workflows/)</span>
+                      </div>
+                      <div className="md:col-span-2 mt-2 pt-2 border-t border-slate-800/60">
+                        <span className="text-emerald-400 font-bold block mb-1">🔹 Environment name (Opcional):</span>
+                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">pypi</code>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-3 leading-relaxed">
+                      Clique no botão azul <strong className="text-emerald-400 font-mono">"Add"</strong> para salvar. Isso dará autorização para o Github Actions que configuramos no arquivo <code className="text-slate-300 bg-slate-900 px-1">.github/workflows/publish.yml</code> enviar atualizações automaticamente toda vez que você criar uma Tag de Versão ou Release no GitHub!
+                    </p>
+                  </div>
+
                   {/* Step 1 */}
                   <div className="bg-slate-950 border border-slate-850 rounded-xl p-4">
                     <h4 className="text-xs font-black font-mono text-emerald-400 uppercase tracking-widest gap-2 flex items-center">

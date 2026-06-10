@@ -33,6 +33,7 @@ export const KEYWORDS_MAP: Record<string, string> = {
   "nao": "not",
   "em": "in",
   "eh": "is",
+  "nao_eh": "is not",
   "asseverar": "assert",
   "global": "global",
   "naolocal": "nonlocal",
@@ -65,6 +66,28 @@ export const BUILTINS_MAP: Record<string, string> = {
   "maximo": "max",
   "minimo": "min",
   "arredondar": "round",
+  "mapear": "map",
+  "filtrar": "filter",
+  "ordenado": "sorted",
+  "super": "super",
+  "propriedade": "property",
+  "zipar": "zip",
+  "enumerar": "enumerate",
+  "objeto": "object",
+  
+  // Python Core Exceptions / Erros base
+  "Excessao": "Exception",
+  "ErroDeValor": "ValueError",
+  "ErroDeTipo": "TypeError",
+  "ErroDeNome": "NameError",
+  "ErroDeIndice": "IndexError",
+  "ErroDeChave": "KeyError",
+  "ErroDeImportacao": "ImportError",
+  "ErroDeAtributo": "AttributeError",
+  "ErroDivisaoPorZero": "ZeroDivisionError",
+  "FaltaDeMemoria": "MemoryError",
+  "ParadaDeIteracao": "StopIteration",
+  "ErroDoSistema": "OSError",
 };
 
 // Object/Property and Method maps for Discord.py wrapper

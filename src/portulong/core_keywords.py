@@ -31,6 +31,7 @@ KEYWORDS_MAP = {
     "nao": "not",
     "em": "in",
     "eh": "is",
+    "nao_eh": "is not",
     "asseverar": "assert",
     "global": "global",
     "naolocal": "nonlocal",
@@ -62,6 +63,28 @@ BUILTINS_MAP = {
     "maximo": "max",
     "minimo": "min",
     "arredondar": "round",
+    "mapear": "map",
+    "filtrar": "filter",
+    "ordenado": "sorted",
+    "super": "super",
+    "propriedade": "property",
+    "zipar": "zip",
+    "enumerar": "enumerate",
+    "objeto": "object",
+    
+    # Python Core Exceptions
+    "Excessao": "Exception",
+    "ErroDeValor": "ValueError",
+    "ErroDeTipo": "TypeError",
+    "ErroDeNome": "NameError",
+    "ErroDeIndice": "IndexError",
+    "ErroDeChave": "KeyError",
+    "ErroDeImportacao": "ImportError",
+    "ErroDeAtributo": "AttributeError",
+    "ErroDivisaoPorZero": "ZeroDivisionError",
+    "FaltaDeMemoria": "MemoryError",
+    "ParadaDeIteracao": "StopIteration",
+    "ErroDoSistema": "OSError",
 }
 
 DISCORD_MAP = {
