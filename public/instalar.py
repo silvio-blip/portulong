@@ -266,8 +266,18 @@ def main():
     print("   INSTALADOR AUTOMÁTICO DO PORTULONG E EXTENSÃO VS CODE")
     print("="*60)
 
-    # 1. Instalar o Portulong (Tenta local primeiro, depois PyPI)
-    info("1/4. Instalando linguagem de programação Portulong...")
+    # 1. Instalar o Portulong e bibliotecas acessórias necessárias
+    info("1/4. Instalando linguagem de programação Portulong e bibliotecas necessárias...")
+    
+    # Automatizar a instalação de todas as bibliotecas necessárias para rodar o Portulong e bots de Discord automaticamente
+    info("Instalando/atualizando dependências essenciais (pip, discord.py, setuptools, portulong)...")
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=False)
+        subprocess.run([sys.executable, "-m", "pip", "install", "discord.py", "setuptools"], check=False)
+        success("Bibliotecas acessórias (discord.py, setuptools, pip) checadas e instaladas!")
+    except Exception as e_deps:
+        warn(f"Aviso ao verificar e preparar bibliotecas de suporte: {e_deps}")
+
     instalado_local = False
     
     # Se o script for corrido dentro do repositório onde existe o pyproject.toml
@@ -314,20 +324,30 @@ def main():
     with open(os.path.join(ext_dir, "src", "extension.js"), "w", encoding="utf-8") as f:
         f.write(extension_js)
 
-    # Se não houver portulong.png localmente, tenta baixar do servidor oficial para não falhar a compilação da extensão
-    if not os.path.exists("portulong.png"):
-        info("Ícone 'portulong.png' não encontrado localmente. Baixando do servidor oficial...")
-        try:
-            import urllib.request
-            urllib.request.urlretrieve("https://portulong.vercel.app/portulong.png", "portulong.png")
-            success("Ícone 'portulong.png' transferido com sucesso!")
-        except Exception as e_dl:
-            warn(f"Não foi possível transferir o ícone automaticamente: {e_dl}")
+    # Evitar duplicação de imagem em pastas principais e fora do projeto:
+    # Baixa e configura diretamente no diretório do VS Code sem poluir a raiz
+    ext_icon_path = os.path.join(ext_dir, "portulong.png")
+    if not os.path.exists(ext_icon_path):
+        if os.path.exists("portulong.png"):
+            shutil.copy("portulong.png", ext_icon_path)
+            info("Ícone 'portulong.png' copiado localmente para o diretório da extensão!")
+        else:
+            info("Ícone 'portulong.png' não encontrado localmente. Baixando diretamente para a pasta da extensão...")
+            try:
+                import urllib.request
+                urllib.request.urlretrieve("https://portulong.vercel.app/portulong.png", ext_icon_path)
+                success("Ícone 'portulong.png' transferido diretamente para a extensão com sucesso!")
+            except Exception as e_dl:
+                warn(f"Não foi possível transferir o ícone automaticamente: {e_dl}")
 
-    # Se houver portulong.png localmente, copia para a extensão!
+    # Limpeza de qualquer ícone duplicado no diretório atual (fora de qualquer pasta/raiz)
+    # se o usuário tiver rodado o instalador que gerou o arquivo no diretório pai
     if os.path.exists("portulong.png"):
-        shutil.copy("portulong.png", os.path.join(ext_dir, "portulong.png"))
-        info("Ícone 'portulong.png' copiado com absoluto êxito para a extensão!")
+        try:
+            os.remove("portulong.png")
+            info("Removida cópia duplicada temporária do ícone na raiz para manter os seus diretórios limpos!")
+        except Exception:
+            pass
 
     success("Estrutura de ficheiros da extensão VS Code criada com perfeição!")
 
