@@ -1238,7 +1238,8 @@ package_json = {
     "Programming Languages"
   ],
   "activationEvents": [
-    "onLanguage:portulong"
+    "onLanguage:portulong",
+    "onCommand:portulong.executar"
   ],
   "main": "./src/extension.js",
   "contributes": {
@@ -1252,7 +1253,11 @@ package_json = {
         "extensions": [
           ".ptg"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./portulong.png",
+          "dark": "./portulong.png"
+        }
       }
     ],
     "grammars": [
@@ -1272,7 +1277,7 @@ package_json = {
     "menus": {
       "editor/title": [
         {
-          "when": "resourceExtname == .ptg",
+          "when": "editorLangId == portulong || resourceExtname == .ptg",
           "command": "portulong.executar",
           "group": "navigation"
         }
@@ -1614,14 +1619,21 @@ if __name__ == '__main__':
         vscode: "^1.74.0"
       },
       categories: ["Programming Languages"],
-      activationEvents: ["onLanguage:portulong"],
+      activationEvents: [
+        "onLanguage:portulong",
+        "onCommand:portulong.executar"
+      ],
       main: "./src/extension.js",
       contributes: {
         languages: [{
           id: "portulong",
           aliases: ["Portulong", "portulong"],
           extensions: [".ptg"],
-          configuration: "./language-configuration.json"
+          configuration: "./language-configuration.json",
+          icon: {
+            light: "./portulong.png",
+            dark: "./portulong.png"
+          }
         }],
         grammars: [{
           language: "portulong",
@@ -1635,7 +1647,7 @@ if __name__ == '__main__':
         }],
         menus: {
           "editor/title": [{
-            "when": "resourceExtname == .ptg",
+            "when": "editorLangId == portulong || resourceExtname == .ptg",
             "command": "portulong.executar",
             "group": "navigation"
           }]
