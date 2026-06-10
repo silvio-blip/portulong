@@ -1988,6 +1988,44 @@ class Robo(commands.Bot):
               </p>
             </div>
 
+            {/* 🛸 NOVO: INSTALAÇÃO AUTOMÁTICA EM 1 CLIQUE */}
+            <div className="p-5 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950/20 to-slate-950/40 shadow-inner flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="flex-1">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono tracking-wider bg-emerald-500/20 text-emerald-400 uppercase border border-emerald-500/30">
+                  RECOMENDADO
+                </span>
+                <h3 className="text-sm font-black font-mono tracking-tight text-white flex items-center gap-2 mt-1.5">
+                  ⚡ Auto-Instalador Inteligente de 1 Comando
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-3xl">
+                  Quer configurar a linguagem <code className="text-emerald-400 bg-slate-950 px-1 py-0.2 rounded font-mono">portulong.ptg</code> instalada do PyPI e ao mesmo tempo habilitar a <strong>Extensão Oficial do VS Code</strong> (com Destaque de Cores e o botão <strong>Play/Run</strong>) no seu terminal e editor de forma instantânea?
+                </p>
+                <div className="flex flex-wrap items-center gap-3 mt-3">
+                  <span className="text-xs font-mono font-bold text-slate-400">Só precisa de rodar:</span>
+                  <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 flex items-center gap-2 font-mono text-xs text-emerald-400 shadow-inner select-all">
+                    <span>python instalar.py</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href="/api/instalar"
+                  download="instalar.py"
+                  className="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black font-mono tracking-wider text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <Download size={14} />
+                  BAIXAR INSTALADOR
+                </a>
+                <button
+                  onClick={() => setActiveTab("docs")}
+                  className="px-5 py-3 bg-slate-950 hover:bg-slate-900 border border-slate-850 text-slate-300 font-bold font-mono text-xs rounded-xl transition-all flex items-center justify-center gap-2"
+                >
+                  <BookOpen size={14} className="text-slate-500" />
+                  VER DICIONÁRIO
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
               {/* Directory Visualization Panel */}

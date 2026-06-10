@@ -25,41 +25,67 @@ portulong-bot/                  <-- Pasta principal do projeto
 
 ---
 
-## 🚀 Instalação Local
+## 🚀 Instalação e Configuração Completa
 
-Você pode instalar o pacote diretamente da pasta raiz com o comando:
+Para garantir uma experiência de desenvolvimento impecável, criamos duas formas simples de instalar e começar a rodar o Portulong localmente.
 
+### Método 1: Instalação Automática Total (Recomendado 🌟)
+Se você quer configurar **tudo de uma vez** (instalar a linguagem e o suporte completo no VS Code com destaque de sintaxe e o botão play), basta baixar e rodar o nosso script de automação (`instalar.py`).
+
+Execute no seu terminal:
 ```bash
-pip install .
+python instalar.py
 ```
 
-Ou no modo editável de desenvolvimento para realizar testes contínuos:
+**O que este script faz por você de forma 100% automatizada:**
+1. Instala a última versão do compilador `portulong.ptg` do PyPI usando o `pip`.
+2. Cria todos os arquivos necessários para a extensão oficial do VS Code (`portulong-vscode`).
+3. Compila a extensão e gera o arquivo `.vsix` automaticamente usando o `npx` (caso tenha o Node.js).
+4. Instala a extensão diretamente no seu VS Code local (caso possua o comando `code` ativado).
 
+---
+
+### Método 2: Instalação Manual Passo a Passo
+
+Se preferir fazer as etapas individualmente, siga as instruções abaixo:
+
+#### 1. Instalar a Linguagem (do PyPI)
+Instale a versão oficial do compilador diretamente do PyPI rodando no seu terminal:
 ```bash
-pip install -e .
+pip install portulong.ptg
 ```
+
+#### 2. Configurar a Extensão VS Code Manualmente
+Se quiser compilar e instalar a extensão de formatação de código manualmente:
+1. Abra a pasta `vscode-extension`.
+2. Certifique-se de possuir o Node.js e instale o empacotador:
+   ```bash
+   npm install -g @vscode/vsce
+   ```
+3. Gere o instalador da extensão(`.vsix`):
+   ```bash
+   vsce package
+   ```
+4. No VS Code, abra a aba de Extensões (`Ctrl + Shift + X`), clique nos três pontinhos (`...`) no canto superior direito, escolha "Instalar a partir de VSIX..." e selecione o arquivo gerado!
 
 ---
 
 ## 🛠️ Como Utilizar a CLI do Portulong
 
-Após a instalação, a palavra-chave `portulong` se tornará um comando global em seu terminal.
+Após a instalação, a ferramenta `portulong` se torna um comando global disponível no seu terminal.
 
 ### 1. Inicializar um Novo Projeto
-Para inicializar os arquivos padrão do robô e o arquivo de configuração de variáveis confidenciais (`.env`), utilize:
-
+Crie o arquivo principal de código (`main.ptg`) e o arquivo de variáveis confidenciais (`.env`) pronto para edição executando:
 ```bash
 portulong iniciar
 ```
 
-Este comando criará o arquivo `main.ptg` e o arquivo `.env` prontos para edição.
-
 ### 2. Executar seu Código Portulong
-Para transpilar e colocar seu robô online em tempo real, use o comando:
-
+Para compilar e colocar seu robô online em tempo real:
 ```bash
 portulong executar main.ptg
 ```
+*(Nota: Você também pode simplesmente pressionar o botão **"Play"** no canto superior direito do seu editor VS Code ou usar o atalho de teclado `Ctrl + F5` dentro de um arquivo `.ptg`!)*
 
 ---
 
