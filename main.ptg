@@ -1,0 +1,19 @@
+# Exemplo de Teste do Bot em Portulong (PT-PT)
+# Arquivo: main.ptg
+
+importar portulong.discord_pt como discordia
+
+# Inicializa o bot com o prefixo selecionado
+robo = discordia.Robo(prefixo="!")
+
+@robo.evento
+definir assincrono ao_iniciar():
+    escrever(f"Robô online! Conectado sob a linguagem Portulong como: {robo.usuario}")
+
+@robo.comando(nome="ping")
+definir assincrono resposta_ping(contexto):
+    aguardar contexto.enviar("🏓 Pong! Resposta direta do motor de simulação em Portulong!")
+
+@robo.comando(nome="falar")
+definir assincrono resposta_falar(contexto, texto):
+    aguardar contexto.enviar(f"Repetindo a pedido do usuário {contexto.autor.nome}: {texto}")

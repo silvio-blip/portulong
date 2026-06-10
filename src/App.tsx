@@ -1,0 +1,1676 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useRef } from "react";
+import { 
+  Play, 
+  BookOpen, 
+  Terminal, 
+  Download, 
+  ArrowRight, 
+  Code, 
+  HelpCircle, 
+  Sparkles, 
+  Search, 
+  Copy, 
+  Check, 
+  Bot, 
+  Cpu, 
+  MessageSquare, 
+  Shield, 
+  Plus, 
+  RotateCcw, 
+  Volume2, 
+  Send 
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import JSZip from "jszip";
+
+import PortulongLogo from "./components/PortulongLogo";
+import { transpilePortulong } from "./utils/transpiler";
+import { CodeTemplate, DiscordMessage, TerminalLog, DictionaryItem, ChatMessage } from "./types";
+
+// Key translations dictionary for visual reference guide and search
+const DICTIONARY: DictionaryItem[] = [
+  { portulong: "se", python: "if", category: "palavra-chave", description: "Inicia um bloco de condição.", example: "se condicao:\n    escrever('Verdadeiro')" },
+  { portulong: "senao", python: "else", category: "palavra-chave", description: "Executa caso nenhuma condição anterior seja atendida.", example: "se condicao:\n    escrever('Certo')\nsenao:\n    escrever('Errado')" },
+  { portulong: "senaose", python: "elif", category: "palavra-chave", description: "Condicional intermediária.", example: "se x == 1:\n    escrever('Um')\nsenaose x == 2:\n    escrever('Dois')" },
+  { portulong: "para", python: "for", category: "palavra-chave", description: "Loop de repetição controlado.", example: "para i em intervalo(5):\n    escrever(i)" },
+  { portulong: "enquanto", python: "while", category: "palavra-chave", description: "Loop de repetição por condição contínua.", example: "enquanto repetindo:\n    escrever('Ativo')" },
+  { portulong: "definir / funcao", python: "def", category: "palavra-chave", description: "Cria e define uma nova função ou comando.", example: "definir somar(a, b):\n    retornar a + b" },
+  { portulong: "classe", python: "class", category: "palavra-chave", description: "Cria um modelo de objeto (classe).", example: "classe Jogador:\n    def __init__(self):\n        self.pontos = 0" },
+  { portulong: "importar", python: "import", category: "palavra-chave", description: "Importa módulos externos.", example: "importar discordia como discordia" },
+  { portulong: "retornar", python: "return", category: "palavra-chave", description: "Retorna um valor de dentro de uma função.", example: "definir dobro(n):\n    retornar n * 2" },
+  { portulong: "tentar", python: "try", category: "palavra-chave", description: "Tenta rodar um trecho capturando possíveis erros.", example: "tentar:\n    escrever(1 / 0)\nexcluir ZeroDivisionError:\n    escrever('Não divida por zero')" },
+  { portulong: "exceto", python: "except", category: "palavra-chave", description: "Captura erros disparados dentro do bloco 'tentar'.", example: "tentar:\n    fazer()\nexcleto:\n    escrever('Deu erro')" },
+  { portulong: "Verdadeiro", python: "True", category: "palavra-chave", description: "Valor lógico de verdadeiro.", example: "ativo = Verdadeiro" },
+  { portulong: "Falso", python: "False", category: "palavra-chave", description: "Valor lógico de falso.", example: "mudo = Falso" },
+  { portulong: "Nulo", python: "None", category: "palavra-chave", description: "Valor vazio de ausência de dados.", example: "resultado = Nulo" },
+  { portulong: "assincrono", python: "async", category: "palavra-chave", description: "Define que um método ou evento pode rodar ao mesmo tempo que outros (assíncrono).", example: "definir assincrono ao_iniciar():\n    escrever('Robô online')" },
+  { portulong: "aguardar", python: "await", category: "palavra-chave", description: "Aproveita loops assíncronos de forma pausada liberando o bot.", example: "aguardar contexto.enviar('Olá')" },
+  { portulong: "escrever / mostrar", python: "print", category: "embutido", description: "Mostra uma mensagem no terminal do console.", example: "escrever('Console Log')" },
+  { portulong: "ler", python: "input", category: "embutido", description: "Recebe dados digitados do usuário no terminal.", example: "nome = ler('Qual seu nome? ')" },
+  { portulong: "tamanho", python: "len", category: "embutido", description: "Calcula a quantidade de itens em uma lista, tupla ou texto.", example: "tam = tamanho('Portulong')" },
+  { portulong: "inteiro", python: "int", category: "embutido", description: "Converte valores para formato de números inteiros.", example: "numero = inteiro('10')" },
+  { portulong: "texto", python: "str", category: "embutido", description: "Converte valores para formato de string escrita.", example: "txt = texto(42)" },
+  { portulong: "real / decimal", python: "float", category: "embutido", description: "Converte valores para formato decimal.", example: "altura = real('1.75')" },
+  { portulong: "lista", python: "list", category: "embutido", description: "Estrutura básica de arranjo com mutabilidade.", example: "convidados = lista()" },
+  { portulong: "intervalo", python: "range", category: "embutido", description: "Gera índices de controle sequencial.", example: "intervalo(1, 10)" },
+  
+  // Discord-specific additions
+  { portulong: "discordia", python: "discord", category: "discordia", description: "Módulo principal do Wrapper do Discord.", example: "importar discordia como discordia" },
+  { portulong: "Robo(prefixo)", python: "commands.Bot(command_prefix)", category: "discordia", description: "Cria e configura a instância do bot do discord.", example: "robo = discordia.Robo(prefixo='!')" },
+  { portulong: "@robo.evento", python: "@bot.event", category: "discordia", description: "Registra gatilhos de eventos automáticos do Discord.", example: "@robo.evento\ndefinir assincrono ao_iniciar():\n    escrever('Pronto!')" },
+  { portulong: "@robo.comando(nome)", python: "@bot.command(name)", category: "discordia", description: "Registra comandos escritos pelos usuários.", example: "@robo.comando(nome='ola')\ndefinir assincrono comando_ola(contexto):\n    aguardar contexto.enviar('Oi!')" },
+  { portulong: "contexto.enviar(...)", python: "ctx.send(...)", category: "discordia", description: "Envia uma mensagem no canal de texto ativo.", example: "aguardar contexto.enviar('Mensagem')" },
+  { portulong: "contexto.autor.nome", python: "ctx.author.name", category: "discordia", description: "Retorna o apelido/nome da pessoa que mandou o comando.", example: "aguardar contexto.enviar(f'{contexto.autor.nome} chamou o comando!')" },
+  { portulong: "membro.expulsar()", python: "member.kick()", category: "discordia", description: "Gatilho para expulsar um usuário do servidor Discord.", example: "aguardar membro.expulsar()" },
+  { portulong: "canal.limpar(limite)", python: "channel.purge(limit)", category: "discordia", description: "Exclui um número determinado de mensagens anteriores.", example: "aguardar contexto.canal.limpar(limite=50)" },
+];
+
+const TEMPLATES: CodeTemplate[] = [
+  {
+    id: "boas-vindas",
+    name: "Bot Boas-vindas",
+    description: "Reage a novos membros com saudações amigáveis no canal padrão.",
+    filename: "bot_boas_vindas.ptg",
+    code: `# Exemplo 1: Bot de Boas-vindas em Portulong
+# Arquivo: bot_boas_vindas.ptg
+
+importar discordia como discordia
+
+# Inicializa o bot com o prefixo '!'
+robo = discordia.Robo(prefixo="!")
+
+# Evento ativado quando o robô se conecta
+@robo.evento
+definir assincrono ao_iniciar():
+    escrever(f"Robô conectado com sucesso como {robo.usuario}!")
+
+# Evento ativado quando um membro entra no servidor
+@robo.evento
+definir assincrono ao_entrar_membro(membro):
+    # Procura o canal padrão do sistema do servidor
+    canal = membro.servidor.canal_sistema
+    se canal nao_eh Nulo:
+        aguardar canal.enviar(f"Boas-vindas ao servidor, {membro.nome}! 🎉 Esperamos que se divirta!")
+`
+  },
+  {
+    id: "comandos-basicos",
+    name: "Comandos Interativos",
+    description: "Criação de comandos interativos fáceis como !ping, !ajuda e !diga.",
+    filename: "comandos_interativos.ptg",
+    code: `# Exemplo 2: Bot de Comandos Interativos
+# Arquivo: comandos_interativos.ptg
+
+importar discordia como discordia
+
+robo = discordia.Robo(prefixo="!")
+
+@robo.evento
+definir assincrono ao_iniciar():
+    escrever("Bot online e pronto para comandos em português!")
+
+# Comando simples !ping
+@robo.comando(nome="ping")
+definir assincrono resposta_ping(contexto):
+    aguardar contexto.enviar("🏓 Pong! O bot está rodando perfeitamente em Portulong.")
+
+# Comando !diga <texto> que ecoa a frase do usuário
+@robo.comando(nome="diga", ajuda="Faz o robô repetir o texto enviado")
+definir assincrono resposta_falar(contexto, texto):
+    aguardar contexto.enviar(f"O usuário **{contexto.autor.nome}** mandou dizer: {texto}")
+
+# Comando !pergunta que simula respostas simples
+@robo.comando(nome="pergunta")
+definir assincrono resposta_pergunta(contexto, pergunta):
+    fala = f"Hum, você perguntou: '{pergunta}'. Minha resposta é: Sim, com certeza! 👍"
+    aguardar contexto.enviar(fala)
+`
+  },
+  {
+    id: "moderacao",
+    name: "Moderação e Segurança",
+    description: "Sistema básico de segurança para apagar mensagens em lote ou banir spammers.",
+    filename: "seguranca.ptg",
+    code: `# Exemplo 3: Bot de Moderação de Canais
+# Arquivo: seguranca.ptg
+
+importar discordia como discordia
+
+robo = discordia.Robo(prefixo="!")
+
+@robo.evento
+definir assincrono ao_iniciar():
+    escrever("Sistema avançado de segurança ativado nos canais.")
+
+# Comando !limpar <quantidade> para deletar mensagens anteriores
+@robo.comando(nome="limpar")
+definir assincrono limpar_chat(contexto, quantidade: inteiro = 10):
+    # Verifica se o solicitante tem permissão de gerenciar mensagens
+    se contexto.autor.permissoes.gerenciar_mensagens:
+        aguardar contexto.canal.limpar(limite=quantidade)
+        aguardar contexto.enviar(f"🧹 {quantidade} mensagens apagadas com sucesso por {contexto.autor.nome}!", excluir_depois=5)
+    senao:
+        aguardar contexto.enviar("❌ Desculpe, você não tem a permissão de 'Gerenciar Mensagens' para usar isso.")
+
+# Comando !expulsar <membro>
+@robo.comando(nome="expulsar")
+definir assincrono expulsar_membro(contexto, membro: discordia.Membro):
+    se contexto.autor.permissoes.expulsar_membros:
+        aguardar membro.expulsar()
+        aguardar contexto.enviar(f"🚨 {membro.nome} foi banido/expulso por violar as regras do servidor!")
+    senao:
+        aguardar contexto.enviar("❌ Acesso negado. Apenas moderadores autorizados podem usar esse comando.")
+`
+  },
+  {
+    id: "calculadora",
+    name: "Bot Calculadora",
+    description: "Excelente bot utilitário com comandos rápidos de matemática.",
+    filename: "calculadora.ptg",
+    code: `# Exemplo 4: Bot de Matemática e Cálculo
+# Arquivo: calculadora.ptg
+
+importar discordia como discordia
+
+robo = discordia.Robo(prefixo="!")
+
+@robo.evento
+definir assincrono ao_iniciar():
+    escrever("Módulo de cálculos matemáticos carregado.")
+
+# Comando !somar <numero1> <numero2>
+@robo.comando(nome="somar")
+definir assincrono somar_numeros(contexto, n1: real, n2: real):
+    soma = n1 + n2
+    aguardar contexto.enviar(f"📊 **Calculadora Portulong**:\nO resultado da soma de {n1} + {n2} é igual a: **{soma}**")
+
+# Comando !multiplicar <numero1> <numero2>
+@robo.comando(nome="vezes")
+definir assincrono multiplicar_numeros(contexto, n1: real, n2: real):
+    resultado = n1 * n2
+    aguardar contexto.enviar(f"✖️ O resultado de {n1} multiplicado por {n2} é igual a: **{resultado}**")
+`
+  }
+];
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<"ide" | "translator" | "docs" | "pypi">("ide");
+  const [code, setCode] = useState(TEMPLATES[0].code);
+  const [pythonEquivalent, setPythonEquivalent] = useState("");
+  const [activePreset, setActivePreset] = useState(TEMPLATES[0].id);
+  const [copiedKeyword, setCopiedKeyword] = useState<string | null>(null);
+
+  // Simulator State
+  const [simulatedChannel, setSimulatedChannel] = useState("geral");
+  const [chatInput, setChatInput] = useState("");
+  const [simulatorLogs, setSimulatorLogs] = useState<TerminalLog[]>([
+    { id: "1", type: "info", time: "21:20:00", message: "Inicializando compilador virtual do Portulong CLI v1.0.0..." },
+    { id: "2", type: "success", time: "21:20:01", message: "Verificando dependências de 'discordia.py' (dependente de 'discord.py')..." },
+    { id: "3", type: "success", time: "21:20:02", message: "Ambiente pronto para simulação no navegador!" }
+  ]);
+  const [discordMessages, setDiscordMessages] = useState<DiscordMessage[]>([
+    { id: "1", sender: "Mestre_Do_Portulong", avatarColor: "from-indigo-500 to-purple-600", timestamp: "Hoje às 21:18", content: "Seja bem vindo à central da Portulong! Digite comandos do robô aqui no canal de chat para simular.", isBot: false },
+    { id: "2", sender: "PortulongBot", avatarColor: "from-green-500 to-emerald-600", timestamp: "Hoje às 21:18", content: "Opa! Eu sou o robô simulado do Portulong. Prorrogado sob Python, aguardando instruções em português! Experimente digitar !ping", isBot: true }
+  ]);
+  const [isSimulatingResponse, setIsSimulatingResponse] = useState(false);
+
+  // Translation Workspace State
+  const [inputPython, setInputPython] = useState(`# Cole código Python original do Discord aqui
+import discord
+from discord.ext import commands
+
+bot = commands.Bot(command_prefix="?")
+
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}")
+
+@bot.command()
+async def greet(ctx):
+    await ctx.send("Hello Discord!")
+`);
+  const [translatedPortulong, setTranslatedPortulong] = useState("");
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  // Gemini Tutor Module State
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiAnswer, setAiAnswer] = useState("");
+  const [isAiAnswering, setIsAiAnswering] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [chatMessageInput, setChatMessageInput] = useState("");
+  const [isChatSending, setIsChatSending] = useState(false);
+
+  // Guide search filtering
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<"tudo" | "palavra-chave" | "embutido" | "discordia">("tudo");
+
+  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const discordEndRef = useRef<HTMLDivElement>(null);
+
+  // Transpile portulong changes instantly
+  useEffect(() => {
+    try {
+      const transpiled = transpilePortulong(code);
+      setPythonEquivalent(transpiled);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [code]);
+
+  // Keep logs scrolled down
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [simulatorLogs]);
+
+  // Keep Discord comments scrolled down
+  useEffect(() => {
+    discordEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [discordMessages]);
+
+  const selectPreset = (presetId: string) => {
+    const selected = TEMPLATES.find(t => t.id === presetId);
+    if (selected) {
+      setCode(selected.code);
+      setActivePreset(presetId);
+      addTerminalLog("success", `Carregado template '${selected.name}' (.ptg)`);
+    }
+  };
+
+  const addTerminalLog = (type: "info" | "success" | "warning" | "error", message: string) => {
+    const now = new Date();
+    const timeStr = now.toTimeString().split(" ")[0];
+    setSimulatorLogs(prev => [...prev, {
+      id: Math.random().toString(),
+      type,
+      time: timeStr,
+      message
+    }]);
+  };
+
+  // Run or transpile simulator with AI
+  const simulateBotResponse = async () => {
+    if (!chatInput.trim()) return;
+    const userMsg = chatInput.trim();
+    setChatInput("");
+
+    // Add user message to Discord history
+    const now = new Date();
+    const timeStr = `Hoje às ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    const userMsgId = Math.random().toString();
+    
+    setDiscordMessages(prev => [...prev, {
+      id: userMsgId,
+      sender: "Mestre_Do_Portulong",
+      avatarColor: "from-indigo-500 to-purple-600",
+      timestamp: timeStr,
+      content: userMsg,
+      isBot: false
+    }]);
+
+    addTerminalLog("info", `[Entrada de Chat] Membro enviou: "${userMsg}"`);
+    setIsSimulatingResponse(true);
+
+    try {
+      const response = await fetch("/api/ai/simulate-bot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: code,
+          inputMessage: userMsg,
+          userTag: "Mestre_Do_Portulong"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro na comunicação com o compilador AI.");
+      }
+
+      const result = await response.json();
+      
+      setIsSimulatingResponse(false);
+
+      if (result.log) {
+        addTerminalLog("info", result.log);
+      }
+
+      // Add Bot reply if simulated
+      if (result.response && result.response !== "None" && result.response !== "null") {
+        setDiscordMessages(prev => [...prev, {
+          id: Math.random().toString(),
+          sender: result.botName || "PortulongBot",
+          avatarColor: "from-green-500 to-emerald-600",
+          timestamp: timeStr,
+          content: result.response,
+          isBot: true,
+          embed: result.embed && (result.embed.title || result.embed.description) ? result.embed : undefined
+        }]);
+        addTerminalLog("success", `[Robô] Enviou resposta no canal #${simulatedChannel}`);
+      } else {
+        addTerminalLog("warning", `[Robô] Nenhum comando ou evento ativo respondeu à mensagem "${userMsg}".`);
+      }
+
+    } catch (err: any) {
+      setIsSimulatingResponse(false);
+      addTerminalLog("error", `Erro de Simulação: ${err.message}`);
+      setDiscordMessages(prev => [...prev, {
+        id: Math.random().toString(),
+        sender: "PortulongBot",
+        avatarColor: "from-red-500 to-orange-600",
+        timestamp: timeStr,
+        content: `⚠️ [ERRO DE MOTOR]: Ocorreu um problema ao simular este comando no servidor: ${err.message}`,
+        isBot: true
+      }]);
+    }
+  };
+
+  // Convert English Python to Portulong with Gemini
+  const translatePythonToPortulong = async () => {
+    if (!inputPython.trim()) return;
+    setIsTranslating(true);
+    try {
+      const res = await fetch("/api/ai/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pythonCode: inputPython })
+      });
+      const data = await res.json();
+      if (data.ptgCode) {
+        setTranslatedPortulong(data.ptgCode);
+      } else {
+        setTranslatedPortulong(`# Erro: ${data.error || "Formato inválido"}`);
+      }
+    } catch (err: any) {
+      setTranslatedPortulong(`# Ocorreu um erro na tradução: ${err.message}`);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  // Explain user Portulong code with Gemini Tutor
+  const explainCode = async () => {
+    setIsAiAnswering(true);
+    setAiAnswer("");
+    try {
+      const res = await fetch("/api/ai/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, question: aiQuestion })
+      });
+      const data = await res.json();
+      setAiAnswer(data.explanation || "Nenhuma resposta gerada.");
+    } catch (err: any) {
+      setAiAnswer(`Ocorreu um erro ao obter ajuda do tutor: ${err.message}`);
+    } finally {
+      setIsAiAnswering(false);
+    }
+  };
+
+  // AI Assistant Chatbot
+  const sendChatMessage = async () => {
+    if (!chatMessageInput.trim()) return;
+    const textMsg = chatMessageInput.trim();
+    setChatMessageInput("");
+
+    const userMessage: ChatMessage = {
+      id: Math.random().toString(),
+      sender: "user",
+      content: textMsg,
+      timestamp: new Date().toLocaleTimeString().slice(0, 5)
+    };
+
+    const updatedHistory = [...chatHistory, userMessage];
+    setChatHistory(updatedHistory);
+    setIsChatSending(true);
+
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: updatedHistory.map(m => ({ role: m.sender === "user" ? "user" : "model", content: m.content })) })
+      });
+      const data = await res.json();
+      
+      const aiReply: ChatMessage = {
+        id: Math.random().toString(),
+        sender: "ai",
+        content: data.reply || "Desculpe, tive um problema ao responder.",
+        timestamp: new Date().toLocaleTimeString().slice(0, 5)
+      };
+      setChatHistory(prev => [...prev, aiReply]);
+    } catch (err: any) {
+      setChatHistory(prev => [...prev, {
+        id: Math.random().toString(),
+        sender: "ai",
+        content: `Erro ao comunicar com assistente: ${err.message}`,
+        timestamp: new Date().toLocaleTimeString().slice(0, 5)
+      }]);
+    } finally {
+      setIsChatSending(false);
+    }
+  };
+
+  // Copy keyword helper
+  const handleCopy = (word: string) => {
+    navigator.clipboard.writeText(word);
+    setCopiedKeyword(word);
+    setTimeout(() => setCopiedKeyword(null), 1500);
+  };
+
+  // Generate and download client side ZIP using JSZip
+  const handleDownloadDistribution = async () => {
+    addTerminalLog("info", "Compilando e empacotando distribuição para o PIP/PyPI...");
+    const zip = new JSZip();
+
+    // 1. Root files
+    zip.file("setup.py", `from setuptools import setup, find_packages
+
+setup(
+    name="portulong",
+    version="1.0.0",
+    author="Silvio & Portulong Community",
+    author_email="silviok5000@gmail.com",
+    description="Uma linguagem de programacao em portugues para criar facil bots do Discord baseada em Python.",
+    long_description=open("README.md", encoding="utf-8").read(),
+    long_description_content_type="text/markdown",
+    packages=find_packages(),
+    include_package_data=True,
+    install_requires=[
+        "discord.py>=2.0.0",
+    ],
+    entry_points={
+        "console_scripts": [
+            "portulong=portulong.cli:main",
+        ],
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.8",
+)`);
+
+    zip.file("pyproject.toml", `[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "portulong"
+version = "1.0.0"
+description = "Linguagem de programacao em portugues baseada em Python para bots do Discord."
+readme = "README.md"
+authors = [{ name = "Silvio", email = "silviok5000@gmail.com" }]
+dependencies = [
+    "discord.py>=2.0.0"
+]
+
+[project.scripts]
+portulong = "portulong.cli:main"`);
+
+    zip.file("README.md", `# 🐉 Portulong 
+
+Uma linguagem de programação moderna 100% em português voltada para facilitar o aprendizado de programação de iniciantes, com foco especial na criação de robôs do Discord profissionais de forma extremamente simples.
+
+Baseada diretamente no interpretador do **Python** e construída sobre a biblioteca oficial **Discord.py**.
+
+## 🚀 Como Instalar
+
+Para instalar o compilador e ambiente de execução do Portulong, basta rodar o comando abaixo no seu terminal (requer Python 3.8+ instalado):
+
+\`\`\`bash
+pip install portulong
+\`\`\`
+
+## 💻 Como usar
+
+Escreva o seu primeiro arquivo \`.ptg\`! Por exemplo, crie um arquivo chamado \`meu_bot.ptg\`:
+
+\`\`\`python
+importar discordia como discordia
+
+robo = discordia.Robo(prefixo="!")
+
+@robo.evento
+definir assincrono ao_iniciar():
+    escrever(f"Opa! Robô online como {robo.usuario}")
+
+@robo.comando(nome="ola")
+definir assincrono responder_ola(contexto):
+    aguardar contexto.enviar(f"Olá {contexto.autor.nome}! Eu fui codificado em Portulong!")
+\`\`\`
+
+Para executar o seu robô no computador, basta rodar o comando:
+
+\`\`\`bash
+portulong meu_bot.ptg
+\`\`\`
+
+## ⚙️ Como funciona?
+
+O Portulong transpila o código em português diretamente para Python válido em tempo de execução, preservando comentários e literais de string intactos, e mapeando as propriedades do Discord da forma mais intuitiva possível.
+
+Desenvolvido com carinho para a comunidade brasileira 🇧🇷`);
+
+    // 2. Package module directory: portulong/
+    const packageFolder = zip.folder("portulong")!;
+    
+    packageFolder.file("__init__.py", `from .transpiler import transpile
+from .discordia import Robo, wrap_object
+`);
+
+    packageFolder.file("transpiler.py", `import re
+
+KEYWORDS_MAP = {
+    "se": "if",
+    "senao": "else",
+    "senaose": "elif",
+    "para": "for",
+    "enquanto": "while",
+    "definir": "def",
+    "funcao": "def",
+    "classe": "class",
+    "importar": "import",
+    "de": "from",
+    "como": "as",
+    "retornar": "return",
+    "tentar": "try",
+    "exceto": "except",
+    "finalmente": "finally",
+    "com": "with",
+    "lambda": "lambda",
+    "passar": "pass",
+    "parar": "break",
+    "continuar": "continue",
+    "Verdadeiro": "True",
+    "Falso": "False",
+    "Nulo": "None",
+    "e": "and",
+    "ou": "or",
+    "nao": "not",
+    "em": "in",
+    "eh": "is",
+    "asseverar": "assert",
+    "global": "global",
+    "naolocal": "nonlocal",
+    "levantar": "raise",
+    "produzir": "yield",
+    "assincrono": "async",
+    "aguardar": "await",
+}
+
+BUILTINS_MAP = {
+    "escrever": "print",
+    "mostrar": "print",
+    "ler": "input",
+    "tamanho": "len",
+    "inteiro": "int",
+    "texto": "str",
+    "real": "float",
+    "decimal": "float",
+    "boleano": "bool",
+    "lista": "list",
+    "dicionario": "dict",
+    "conjunto": "set",
+    "tupla": "tuple",
+    "intervalo": "range",
+    "abrir": "open",
+    "tipo": "type",
+    "somar": "sum",
+    "absoluto": "abs",
+    "maximo": "max",
+    "minimo": "min",
+    "arredondar": "round",
+}
+
+DISCORD_MAP = {
+    "Robo": "Bot",
+    "prefixo": "command_prefix",
+    "evento": "event",
+    "comando": "command",
+    "nome": "name",
+    "ajuda": "help",
+    "enviar": "send",
+    "responder": "reply",
+    "deletar": "delete",
+    "adicionar_reacao": "add_reaction",
+    "remover_reacao": "remove_reaction",
+    "expulsar": "kick",
+    "banir": "ban",
+    "limpar": "purge",
+    "conteudo": "content",
+    "autor": "author",
+    "canal": "channel",
+    "servidor": "guild",
+    "mensagem": "message",
+    "usuario": "user",
+    "id": "id",
+}
+
+def transpile(code_str):
+    strings = []
+    comments = []
+    
+    # 1. Protect triple strings
+    def repl_triple(m):
+        strings.append(m.group(0))
+        return f"__TRIPLE_STR_PLACEHOLDER_{len(strings)-1}__"
+    processed = re.sub(r'"""[\\s\\S]*?"""', repl_triple, code_str)
+    
+    # 2. Protect single/double quotes
+    def repl_str(m):
+        strings.append(m.group(0))
+        return f"__STR_PLACEHOLDER_{len(strings)-1}__"
+    processed = re.sub(r'"([^"\\\\]|\\\\.)*"', repl_str, processed)
+    processed = re.sub(r"'([^'\\\\]|\\\\.)*'", repl_str, processed)
+    
+    # 3. Protect comments
+    def repl_com(m):
+        comments.append(m.group(0))
+        return f"__COM_PLACEHOLDER_{len(comments)-1}__"
+    processed = re.sub(r'#.*', repl_com, processed)
+    
+    # Combine maps
+    full_map = {**KEYWORDS_MAP, **BUILTINS_MAP, **DISCORD_MAP}
+    sorted_keys = sorted(full_map.keys(), key=len, reverse=True)
+    
+    for key in sorted_keys:
+        val = full_map[key]
+        escaped_key = re.escape(key)
+        processed = re.sub(rf'\\b{escaped_key}\\b', val, processed)
+        
+    # Restore comments
+    for i in reversed(range(len(comments))):
+         processed = processed.replace(f"__COM_PLACEHOLDER_{i}__", comments[i])
+         
+    # Restore strings
+    for i in reversed(range(len(strings))):
+         processed = processed.replace(f"__STR_PLACEHOLDER_{i}__", strings[i])
+         processed = processed.replace(f"__TRIPLE_STR_PLACEHOLDER_{i}__", strings[i])
+         
+    return processed
+`);
+
+    packageFolder.file("cli.py", `import sys
+import os
+from .transpiler import transpile
+
+def main():
+    if len(sys.argv) < 2:
+        print("🐉 Portulong CLI v1.0.0")
+        print("Uso: portulong <arquivo.ptg>")
+        sys.exit(1)
+        
+    filepath = sys.argv[1]
+    if not os.path.exists(filepath):
+        print(f"Erro: Arquivo '{filepath}' nao encontrado.")
+        sys.exit(1)
+        
+    with open(filepath, 'r', encoding='utf-8') as f:
+        ptg_code = f.read()
+        
+    # Translate PTG to standard python code
+    py_code = transpile(ptg_code)
+    
+    # Inject directory of execution in python system path for library finding
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
+    # Run the compiled code dynamically inside standard python context
+    exec(py_code, {'__name__': '__main__'})
+`);
+
+    packageFolder.file("discordia.py", `import discord
+from discord.ext import commands
+import asyncio
+
+class DynamicProxy:
+    def __init__(self, obj):
+        super().__setattr__('_obj', obj)
+
+    def __getattr__(self, name):
+        translations = {
+            'conteudo': 'content',
+            'autor': 'author',
+            'canal': 'channel',
+            'nome': 'name',
+            'id': 'id',
+            'servidor': 'guild',
+            'mensagem': 'message',
+            'usuario': 'user',
+            'canal_sistema': 'system_channel',
+            'permissoes': 'permissions',
+            'expulsar_membros': 'kick_members',
+            'gerenciar_mensagens': 'manage_messages',
+        }
+        eng_name = translations.get(name, name)
+        val = getattr(self._obj, eng_name)
+        if callable(val):
+            method_translations = {
+                'enviar': 'send',
+                'responder': 'reply',
+                'deletar': 'delete',
+                'adicionar_reacao': 'add_reaction',
+                'remover_reacao': 'remove_reaction',
+                'expulsar': 'kick',
+                'banir': 'ban',
+                'limpar': 'purge',
+            }
+            eng_method = method_translations.get(name, name)
+            actual_method = getattr(self._obj, eng_method)
+            
+            def wrapped_method(*args, **kwargs):
+                if 'nome' in kwargs:
+                    kwargs['name'] = kwargs.pop('nome')
+                if 'excluir_depois' in kwargs:
+                    kwargs['delete_after'] = kwargs.pop('excluir_depois')
+                if 'limite' in kwargs:
+                    kwargs['limit'] = kwargs.pop('limite')
+                
+                unwrapped_args = []
+                for arg in args:
+                    if hasattr(arg, '_obj'):
+                        unwrapped_args.append(arg._obj)
+                    else:
+                        unwrapped_args.append(arg)
+                
+                unwrapped_kwargs = {}
+                for k, v in kwargs.items():
+                    if hasattr(v, '_obj'):
+                        unwrapped_kwargs[k] = v._obj
+                    else:
+                        unwrapped_kwargs[k] = v
+                        
+                res = actual_method(*unwrapped_args, **unwrapped_kwargs)
+                if asyncio.iscoroutine(res):
+                    async def async_wrapper():
+                        await_res = await res
+                        return wrap_object(await_res)
+                    return async_wrapper()
+                return wrap_object(res)
+            return wrapped_method
+        return wrap_object(val)
+
+    def __setattr__(self, name, value):
+        translations = {
+            'conteudo': 'content',
+        }
+        eng_name = translations.get(name, name)
+        setattr(self._obj, eng_name, value)
+
+def wrap_object(obj):
+    if obj is None:
+        return None
+    if isinstance(obj, (str, int, float, bool, dict, list, tuple, set)):
+        return obj
+    return DynamicProxy(obj)
+
+class Robo(commands.Bot):
+    def __init__(self, prefixo, *args, **kwargs):
+        super().__init__(command_prefix=prefixo, *args, **kwargs)
+
+    def comando(self, *args, **kwargs):
+        if 'nome' in kwargs:
+            kwargs['name'] = kwargs.pop('nome')
+        if 'ajuda' in kwargs:
+            kwargs['help'] = kwargs.pop('ajuda')
+        
+        def decorator(func):
+            import functools
+            @functools.wraps(func)
+            async def wrapper(ctx, *args, **kwargs):
+                wrapped_ctx = wrap_object(ctx)
+                wrapped_args = [wrap_object(a) for a in args]
+                wrapped_kwargs = {k: wrap_object(v) for k, v in kwargs.items()}
+                return await func(wrapped_ctx, *wrapped_args, **wrapped_kwargs)
+            return super(Robo, self).command(*args, **kwargs)(wrapper)
+        return decorator
+
+    def evento(self, *args, **kwargs):
+        def decorator(func):
+            import functools
+            @functools.wraps(func)
+            async def wrapper(*args, **kwargs):
+                wrapped_args = [wrap_object(a) for a in args]
+                wrapped_kwargs = {k: wrap_object(v) for k, v in kwargs.items()}
+                return await func(*wrapped_args, **wrapped_kwargs)
+            event_mappings = {
+                'ao_iniciar': 'on_ready',
+                'ao_mensagem': 'on_message',
+                'ao_entrar_membro': 'on_member_join',
+            }
+            mapped_name = event_mappings.get(func.__name__, func.__name__)
+            wrapper.__name__ = mapped_name
+            return super(Robo, self).event(*args, **kwargs)(wrapper)
+        return decorator
+`);
+
+    // 3. User's Code
+    zip.file("meu_bot.ptg", code);
+
+    // 4. Trigger download
+    const content = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(content);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "portulong_dist.zip";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    addTerminalLog("success", "Arquivo de distribuição 'portulong_dist.zip' compactado com sucesso! Baixando...");
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-600 selection:text-white">
+      {/* 🚀 Brand Header Bar */}
+      <header id="main-header" className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <PortulongLogo size={48} />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-black tracking-tight text-white font-mono">
+                PORTU<span className="text-emerald-500 font-mono">LONG</span>
+              </h1>
+              <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-mono">
+                v1.0.0
+              </span>
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 tracking-tight">
+              Criador de Bots do Discord em Português
+            </p>
+          </div>
+        </div>
+
+        {/* 🧭 Tab Navigation */}
+        <nav className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800 self-start md:self-auto">
+          <button
+            id="tab-ide-btn"
+            onClick={() => setActiveTab("ide")}
+            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono flex items-center gap-2 transition-all ${
+              activeTab === "ide" 
+                ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700" 
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Code size={14} />
+            IDE & Simulador
+          </button>
+          
+          <button
+            id="tab-translator-btn"
+            onClick={() => setActiveTab("translator")}
+            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono flex items-center gap-2 transition-all ${
+              activeTab === "translator" 
+                ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700" 
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Sparkles size={14} />
+            Tradutor Python
+          </button>
+
+          <button
+            id="tab-docs-btn"
+            onClick={() => setActiveTab("docs")}
+            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono flex items-center gap-2 transition-all ${
+              activeTab === "docs" 
+                ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700" 
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <BookOpen size={14} />
+            Dicionário / Guia
+          </button>
+
+          <button
+            id="tab-pypi-btn"
+            onClick={() => setActiveTab("pypi")}
+            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono flex items-center gap-2 transition-all ${
+              activeTab === "pypi" 
+                ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700" 
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Cpu size={14} />
+            Empacotar (PyPI)
+          </button>
+        </nav>
+      </header>
+
+      {/* 🔮 Workspace Hub */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
+        
+        {/* 💡 Sub-guidance Info Panel */}
+        <div className="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-950 border border-emerald-500/15 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex gap-3">
+            <span className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 self-start">
+              <Bot size={20} />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-slate-100">Crie bots profissionais do Discord escrevendo código em português!</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Utilize estruturas normais adaptadas do Python como <code className="text-emerald-400 bg-slate-800/60 px-1 py-0.5 rounded font-mono font-medium">se</code>, <code className="text-emerald-400 bg-slate-800/60 px-1 py-0.5 rounded font-mono font-medium">definir assincrono</code> e <code className="text-emerald-400 bg-slate-800/60 px-1 py-0.5 rounded font-mono font-medium">escrever()</code>.
+              </p>
+            </div>
+          </div>
+          <button 
+            id="download-master-btn"
+            onClick={handleDownloadDistribution}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-slate-950 text-xs font-black font-mono rounded-lg transition-all flex items-center justify-center gap-2"
+          >
+            <Download size={14} />
+            BAIXAR .ZIP DO COMPILADOR
+          </button>
+        </div>
+
+        {/* 💻 TAB CONTENT: IDE & DISCORD CLIENT SIMULATOR */}
+        {activeTab === "ide" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {/* LEFT AREA: Editor & Selector (Line count: 7 spans) */}
+            <div className="col-span-1 lg:col-span-7 flex flex-col gap-4">
+              
+              {/* Presets Toggle Header */}
+              <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="text-slate-200">
+                  <h3 className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest">Modelos Disponíveis</h3>
+                  <p className="text-[11px] text-slate-500">Escolha um ponto de partida rápido em Portulong</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {TEMPLATES.map((tmpl) => (
+                    <button
+                      key={tmpl.id}
+                      onClick={() => selectPreset(tmpl.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        activePreset === tmpl.id
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                          : "bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800"
+                      }`}
+                    >
+                      {tmpl.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Code Editor Frame */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-xl">
+                <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                    <span className="text-xs text-slate-400 font-mono ml-2 font-medium">
+                      {TEMPLATES.find(t => t.id === activePreset)?.filename || "meu_bot.ptg"}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <button
+                      id="reset-code-btn"
+                      onClick={() => {
+                        const original = TEMPLATES.find(t => t.id === activePreset);
+                        if (original) setCode(original.code);
+                      }}
+                      title="Resetar arquivo ao padrão"
+                      className="p-1 px-2.5 text-[11px] hover:text-rose-400 hover:bg-rose-500/5 hover:border-rose-500/20 border border-slate-800 rounded flex items-center gap-1 transition-all"
+                    >
+                      <RotateCcw size={11} />
+                      Carregar Padrão
+                    </button>
+                  </div>
+                </div>
+
+                {/* Editor Content Area */}
+                <div className="relative flex-1 flex bg-slate-900 font-mono text-sm leading-relaxed">
+                  {/* Fake Row line counters gutter */}
+                  <div className="bg-slate-950/60 p-4 text-right select-none text-slate-600 font-mono text-xs w-12 border-r border-slate-800/50 flex flex-col gap-[3px] py-4">
+                    {Array.from({ length: Math.max(code.split("\n").length, 12) }).map((_, i) => (
+                      <div key={i} className="font-mono">{i + 1}</div>
+                    ))}
+                  </div>
+
+                  {/* actual code textarea */}
+                  <textarea
+                    id="code-editor-textarea"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="flex-1 bg-transparent p-4 text-emerald-400 font-mono font-medium focus:outline-none resize-none min-h-[380px] text-xs leading-5"
+                    placeholder="Escreva seu código Portulong aqui..."
+                    spellCheck="false"
+                  />
+                </div>
+
+                <div className="bg-slate-950/90 px-4 py-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+                  <span>Portulong - Baseado em Python</span>
+                  <span>Linhas: {code.split("\n").length}</span>
+                </div>
+              </div>
+
+              {/* Real-time Side-by-side python equivalent component */}
+              <div className="bg-slate-900 border border-slate-850 rounded-xl overflow-hidden shadow-inner">
+                <div className="bg-slate-950/50 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-mono font-semibold text-slate-300">
+                    <Terminal size={12} className="text-amber-500" />
+                    Código Python Traduzido (.py equivalente)
+                  </div>
+                  <span className="text-[10px] bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded font-mono text-slate-400">
+                    Transpilador Ativo
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-950/80 max-h-[160px] overflow-y-auto">
+                  <pre className="text-amber-400/90 font-mono text-[11px] leading-5 whitespace-pre">
+                    {pythonEquivalent || "# Codifique acima para começar a compilação..."}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Explanation Assistant Tab Panel inside IDE */}
+              <div className="bg-gradient-to-br from-slate-900 to-indigo-950/20 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles size={16} className="text-emerald-400" />
+                  <h4 className="text-xs font-black font-mono tracking-wider text-slate-200 uppercase">
+                    Assistente Tutor Portulong (IA)
+                  </h4>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
+                  Dúvidas sobre como esse código funciona? Clique em analisar ou faça perguntas diretamente ao compilador inteligente!
+                </p>
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={aiQuestion}
+                    onChange={(e) => setAiQuestion(e.target.value)}
+                    placeholder="Ex: Como eu recebo a mensagem do usuário?"
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 text-slate-300"
+                  />
+                  <button
+                    id="explain-code-btn"
+                    onClick={explainCode}
+                    disabled={isAiAnswering}
+                    className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-emerald-400 font-semibold rounded-lg font-mono text-xs transition-all flex items-center gap-1 border border-slate-700"
+                  >
+                    {isAiAnswering ? "Pensando..." : "Perguntar"}
+                  </button>
+                </div>
+
+                {isAiAnswering && (
+                  <div className="p-3 bg-slate-950 rounded-lg animate-pulse border border-slate-800 text-xs text-slate-400 font-mono">
+                    Conectando ao modelo gemini-3.5-flash para ler os tokens do Portulong...
+                  </div>
+                )}
+
+                {aiAnswer && !isAiAnswering && (
+                  <div className="p-4 bg-slate-950 border border-slate-800/80 rounded-lg text-xs leading-5 max-h-[220px] overflow-y-auto">
+                    <p className="font-bold text-emerald-400 mb-2 font-mono">💡 Resposta do Tutor:</p>
+                    <p className="text-slate-300 whitespace-pre-line leading-relaxed font-sans">{aiAnswer}</p>
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* RIGHT AREA: Discord client & Console (Line count: 5 spans) */}
+            <div className="col-span-1 lg:col-span-5 flex flex-col gap-6">
+              
+              {/* Discord App Simulator */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex flex-col">
+                {/* Simulated Discord client Header */}
+                <div className="bg-slate-950 p-3.5 border-b border-slate-800/80 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bot size={18} className="text-indigo-400" />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-indigo-100 leading-tight">Simulador Discordia</span>
+                      <span className="text-[10px] text-slate-500 font-mono leading-none">Ambiente de Testes Virtual</span>
+                    </div>
+                  </div>
+                  
+                  {/* simulated server name indicator */}
+                  <span className="text-[10px] bg-slate-800/80 border border-indigo-500/20 px-2 py-0.5 rounded-full text-indigo-300 font-semibold tracking-wide">
+                    Servidor: Portulong Devs
+                  </span>
+                </div>
+
+                {/* Sub discord client sidebar + channel layout */}
+                <div className="flex min-h-[350px] max-h-[420px] bg-slate-900">
+                  
+                  {/* Channels selection bar (discord style) */}
+                  <div className="w-[120px] bg-slate-950/70 py-3 border-r border-slate-800/40 flex flex-col gap-1 select-none">
+                    <span className="px-3 text-[9px] uppercase tracking-wider font-bold text-slate-500">
+                      Canais
+                    </span>
+                    <button 
+                      onClick={() => setSimulatedChannel("geral")}
+                      className={`px-3 py-1 text-left text-[11px] font-semibold flex items-center gap-1 ${
+                        simulatedChannel === "geral" ? "text-indigo-400 bg-slate-800/40 font-bold" : "text-slate-400 hover:text-slate-300"
+                      }`}
+                    >
+                      # geral
+                    </button>
+                    <button 
+                      onClick={() => setSimulatedChannel("comandos")}
+                      className={`px-3 py-1 text-left text-[11px] font-semibold flex items-center gap-1 ${
+                        simulatedChannel === "comandos" ? "text-indigo-400 bg-slate-800/40 font-bold" : "text-slate-400 hover:text-slate-300"
+                      }`}
+                    >
+                      # comandos-bot
+                    </button>
+                    <button 
+                      onClick={() => setSimulatedChannel("logs")}
+                      className={`px-3 py-1 text-left text-[11px] font-semibold flex items-center gap-1 ${
+                        simulatedChannel === "logs" ? "text-indigo-400 bg-slate-800/40 font-bold" : "text-slate-400 hover:text-slate-300"
+                      }`}
+                    >
+                      # logs-do-sistema
+                    </button>
+                  </div>
+
+                  {/* Messages workspace log area */}
+                  <div className="flex-1 flex flex-col bg-[#313338] h-[340px] max-h-[400px]">
+                    
+                    {/* Chat Area output log */}
+                    <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3">
+                      {discordMessages.map((msg) => (
+                        <div key={msg.id} className="flex gap-2.5 text-xs items-start animate-fade-in group">
+                          {/* Avatar icon */}
+                          <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${msg.avatarColor} text-white font-black flex items-center justify-center flex-shrink-0 relative`}>
+                            {msg.sender[0].toUpperCase()}
+                            {msg.isBot && (
+                              <span className="absolute -bottom-1 -right-1 bg-indigo-500 text-[8px] font-bold px-0.5 rounded text-white border border-[#313338] leading-none py-0.5 font-mono capitalize shadow">
+                                BOT
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Username text wrap */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`font-semibold ${msg.isBot ? "text-emerald-300" : "text-white"}`}>
+                                {msg.sender}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono mt-0.5">{msg.timestamp}</span>
+                            </div>
+                            <p className="text-[#dbdee1] mt-1 break-all select-text font-sans font-medium whitespace-pre-wrap">
+                              {msg.content}
+                            </p>
+
+                            {/* Embed Render mock if any */}
+                            {msg.embed && (
+                              <div className="mt-2 pl-3 py-2 border-l-4 bg-[#1e1f22] rounded rounded-l-none" style={{ borderColor: msg.embed.color || "#10B981" }}>
+                                {msg.embed.title && (
+                                  <h4 className="font-bold text-white text-xs mb-1 font-sans">{msg.embed.title}</h4>
+                                )}
+                                {msg.embed.description && (
+                                  <p className="text-slate-300 text-[11px] whitespace-pre-line font-medium font-sans leading-relaxed">{msg.embed.description}</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {isSimulatingResponse && (
+                        <div className="flex gap-2.5 text-xs items-center animate-pulse text-indigo-300 font-mono">
+                          <Plus size={14} className="animate-spin text-indigo-400" />
+                          Processando resposta com compilador virtual do Portulong...
+                        </div>
+                      )}
+                      
+                      <div ref={discordEndRef} />
+                    </div>
+
+                    {/* Chat simulator manual input */}
+                    <div className="p-3 bg-[#2b2d31] border-t border-slate-800 flex gap-2">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") simulateBotResponse();
+                        }}
+                        placeholder={`Mande mensagens em #${simulatedChannel} (Ex: !ping)`}
+                        className="flex-1 bg-[#383a40] text-slate-100 rounded px-3 py-2 text-xs focus:outline-none"
+                      />
+                      <button
+                        id="send-simulated-msg-btn"
+                        onClick={simulateBotResponse}
+                        className="px-3 bg-indigo-500 hover:bg-slate-700 text-white rounded transition-colors group flex items-center justify-center p-2 border border-slate-700"
+                        title="Enviar para simular"
+                      >
+                        <Send size={14} />
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* Bot active execution terminal console */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-lg">
+                <div className="bg-slate-950 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold font-mono text-slate-400">
+                    <Terminal size={12} className="text-emerald-500" />
+                    Console do Compilador (Logs de Execução)
+                  </div>
+                  <button
+                    id="clear-logs-btn"
+                    onClick={() => {
+                      setSimulatorLogs([
+                        { id: "1", type: "info", time: "21:20:00", message: "Console de logs limpo pelo desenvolvedor." }
+                      ]);
+                    }}
+                    className="text-[10px] text-slate-500 hover:text-slate-300 font-mono transition-colors"
+                  >
+                    Limpar
+                  </button>
+                </div>
+                
+                {/* Console list output */}
+                <div className="p-4 bg-slate-950 font-mono text-xs max-h-[180px] overflow-y-auto flex flex-col gap-2 min-h-[120px]">
+                  {simulatorLogs.map((log) => (
+                    <div key={log.id} className="text-slate-300 font-mono gap-1">
+                      <span className="text-slate-600 mr-2 font-mono">[{log.time}]</span>
+                      <span className={`font-mono ${
+                        log.type === "success" 
+                          ? "text-emerald-400" 
+                          : log.type === "warning" 
+                            ? "text-yellow-400" 
+                            : log.type === "error" 
+                              ? "text-red-400 font-bold" 
+                              : "text-slate-400"
+                      }`}>
+                        {log.message}
+                      </span>
+                    </div>
+                  ))}
+                  <div ref={terminalEndRef} />
+                </div>
+              </div>
+
+              {/* Chat Support Frame */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col">
+                <div className="flex items-center gap-2 mb-3">
+                  <MessageSquare size={16} className="text-emerald-400" />
+                  <h3 className="text-xs font-black font-mono tracking-wider uppercase text-slate-200">
+                    Bate-papo de Suporte Portulong
+                  </h3>
+                </div>
+                <div className="bg-slate-950/80 rounded-lg p-3 overflow-y-auto max-h-[200px] mb-3 flex flex-col gap-2 min-h-[140px]">
+                  {chatHistory.length === 0 ? (
+                    <p className="text-[11px] text-slate-500 font-serif leading-relaxed italic text-center py-4">
+                      Ex: Pergunte "Como eu faço um comando de banir?" ou "O que significa 'se membro.servidor'?" para tirar suas dúvidas de iniciante!
+                    </p>
+                  ) : (
+                    chatHistory.map((m) => (
+                      <div key={m.id} className={`p-2.5 rounded-lg text-xs leading-relaxed max-w-[85%] ${
+                        m.sender === "user" 
+                          ? "bg-indigo-950/40 border border-indigo-800/15 text-indigo-200 self-end" 
+                          : "bg-slate-900 text-slate-200 self-start border border-slate-800"
+                      }`}>
+                        <div className="text-[10px] opacity-60 font-mono mb-1 capitalize">
+                          {m.sender === "user" ? "Eu" : "Mestre Portulong (IA)"}
+                        </div>
+                        <p className="whitespace-pre-line font-sans font-medium">{m.content}</p>
+                      </div>
+                    ))
+                  )}
+                  {isChatSending && (
+                    <div className="p-2.5 bg-slate-900 rounded-lg text-xs text-slate-400 animate-pulse font-mono self-start border border-slate-800">
+                      Mestre Portulong está digitando...
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatMessageInput}
+                    onChange={(e) => setChatMessageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") sendChatMessage();
+                    }}
+                    placeholder="Tire dúvidas sobre portulong..."
+                    className="flex-1 bg-slate-950 border border-slate-800/80 rounded-lg px-3 py-1.5 text-xs focus:outline-none"
+                  />
+                  <button
+                    id="chat-send-btn"
+                    onClick={sendChatMessage}
+                    disabled={isChatSending}
+                    className="px-3 bg-slate-800 text-emerald-400 hover:text-emerald-300 font-bold rounded-lg border border-slate-700 transform duration-150 active:scale-95 text-xs"
+                  >
+                    Enviar
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* 💻 TAB CONTENT: PYTHON TRANSLATOR */}
+        {activeTab === "translator" && (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col gap-6">
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-lg font-black font-mono tracking-tight text-white flex items-center gap-2">
+                <Sparkles size={18} className="text-emerald-400" />
+                Conversor de Inglês (Python) para Português (Portulong)
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Tem algum comando ou bot já pronto em Python que você achou na internet? Cole o código original do Discord.py aqui embaixo e clique em traduzir. Nossa inteligência artificial e nosso transpiler farão a tradução 100% precisa das palavras-chave para Portulong!
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              {/* Python Left Entry Column */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Code size={13} />
+                  Código em Python de Entrada (.py inglês)
+                </label>
+                <textarea
+                  value={inputPython}
+                  onChange={(e) => setInputPython(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs focus:outline-none focus:border-indigo-500 text-amber-300 min-h-[340px] resize-none"
+                  spellCheck="false"
+                />
+              </div>
+
+              {/* Portulong Right Target Column */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-emerald-400" />
+                  Código Processado em Portulong (.ptg português)
+                </label>
+                <div className="relative flex-1 flex flex-col bg-slate-950 border border-slate-800 rounded-xl min-h-[340px] overflow-hidden">
+                  <textarea
+                    readOnly
+                    value={translatedPortulong}
+                    className="flex-1 bg-transparent p-4 font-mono text-xs focus:outline-none text-emerald-400 cursor-text resize-none"
+                    placeholder="# Clique em Traduzir para processar as palavras-chave..."
+                    spellCheck="false"
+                  />
+                  {translatedPortulong && (
+                    <button
+                      id="copy-translated-btn"
+                      onClick={() => {
+                        navigator.clipboard.writeText(translatedPortulong);
+                        alert("Código Portulong copiado!");
+                      }}
+                      className="absolute bottom-4 right-4 p-2 bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all"
+                    >
+                      <Copy size={13} />
+                      Copiar Código
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-center border-t border-slate-800 pt-6">
+              <button
+                id="translate-python-now-btn"
+                onClick={translatePythonToPortulong}
+                disabled={isTranslating}
+                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 text-sm font-black font-mono tracking-wide rounded-xl transition-all flex items-center justify-center gap-2 transform active:scale-95 shadow-lg"
+              >
+                {isTranslating ? (
+                  <>
+                    <Plus size={16} className="animate-spin text-slate-950" />
+                    Traduzindo com Inteligência Artificial...
+                  </>
+                ) : (
+                  <>
+                    Traduzir Agora para Portulong
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 💻 TAB CONTENT: REFERENCE DICTIONARY */}
+        {activeTab === "docs" && (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col gap-6">
+            <div className="border-b border-slate-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-black font-mono tracking-tight text-white flex items-center gap-2">
+                  <BookOpen size={18} className="text-emerald-400" />
+                  Dicionário Oficial & Guia de Sintaxe
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Encontre a tradução exata de loops, palavras-chave e métodos específicos do Discord.
+                </p>
+              </div>
+
+              {/* Filtering Controls */}
+              <div className="flex flex-wrap items-center gap-2 select-none">
+                <button
+                  onClick={() => setCategoryFilter("tudo")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    categoryFilter === "tudo" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+                  }`}
+                >
+                  Tudo
+                </button>
+                <button
+                  onClick={() => setCategoryFilter("palavra-chave")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    categoryFilter === "palavra-chave" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+                  }`}
+                >
+                  Palavras-Chave
+                </button>
+                <button
+                  onClick={() => setCategoryFilter("embutido")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    categoryFilter === "embutido" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+                  }`}
+                >
+                  Funções Embutidas
+                </button>
+                <button
+                  onClick={() => setCategoryFilter("discordia")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    categoryFilter === "discordia" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+                  }`}
+                >
+                  Discord (Discordia)
+                </button>
+              </div>
+            </div>
+
+            {/* Live dictionary lookup input */}
+            <div className="relative">
+              <Search className="absolute left-4 top-3.5 text-slate-500" size={16} />
+              <input
+                type="text"
+                placeholder="Busque por termos (Ex: se, senao, @robo.comando, escrever)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-850 rounded-xl pl-11 pr-4 py-3 text-xs focus:outline-none focus:border-emerald-500 text-slate-200 shadow-inner"
+              />
+            </div>
+
+            {/* Bento Grid layout of dictionary keys */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {DICTIONARY.filter(item => {
+                const query = searchQuery.toLowerCase();
+                const matchesSearch = item.portulong.toLowerCase().includes(query) || item.python.toLowerCase().includes(query) || item.description.toLowerCase().includes(query);
+                const matchesCategory = categoryFilter === "tudo" || item.category === categoryFilter;
+                return matchesSearch && matchesCategory;
+              }).map((item) => (
+                <div key={item.portulong} className="bg-slate-950/60 hover:bg-slate-950 border border-slate-850 hover:border-emerald-500/20 rounded-xl p-4 flex flex-col justify-between group transition-all">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded-full ${
+                        item.category === "palavra-chave" 
+                          ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" 
+                          : item.category === "embutido" 
+                            ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+                            : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                      }`}>
+                        {item.category}
+                      </span>
+                      <button
+                        onClick={() => handleCopy(item.portulong)}
+                        className="text-slate-600 hover:text-emerald-400 transition-colors p-1"
+                        title="Copiar termo"
+                      >
+                        {copiedKeyword === item.portulong ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                      </button>
+                    </div>
+
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <h3 className="text-sm font-bold font-mono text-emerald-400">{item.portulong}</h3>
+                      <span className="text-slate-600 text-xs font-mono">→</span>
+                      <span className="text-slate-500 text-xs font-mono select-all font-semibold italic">{item.python}</span>
+                    </div>
+
+                    <p className="text-xs text-slate-400 font-sans leading-relaxed mt-1 font-medium">{item.description}</p>
+                  </div>
+
+                  <div className="mt-4">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase font-mono tracking-wider block mb-1">Exemplo de Sintaxe:</span>
+                    <pre className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-[10px] text-slate-300 leading-snug whitespace-pre overflow-x-auto">
+                      {item.example}
+                    </pre>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 💻 TAB CONTENT: PIP / PYPI PUBLISHING PACKAGE EXPORT */}
+        {activeTab === "pypi" && (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col gap-8">
+            <div className="border-b border-slate-800 pb-5">
+              <h2 className="text-lg font-black font-mono tracking-tight text-white flex items-center gap-2">
+                <Cpu size={18} className="text-emerald-400" />
+                Empacotador Oficial para PyPI (pip install portulong)
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Você quer que qualquer pessoa no mundo hospede e use sua nova linguagem de programação em português no terminal rodando <code className="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded font-mono">pip install portulong</code>? Nós criamos toda a estrutura necessária para você subir isso com facilidade para o PyPI!
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Directory Visualization Panel */}
+              <div className="lg:col-span-5 bg-slate-950 border border-slate-850 rounded-xl p-5 shadow-inner">
+                <h3 className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                  <Terminal size={14} className="text-amber-500" />
+                  Árvore de Arquivos do Pacote PIP
+                </h3>
+
+                <div className="font-mono text-xs text-slate-400 flex flex-col gap-2 font-medium">
+                  <div className="flex items-center gap-2">📦 portulong_dist/</div>
+                  <div className="flex items-center gap-2 pl-4 text-emerald-400">📄 setup.py <span className="text-slate-600 text-[10px] font-mono font-normal ml-1"># Instalador PyPI / Dependências</span></div>
+                  <div className="flex items-center gap-2 pl-4 text-emerald-400">📄 pyproject.toml <span className="text-slate-600 text-[10px] font-mono font-normal ml-1"># Configuração das ferramentas</span></div>
+                  <div className="flex items-center gap-2 pl-4 text-emerald-400">📄 README.md <span className="text-slate-600 text-[10px] font-mono font-normal ml-1"># Documentação em português</span></div>
+                  <div className="flex items-center gap-2 pl-4">📂 portulong/</div>
+                  <div className="flex items-center gap-2 pl-8 text-amber-300">📄 __init__.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Inicialização do módulo</span></div>
+                  <div className="flex items-center gap-2 pl-8 text-amber-300">📄 transpiler.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Core de tradução Python</span></div>
+                  <div className="flex items-center gap-2 pl-8 text-amber-300">📄 cli.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Executor terminal (portulong script.ptg)</span></div>
+                  <div className="flex items-center gap-2 pl-8 text-amber-300">📄 discordia.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Wrapper Discord.py em PT</span></div>
+                  <div className="flex items-center gap-2 pl-4 text-slate-400">📄 meu_bot.ptg <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Seu código ativo no editor</span></div>
+                </div>
+
+                <div className="mt-6 border-t border-slate-850 pt-5 flex flex-col gap-3">
+                  <button
+                    id="export-zip-dist-btn"
+                    onClick={handleDownloadDistribution}
+                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black font-mono tracking-wide rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    <Download size={14} />
+                    BAIXAR PACOTE DE DISTRIBUIÇÃO (.ZIP)
+                  </button>
+                  <p className="text-[10px] text-slate-500 leading-normal text-center max-w-[280px] mx-auto">
+                    Compactamos todos os arquivos acima estruturados contendo o seu código do robô.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step by step installation guide */}
+              <div className="lg:col-span-7 flex flex-col gap-6">
+                <div>
+                  <h3 className="text-sm font-black font-mono tracking-tight text-white flex items-center gap-1.5">
+                    <Shield size={16} className="text-emerald-400" />
+                    Como publicar e instalar sua linguagem?
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Siga o passo a passo simplificado para registrar a Portulong na comunidade brasileira.
+                  </p>
+                </div>
+
+                {/* Steps Accordion */}
+                <div className="flex flex-col gap-4">
+                  {/* Step 1 */}
+                  <div className="bg-slate-950 border border-slate-850 rounded-xl p-4">
+                    <h4 className="text-xs font-black font-mono text-emerald-400 uppercase tracking-widest gap-2 flex items-center">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-[10px]">1</span>
+                      Extrair e Configurar sua conta no PyPI
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                      Crie uma conta gratuita em <a href="https://pypi.org" target="_blank" rel="noreferrer" className="text-indigo-400 underline font-medium">pypi.org</a> e gere uma chave de Token API em suas configurações de conta. Extraia os arquivos do ZIP que você baixou na sua máquina de desenvolvimento.
+                    </p>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="bg-slate-950 border border-slate-850 rounded-xl p-4">
+                    <h4 className="text-xs font-black font-mono text-emerald-400 uppercase tracking-widest gap-2 flex items-center">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-[10px]">2</span>
+                      Compilar o módulo Python
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                      No terminal do seu computador, navegue para a pasta extraída contendo o <code className="text-emerald-400 bg-slate-900 px-1 py-0.5 rounded font-mono">setup.py</code> e use o built-in do python para compilar os arquivos de empacotamento:
+                    </p>
+                    <pre className="bg-slate-900 border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-amber-300 mt-2.5 overflow-x-auto">
+                      pip install build wheel<br />
+                      python -m build
+                    </pre>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="bg-slate-950 border border-slate-850 rounded-xl p-4">
+                    <h4 className="text-xs font-black font-mono text-emerald-400 uppercase tracking-widest gap-2 flex items-center">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-[10px]">3</span>
+                      Fazer o Upload com o Twine
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                      Para subir sua linguagem para o banco mundial de pacotes públicos do PIP, use o assistente Twine:
+                    </p>
+                    <pre className="bg-slate-900 border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-amber-300 mt-2.5 overflow-x-auto">
+                      pip install twine<br />
+                      twine upload dist/*
+                    </pre>
+                    <p className="text-[10px] text-slate-500 mt-2">
+                      * O terminal solicitará seu nome de usuário (insira <code className="text-indigo-400 font-mono">__token__</code>) e a chave API criada no passo 1.
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* 📝 Tiny branding footer */}
+      <footer className="border-t border-slate-900 bg-slate-950 px-6 py-6 text-slate-500 text-xs font-mono font-medium text-center tracking-tight mt-12">
+        Portulong Studio © 2026. Criado sob medida em colaboração com Silvio. Desenvolvido para transformar o aprendizado de robôs do Discord em algo 100% nativo.
+      </footer>
+    </div>
+  );
+}

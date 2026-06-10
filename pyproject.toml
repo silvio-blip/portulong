@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "portulong"
+version = "1.0.0"
+description = "Uma linguagem de programação em português para criar bots do Discord baseada em Python"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Apache-2.0"}
+authors = [
+    { name = "Silvio", email = "silviok5000@gmail.com" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Interpreters",
+]
+dependencies = [
+    "discord.py>=2.3.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/silviok5000/portulong"
+
+[project.scripts]
+portulong = "portulong.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/portulong"]

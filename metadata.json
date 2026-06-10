@@ -1,0 +1,6 @@
+{
+  "name": "Portulong Studio",
+  "description": "Ambiente oficial de desenvolvimento e aprendizado para Portulong, a linguagem em português para criar bots do Discord baseada em Python.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
