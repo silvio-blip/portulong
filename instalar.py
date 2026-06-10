@@ -11,6 +11,10 @@ package_json = {
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
   "version": "1.0.0",
   "publisher": "silvio-blip",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/silvio-blip/portulong"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -154,7 +158,7 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "keyword.control.portulong",
-          "match": "\\\b(se|senao|enquanto|para|retornar|esperar|assincrono)\\\b"
+          "match": "\\\\b(se|senao|enquanto|para|retornar|esperar|assincrono)\\\\b"
         }
       ]
     },
@@ -162,7 +166,7 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "constant.language.portulong",
-          "match": "\\\b(verdadeiro|falso|nulo)\\\b"
+          "match": "\\\\b(verdadeiro|falso|nulo)\\\\b"
         }
       ]
     },
@@ -170,7 +174,7 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.function.builtin.portulong",
-          "match": "\\\b(presente|importar|de)\\\b"
+          "match": "\\\\b(presente|importar|de)\\\\b"
         }
       ]
     }
@@ -232,14 +236,33 @@ def main():
     print("   INSTALADOR AUTOMÁTICO DO PORTULONG E EXTENSÃO VS CODE")
     print("="*60)
 
-    # 1. Instalar o Portulong do PyPI
-    info("1/4. Instalando linguagem de programação Portulong via pip...")
-    try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "portulong.ptg"], check=True)
-        success("Portulong instalado com sucesso via pip!")
-    except Exception as e:
-        warn(f"Não foi possível instalar portulong.ptg automaticamente: {e}")
-        info("Certifique-se de rodar posteriormente: pip install portulong.ptg")
+    # 1. Instalar o Portulong (Tenta local primeiro, depois PyPI)
+    info("1/4. Instalando linguagem de programação Portulong...")
+    instalado_local = False
+    
+    # Se o script for corrido dentro do repositório onde existe o pyproject.toml
+    if os.path.exists("pyproject.toml"):
+        info("Encontrado 'pyproject.toml' localmente. Tentando instalar em modo editável/direto...")
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", "-e", "."], check=True)
+            success("Excelente! Portulong instalado em modo de desenvolvimento local com absoluto sucesso!")
+            instalado_local = True
+        except Exception as e_local:
+            try:
+                subprocess.run([sys.executable, "-m", "pip", "install", "."], check=True)
+                success("Excelente! Portulong instalado localmente com absoluto sucesso!")
+                instalado_local = True
+            except Exception as e_local_padrao:
+                warn(f"Tentativa de instalação local falhou: {e_local_padrao}. Tentando via indexador remoto...")
+                
+    if not instalado_local:
+        info("Instalando pacote 'portulong.ptg' oficial a partir do PyPI...")
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", "portulong.ptg"], check=True)
+            success("Portulong instalado com sucesso via pip!")
+        except Exception as e:
+            warn(f"Não foi possível instalar portulong.ptg automaticamente do PyPI: {e}")
+            info("Certifique-se de rodar posteriormente no seu ambiente: pip install portulong.ptg")
 
     # 2. Criar a estrutura de ficheiros da Extensão VS Code
     ext_dir = "portulong-vscode"
@@ -272,7 +295,7 @@ def main():
             # Roda npx @vscode/vsce package no diretório da extensão
             info("Rodando vsce via npx temporário para gerar o instalador...")
             # Em sistemas Windows pode precisar do shell=True
-            subprocess.run([npx_path, "-y", "@vscode/vsce", "package"], cwd=ext_dir, check=True, shell=os.name == 'nt')
+            subprocess.run([npx_path, "-y", "@vscode/vsce", "package", "--allow-missing-repository"], cwd=ext_dir, check=True, shell=os.name == 'nt')
             success("Extensão compilada em ficheiro .vsix com sucesso!")
         except Exception as e:
             warn(f"Durante a compilação do vsce: {e}")

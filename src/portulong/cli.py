@@ -87,37 +87,34 @@ senao:
     print("\n💡 Pronto! Digite o seguinte comando para testar:")
     print("   portulong executar main.ptg")
 
+def exibir_ajuda():
+    print("🐉 CLI oficial da linguagem Portulong para bots do Discord em português.\n")
+    print("Uso:")
+    print("   portulong iniciar              - Inicializa um novo projeto com o template de bot")
+    print("   portulong executar <arq.ptg>   - Transpila e executa o arquivo")
+    print("   portulong <arq.ptg>            - Executa o arquivo diretamente")
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="🐉 CLI oficial da linguagem Portulong para bots do Discord em português.",
-        formatter_class=argparse.RawTextHelpFormatter
-    )
+    if len(sys.argv) < 2:
+        exibir_ajuda()
+        sys.exit(0)
+        
+    cmd = sys.argv[1]
     
-    subparsers = parser.add_subparsers(dest="comando", help="Comando a ser executado")
-    
-    # Subcomando: executar
-    parser_executar = subparsers.add_parser("executar", help="Transpila e executa um arquivo .ptg")
-    parser_executar.add_argument("arquivo", type=str, nargs="?", help="Caminho do arquivo .ptg para executar")
-    
-    # Subcomando: iniciar
-    subparsers.add_parser("iniciar", help="Inicializa um novo projeto com o template de bot")
-    
-    # Pasta raiz como script direto
-    parser.add_argument("arquivo_direto", type=str, nargs="?", help="Executa o arquivo .ptg diretamente")
-    
-    args = parser.parse_args()
-    
-    if args.comando == "iniciar" or args.arquivo_direto == "iniciar":
+    if cmd in ("--ajuda", "-h", "help", "--help"):
+        exibir_ajuda()
+        sys.exit(0)
+        
+    if cmd == "iniciar":
         iniciar_projeto()
-    elif args.comando == "executar":
-        if not args.arquivo:
+    elif cmd == "executar":
+        if len(sys.argv) < 3:
             print("❌ Erro: Forneça o arquivo .ptg para executar. Ex: portulong executar main.ptg")
             sys.exit(1)
-        executar_arquivo(args.arquivo)
-    elif args.arquivo_direto:
-        executar_arquivo(args.arquivo_direto)
+        executar_arquivo(sys.argv[2])
     else:
-        parser.print_help()
+        # Se for qualquer outro argumento, assume-se que é o ficheiro a executar diretamente
+        executar_arquivo(cmd)
 
 if __name__ == "__main__":
     main()
