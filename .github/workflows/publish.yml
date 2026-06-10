@@ -1,11 +1,12 @@
 name: Publicar no PyPI 🚀
 
 on:
+  workflow_dispatch: # Este é o botão mágico para publicares manualmente no GitHub!
   release:
     types: [published]
   push:
     tags:
-      - 'v*' # Disparará quando você enviar uma tag como v1.0.0, v1.1.0, etc.
+      - 'v*' # Disparará quando enviares uma tag como v1.0.0, v1.1.0, etc.
 
 jobs:
   build-n-publish:
@@ -39,4 +40,3 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         packages-dir: dist/
-
