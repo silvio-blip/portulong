@@ -1,0 +1,18 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/api/instalar",
+      "destination": "/instalar.py"
+    },
+    {
+      "source": "/api/instalar.py",
+      "destination": "/instalar.py"
+    },
+    {
+      "source": "/portulong.png",
+      "destination": "/portulong.png"
+    }
+  ]
+}
