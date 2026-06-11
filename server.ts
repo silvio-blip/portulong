@@ -39,6 +39,139 @@ function getAIClient(): GoogleGenAI {
   return aiClient;
 }
 
+// Helper to generate content with retries and fallback models
+async function generateContentWithRetry(params: {
+  contents: any;
+  config?: any;
+  primaryModel?: string;
+}) {
+  const ai = getAIClient();
+  const modelsToTry = [
+    params.primaryModel || "gemini-3.5-flash",
+    "gemini-3.1-flash-lite", // Fallback to lite model first for ultra-high availability
+    "gemini-flash-latest",
+  ];
+
+  let lastError: any = null;
+  
+  for (const model of modelsToTry) {
+    let retries = 2; // up to 3 tries total per model for other errors
+    let delay = 1000;
+    
+    while (retries >= 0) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: params.contents,
+          config: params.config,
+        });
+        return response;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[AI WARN] Failed with model ${model}, retries left: ${retries}. Error:`, err.message || err);
+        
+        const errorMessage = String(err.message || err).toLowerCase();
+        const isTransient = err.status === 503 || err.status === 429 || err.status === 500 || 
+                            err.code === 503 || err.code === 429 || err.code === 500 ||
+                            errorMessage.includes("503") || errorMessage.includes("unavailable") ||
+                            errorMessage.includes("demand") || errorMessage.includes("rate limit") ||
+                            errorMessage.includes("quota") || errorMessage.includes("overloaded");
+        
+        if (!isTransient) {
+          // If it's a configuration, validation or bad request error, don't try other models
+          break;
+        }
+
+        // Critical Optimization: If the model is experiencing high demand, overloaded, or is unavailable,
+        // do NOT perform standard retries on this specific model. Immediately failover to the next model.
+        const isHighDemandOrUnavailable = errorMessage.includes("503") || 
+                                         errorMessage.includes("unavailable") || 
+                                         errorMessage.includes("demand") || 
+                                         errorMessage.includes("overloaded");
+        if (isHighDemandOrUnavailable) {
+          console.warn(`[AI WARN] Model ${model} is unavailable or high demand. Skipping retries and trying fallback model immediately.`);
+          retries = -1; // Exits the while loop for this model
+          break;
+        }
+        
+        if (retries > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2; // exponential backoff
+        }
+        retries--;
+      }
+    }
+  }
+  
+  throw lastError || new Error("Failed to generate content after trying multiple models and retries.");
+}
+
+// Helper to send chat message with retries and fallback models
+async function sendChatMessageWithRetry(messagesList: any[], systemInstruction: string) {
+  const ai = getAIClient();
+  const modelsToTry = [
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite", // Fallback to lite model first for ultra-high availability
+    "gemini-flash-latest",
+  ];
+  const lastMessage = messagesList[messagesList.length - 1];
+
+  let lastError: any = null;
+
+  for (const model of modelsToTry) {
+    let retries = 2;
+    let delay = 1000;
+
+    while (retries >= 0) {
+      try {
+        const chatSession = ai.chats.create({
+          model,
+          config: {
+            systemInstruction,
+          }
+        });
+        const response = await chatSession.sendMessage({
+          message: lastMessage.content,
+        });
+        return response;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[AI CHAT WARN] Failed with model ${model}, retries left: ${retries}. Error:`, err.message || err);
+
+        const errorMessage = String(err.message || err).toLowerCase();
+        const isTransient = err.status === 503 || err.status === 429 || err.status === 500 || 
+                            err.code === 503 || err.code === 429 || err.code === 500 ||
+                            errorMessage.includes("503") || errorMessage.includes("unavailable") ||
+                            errorMessage.includes("demand") || errorMessage.includes("rate limit") ||
+                            errorMessage.includes("quota") || errorMessage.includes("overloaded");
+
+        if (!isTransient) {
+          break;
+        }
+
+        // Critical Optimization: Skip retries on high demand/unavailability and failover immediately
+        const isHighDemandOrUnavailable = errorMessage.includes("503") || 
+                                         errorMessage.includes("unavailable") || 
+                                         errorMessage.includes("demand") || 
+                                         errorMessage.includes("overloaded");
+        if (isHighDemandOrUnavailable) {
+          console.warn(`[AI CHAT WARN] Model ${model} is unavailable or high demand. Skipping retries and trying fallback model immediately.`);
+          retries = -1; // Exits the while loop for this model
+          break;
+        }
+
+        if (retries > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+        }
+        retries--;
+      }
+    }
+  }
+
+  throw lastError || new Error("Failed to send chat message after trying multiple models and retries.");
+}
+
 // AI API endpoints
 app.get("/api/instalar", (req, res) => {
   const filePath = path.join(process.cwd(), "instalar.py");
@@ -211,8 +344,7 @@ No Discord:
 
 Você DEVE produzir APENAS o código Portulong equivalente, limpo, sem explicações adicionais, e sem blocos extras de diálogo. Apenas o código.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+    const response = await generateContentWithRetry({
       contents: `Traduza o seguinte código Python para Portulong:\n\n${pythonCode}`,
       config: {
         systemInstruction: systemPrompt,
@@ -251,8 +383,7 @@ Destaque onde estão as melhorias ou correções necessárias utilizando a sinta
       ? `Código do usuário:\n${code}\n\nPergunta:\n${question}`
       : `Por favor, analise didaticamente este código em Portulong, explique o que ele faz de forma simples e mostre como rodá-lo:\n\n${code}`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+    const response = await generateContentWithRetry({
       contents: instructions,
       config: {
         systemInstruction: systemPrompt,
@@ -274,22 +405,12 @@ app.post("/api/ai/chat", async (req, res) => {
       return res.status(400).json({ error: "Faltando histórico de mensagens legível." });
     }
 
-    const ai = getAIClient();
-    const chatSession = ai.chats.create({
-      model: "gemini-3.5-flash",
-      config: {
-        systemInstruction: `Você é um assistente de IA especialista e amigável da linguagem "Portulong" (PTG) — uma linguagem em português criada para facilitar o desenvolvimento de bots do discord em Python.
+    const systemInstruction = `Você é um assistente de IA especialista e amigável da linguagem "Portulong" (PTG) — uma linguagem em português criada para facilitar o desenvolvimento de bots do discord em Python.
 Ajude o usuário a criar comandos úteis, integrar APIs do Discord de forma simples e aprender os conceitos básicos.
 Sempre forneça exemplos em código Portulong (.ptg).
-Seja acolhedor, focado em ajudar iniciantes e responda em português brasileiro bem estruturado.`,
-      },
-    });
+Seja acolhedor, focado em ajudar iniciantes e responda em português brasileiro bem estruturado.`;
 
-    // We can feed the messages into the chat or get the last one
-    const lastMessage = messages[messages.length - 1];
-    const response = await chatSession.sendMessage({
-      message: lastMessage.content,
-    });
+    const response = await sendChatMessageWithRetry(messages, systemInstruction);
 
     return res.json({ reply: response.text });
   } catch (error: any) {
@@ -323,8 +444,7 @@ Retorne EXCLUSIVAMENTE uma estrutura JSON válida com a seguinte forma (não use
 
     const contents = `Código em Portulong:\n${code}\n\nMembro diz: "${inputMessage}" (tag: @${userTag || "Membro"})`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+    const response = await generateContentWithRetry({
       contents: contents,
       config: {
         systemInstruction: systemPrompt,

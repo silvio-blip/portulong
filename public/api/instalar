@@ -108,7 +108,10 @@ language_configuration = {
     ["(", ")"],
     ["\"", "\""],
     ["'", "'"]
-  tmlanguage_json = {
+  ]
+}
+
+tmlanguage_json = {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "Portulong",
   "scopeName": "source.portulong",
