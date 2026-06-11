@@ -7,6 +7,7 @@ import discord
 from discord.ext import commands
 import asyncio
 import functools
+import inspect
 from datetime import timedelta
 
 class ObjetoProxy:
@@ -18,7 +19,8 @@ class ObjetoProxy:
         super().__setattr__('_obj', obj)
 
     def __getattr__(self, name):
-        tradutor_atributos = {
+        # UNIFICADO: O proxy precisa de traduzir TUDO (atributos e métodos) antes de fazer o getattr
+        tradutor_geral = {
             'conteudo': 'content',
             'autor': 'author',
             'canal': 'channel',
@@ -31,25 +33,21 @@ class ObjetoProxy:
             'permissoes': 'permissions',
             'expulsar_membros': 'kick_members',
             'gerenciar_mensagens': 'manage_messages',
+            'enviar': 'send',
+            'responder': 'reply',
+            'deletar': 'delete',
+            'adicionar_reacao': 'add_reaction',
+            'remover_reacao': 'remove_reaction',
+            'expulsar': 'kick',
+            'banir': 'ban',
+            'limpar': 'purge',
+            'purgar': 'purge',
         }
-        real_name = tradutor_atributos.get(name, name)
+        
+        real_name = tradutor_geral.get(name, name)
         original_attr = getattr(self._obj, real_name)
         
         if callable(original_attr):
-            tradutor_metodos = {
-                'enviar': 'send',
-                'responder': 'reply',
-                'deletar': 'delete',
-                'adicionar_reacao': 'add_reaction',
-                'remover_reacao': 'remove_reaction',
-                'expulsar': 'kick',
-                'banir': 'ban',
-                'limpar': 'purge',
-                'purgar': 'purge',
-            }
-            real_method_name = tradutor_metodos.get(name, name)
-            original_method = getattr(self._obj, real_method_name)
-            
             @functools.wraps(original_attr)
             def metodo_empacotado(*args, **kwargs):
                 if 'nome' in kwargs:
@@ -66,7 +64,7 @@ class ObjetoProxy:
                 args_desempacotados = [unwrap_object(arg) for arg in args]
                 kwargs_desempacotados = {k: unwrap_object(v) for k, v in kwargs.items()}
                 
-                resultado = original_method(*args_desempacotados, **kwargs_desempacotados)
+                resultado = original_attr(*args_desempacotados, **kwargs_desempacotados)
                 
                 if asyncio.iscoroutine(resultado):
                     async def wrapper_assincrono():
@@ -107,7 +105,7 @@ class Intencoes:
         return cls(discord.Intents.all())
 
     @classmethod
-    def padrao(cls):
+    def default(cls):
         return cls(discord.Intents.default())
 
     @property
@@ -483,14 +481,21 @@ class Contexto:
         return wrap_object(self._obj.channel)
 
     async def enviar(self, *args, **kwargs):
+        # Permite usar tanto 'embutido=' como 'embed=' no Portulong
         if 'embutido' in kwargs:
             kwargs['embed'] = unwrap_object(kwargs.pop('embutido'))
+        elif 'embed' in kwargs:
+            kwargs['embed'] = unwrap_object(kwargs['embed'])
+            
         res = await self._obj.send(*args, **kwargs)
         return wrap_object(res)
 
     async def responder(self, *args, **kwargs):
         if 'embutido' in kwargs:
             kwargs['embed'] = unwrap_object(kwargs.pop('embutido'))
+        elif 'embed' in kwargs:
+            kwargs['embed'] = unwrap_object(kwargs['embed'])
+            
         res = await self._obj.reply(*args, **kwargs)
         return wrap_object(res)
 
@@ -558,12 +563,18 @@ class Robo(commands.Bot):
             kwargs['help'] = kwargs.pop('ajuda')
             
         def decorador(funcao):
+            # Guardar a assinatura original para o Discord saber os argumentos (ex: a: inteiro)
+            assinatura_original = inspect.signature(funcao)
+            
             @functools.wraps(funcao)
             async def wrapper(ctx, *args_f, **kwargs_f):
                 ctx_portugues = wrap_object(ctx)
                 args_portugues = [wrap_object(a) for a in args_f]
                 kwargs_portugues = {k: wrap_object(v) for k, v in kwargs_f.items()}
                 return await funcao(ctx_portugues, *args_portugues, **kwargs_portugues)
+                
+            # Devolver a assinatura escondida para a biblioteca original do Discord ler
+            wrapper.__signature__ = assinatura_original
             return super(Robo, self).command(*args, **kwargs)(wrapper)
         return decorador
 
@@ -589,3 +600,10 @@ class Robo(commands.Bot):
     def executar(self, token, *args, **kwargs):
         """Inicializa e executa o robô usando o token de acesso fornecido."""
         self.run(token, *args, **kwargs)
+
+# ==========================================
+# ALIASES DE COMPATIBILIDADE (ATALHOS)
+# ==========================================
+Embed = Embutido
+Color = Cor
+Intents = Intencoes
