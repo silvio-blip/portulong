@@ -20,10 +20,10 @@ def main():
     # 1. Desinstalar pacotes do pip
     info("1/3. Desinstalando linguagens e bibliotecas Python instaladas...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "portugues"], check=False)
-        success("Pacote 'portugues' desinstalado do pip com sucesso!")
+        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "portulong.ptg"], check=False)
+        success("Pacote 'portulong.ptg' desinstalado do pip com sucesso!")
     except Exception as e:
-        warn(f"Erro ao desinstalar 'portugues' pelo pip: {e}")
+        warn(f"Erro ao desinstalar 'portulong.ptg' pelo pip: {e}")
 
     # 2. Desinstalar Extensão do VS Code
     info("2/3. Removendo a extensão diretamente do VS Code...")

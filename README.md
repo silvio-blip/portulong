@@ -28,10 +28,10 @@ A instalação do Portulong é extremamente simples e pode ser feita diretamente
 
 No terminal do seu computador (Windows, Mac ou Linux), execute:
 ```bash
-pip install portugues
+pip install portulong.ptg
 ```
 
-*(Nota: Dependendo das configurações do seu ambiente de desenvolvimento local, você pode usar `pip3 install portugues` ou para atualizar rode `pip install --upgrade portugues`).*
+*(Nota: Dependendo das configurações do seu ambiente de desenvolvimento local, você pode usar `pip3 install portulong.ptg` ou para atualizar rode `pip install --upgrade portulong.ptg`).*
 
 ### Como executar um ficheiro? 🚀
 Depois de instalado globalmente no sistema, você pode executar os seus ficheiros com a extensão `.ptg` através do comando `executar` de forma direta e rápida:

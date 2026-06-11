@@ -1177,8 +1177,8 @@ async def greet(ctx):
     zip.file("setup.py", `from setuptools import setup, find_packages
 
 setup(
-    name="portugues",
-    version="1.0.0",
+    name="portulong.ptg",
+    version="1.0.1",
     author="Silvio & Portulong Community",
     author_email="silviok5000@gmail.com",
     description="Uma linguagem de programacao em portugues para criar facil bots do Discord baseada em Python.",
@@ -1207,8 +1207,8 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "portugues"
-version = "1.0.0"
+name = "portulong.ptg"
+version = "1.0.1"
 description = "Linguagem de programacao em portugues baseada em Python para bots do Discord."
 readme = "README.md"
 authors = [{ name = "Silvio", email = "silviok5000@gmail.com" }]
@@ -1230,19 +1230,19 @@ Baseada diretamente no interpretador do **Python** e construída sobre a bibliot
 ### 🔹 1. Instalar o Compilador
 Para instalar o compilador e ambiente de execução oficial do Portulong no seu computador executando Python 3.8+:
 \`\`\`bash
-pip install portugues
+pip install portulong.ptg
 \`\`\`
 
 ### 🔹 2. Atualizar o Pacote (Upgrade)
 Caso você já tenha a linguagem instalada e queira atualizar para a versão mais recente com novos recursos:
 \`\`\`bash
-pip install --upgrade portugues
+pip install --upgrade portulong.ptg
 \`\`\`
 
 ### 🔹 3. Desinstalar a Linguagem
 Se desejar remover completamente o pacote do compilador do seu sistema:
 \`\`\`bash
-pip uninstall -y portugues
+pip uninstall -y portulong.ptg
 \`\`\`
 
 ## 💻 Como usar
@@ -1996,13 +1996,13 @@ def main():
                 warn(f"Tentativa de instalação local falhou: {e_local_padrao}. Tentando via indexador remoto...")
                 
     if not instalado_local:
-        info("Instalando pacote 'portugues' oficial a partir do PyPI...")
+        info("Instalando pacote 'portulong.ptg' oficial a partir do PyPI...")
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", "portugues"], check=True)
-            success("Portulong instalado com sucesso via pip (pacote 'portugues')!")
+            subprocess.run([sys.executable, "-m", "pip", "install", "portulong.ptg"], check=True)
+            success("Portulong instalado com sucesso via pip (pacote 'portulong.ptg')!")
         except Exception as e:
-            warn(f"Não foi possível instalar o pacote 'portugues' automaticamente do PyPI: {e}")
-            info("Certifique-se de rodar posteriormente no seu ambiente: pip install portugues")
+            warn(f"Não foi possível instalar o pacote 'portulong.ptg' automaticamente do PyPI: {e}")
+            info("Certifique-se de rodar posteriormente no seu ambiente: pip install portulong.ptg")
 
     # 2. Criar a estrutura de ficheiros da Extensão VS Code
     ext_dir = "portulong-vscode"
@@ -2197,10 +2197,10 @@ def main():
     # 1. Desinstalar pacotes do pip
     info("1/3. Desinstalando linguagens e bibliotecas Python instaladas...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "portugues"], check=False)
-        success("Pacote 'portugues' desinstalado do pip com sucesso!")
+        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "portulong.ptg"], check=False)
+        success("Pacote 'portulong.ptg' desinstalado do pip com sucesso!")
     except Exception as e:
-        warn(f"Erro ao desinstalar 'portugues' pelo pip: {e}")
+        warn(f"Erro ao desinstalar 'portulong.ptg' pelo pip: {e}")
 
     # 2. Desinstalar Extensão do VS Code
     info("2/3. Removendo a extensão diretamente do VS Code...")
@@ -3168,10 +3168,10 @@ module.exports = {
             <div className="border-b border-slate-800 pb-5">
               <h2 className="text-lg font-black font-mono tracking-tight text-white flex items-center gap-2">
                 <Cpu size={18} className="text-emerald-400" />
-                Empacotador Oficial para PyPI (pip install portugues)
+                Empacotador Oficial para PyPI (pip install portulong.ptg)
               </h2>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Você quer que qualquer pessoa no mundo hospede e use sua nova linguagem de programação em português no terminal rodando <code className="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded font-mono">pip install portugues</code>? Nós criamos toda a estrutura necessária para você subir isso com facilidade para o PyPI!
+                Você quer que qualquer pessoa no mundo hospede e use sua nova linguagem de programação em português no terminal rodando <code className="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded font-mono">pip install portulong.ptg</code>? Nós criamos toda a estrutura necessária para você subir isso com facilidade para o PyPI!
               </p>
             </div>
 
@@ -3185,7 +3185,7 @@ module.exports = {
                   ⚡ Auto-Instalador Inteligente de 1 Comando
                 </h3>
                 <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-3xl">
-                  Quer configurar a linguagem <code className="text-emerald-400 bg-slate-950 px-1 py-0.2 rounded font-mono">portugues</code> instalada do PyPI e ao mesmo tempo habilitar a <strong>Extensão Oficial do VS Code</strong> (com Destaque de Cores e o botão <strong>Play/Run</strong>) no seu terminal e editor de forma instantânea?
+                  Quer configurar a linguagem <code className="text-emerald-400 bg-slate-950 px-1 py-0.2 rounded font-mono">portulong.ptg</code> instalada do PyPI e ao mesmo tempo habilitar a <strong>Extensão Oficial do VS Code</strong> (com Destaque de Cores e o botão <strong>Play/Run</strong>) no seu terminal e editor de forma instantânea?
                 </p>
                 <div className="flex flex-wrap items-center gap-6 mt-3">
                   <div className="flex items-center gap-2">
@@ -3251,7 +3251,7 @@ module.exports = {
                     </p>
                   </div>
                   <div className="bg-slate-950 border border-slate-800 rounded p-1.5 font-mono text-[11px] text-emerald-400 select-all flex items-center justify-between shadow-inner">
-                    <span>pip install portugues</span>
+                    <span>pip install portulong.ptg</span>
                   </div>
                 </div>
 
@@ -3264,7 +3264,7 @@ module.exports = {
                     </p>
                   </div>
                   <div className="bg-slate-950 border border-slate-800 rounded p-1.5 font-mono text-[11px] text-amber-300 select-all flex items-center justify-between shadow-inner">
-                    <span>pip install --upgrade portugues</span>
+                    <span>pip install --upgrade portulong.ptg</span>
                   </div>
                 </div>
 
@@ -3277,7 +3277,7 @@ module.exports = {
                     </p>
                   </div>
                   <div className="bg-slate-950 border border-slate-800 rounded p-1.5 font-mono text-[11px] text-rose-400 select-all flex items-center justify-between shadow-inner">
-                    <span>pip uninstall -y portugues</span>
+                    <span>pip uninstall -y portulong.ptg</span>
                   </div>
                 </div>
 
@@ -3364,8 +3364,8 @@ module.exports = {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 bg-slate-900/60 p-3.5 border border-slate-800 rounded-lg text-xs leading-normal font-mono text-slate-400">
                       <div>
                         <span className="text-emerald-400 font-bold block mb-1">🔹 PyPI Project Name:</span>
-                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">portugues</code>
-                        <span className="text-[10px] text-slate-500 block mt-1">(Nome do pacote no PyPI. Que é o pacote que você está usando!)</span>
+                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">portulong.ptg</code>
+                        <span className="text-[10px] text-slate-500 block mt-1">(O nome exato do seu pacote registrado no PyPI)</span>
                       </div>
                       <div>
                         <span className="text-emerald-400 font-bold block mb-1">🔹 Owner (Dono):</span>
@@ -3374,7 +3374,7 @@ module.exports = {
                       </div>
                       <div className="mt-2">
                         <span className="text-emerald-400 font-bold block mb-1">🔹 Repository name:</span>
-                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">portugues</code>
+                        <code className="text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded">portulong</code>
                         <span className="text-[10px] text-slate-500 block mt-1">(O nome exato do seu repositório no seu GitHub)</span>
                       </div>
                       <div className="mt-2">

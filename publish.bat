@@ -40,7 +40,7 @@ if /i "%confirmar%"=="S" (
     echo 👉 Instrucao: Use "__token__" como nome de usuario e seu Token API do PyPI ^(incluindo o prefixo pypi-^) como senha.
     echo.
     python -m twine upload dist/*
-    echo 🎉 Publicado com sucesso! Qualquer pessoa agora pode instalar rodando 'pip install portulong'.
+    echo 🎉 Publicado com sucesso! Qualquer pessoa agora pode instalar rodando 'pip install portulong.ptg'.
 ) else (
     echo ⚠️ Upload cancelado. O pacote compilado esta na pasta 'dist\' pronto para envio manual.
 )

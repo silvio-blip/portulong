@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "portugues"
+name = "portulong.ptg"
 version = "1.0.1"
 description = "Uma linguagem de programação em português para criar bots do Discord baseada em Python"
 readme = "README.md"
