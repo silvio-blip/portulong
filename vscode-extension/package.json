@@ -46,6 +46,12 @@
         "path": "./syntaxes/portulong.tmLanguage.json"
       }
     ],
+    "snippets": [
+      {
+        "language": "portulong",
+        "path": "./snippets/portulong.json"
+      }
+    ],
     "commands": [
       {
         "command": "portulong.executar",

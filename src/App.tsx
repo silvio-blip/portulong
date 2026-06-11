@@ -283,6 +283,83 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
   return elements;
 }
 
+// Função de realce de sintaxe robusta para Python (.py)
+function highlightPython(rawCode: string): React.ReactNode[] {
+  const regex = /(\s+)|(#.*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')|(\b[a-zA-Z_0-9ñáéíóúçãõâêîôûüãõàèìòù_]+\b)|([()[\]{}!@#$%^&*+\-=|\\:;<>,.?/]+)/g;
+  
+  let match;
+  const elements: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let key = 0;
+
+  const KEYWORDS = new Set([
+    "if", "else", "elif", "for", "while", "def", "class", "import", "from", "as", 
+    "return", "try", "except", "finally", "with", "lambda", "pass", "break", "continue", 
+    "True", "False", "None", "and", "or", "not", "in", "is", "assert", "global", 
+    "nonlocal", "raise", "yield", "async", "await"
+  ]);
+
+  const BUILTINS = new Set([
+    "print", "input", "len", "int", "str", "float", "list", "dict", "set", "tuple", 
+    "range", "open", "type", "sum", "abs", "max", "min", "round", "map", "filter", 
+    "sorted", "super", "property", "zip", "enumerate", "object", "any", "all", "help", 
+    "id", "reversed", "format", "getattr", "setattr", "hasattr", "delattr", "repr", 
+    "next", "iter", "isinstance", "issubclass", "ZeroDivisionError", "ValueError", 
+    "TypeError", "NameError", "IndexError", "KeyError", "ImportError", "AttributeError", 
+    "Exception", "KeyboardInterrupt"
+  ]);
+
+  const DISCORD = new Set([
+    "Bot", "Intents", "Member", "Guild", "Message", "User", "TextChannel", "commands", "discord",
+    "command", "event", "ctx", "send", "reply", "delete", "kick", "ban", "purge", "author", 
+    "content", "guild", "channel", "message", "user", "id", "on_ready", "on_message"
+  ]);
+
+  while ((match = regex.exec(rawCode)) !== null) {
+    if (match.index > lastIndex) {
+      elements.push(<span key={key++}>{rawCode.slice(lastIndex, match.index)}</span>);
+    }
+
+    const [full, whitespace, comment, str, word, operator] = match;
+
+    if (whitespace) {
+      elements.push(<span key={key++}>{whitespace}</span>);
+    } else if (comment) {
+      elements.push(<span key={key++} className="text-slate-500 italic font-mono">{comment}</span>);
+    } else if (str) {
+      elements.push(<span key={key++} className="text-amber-300 font-mono">{str}</span>);
+    } else if (word) {
+      if (KEYWORDS.has(word)) {
+        elements.push(<span key={key++} className="text-pink-400 font-bold font-mono">{word}</span>);
+      } else if (BUILTINS.has(word)) {
+        elements.push(<span key={key++} className="text-cyan-400 font-medium font-mono">{word}</span>);
+      } else if (DISCORD.has(word)) {
+        elements.push(<span key={key++} className="text-indigo-400 font-semibold font-mono">{word}</span>);
+      } else if (/^\d+$/.test(word)) {
+        elements.push(<span key={key++} className="text-purple-400 font-mono">{word}</span>);
+      } else if (rawCode[match.index + word.length] === '(') {
+        elements.push(<span key={key++} className="text-emerald-400 font-mono font-medium">{word}</span>);
+      } else {
+        elements.push(<span key={key++} className="text-slate-350 font-mono">{word}</span>);
+      }
+    } else if (operator) {
+      if (operator.includes('@')) {
+        elements.push(<span key={key++} className="text-amber-500 font-bold font-mono">{operator}</span>);
+      } else {
+        elements.push(<span key={key++} className="text-emerald-500 font-mono">{operator}</span>);
+      }
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < rawCode.length) {
+    elements.push(<span key={key++}>{rawCode.slice(lastIndex)}</span>);
+  }
+
+  return elements;
+}
+
 // Catálogo de Abreviaturas e Snippets do Portulong (Auto-completar)
 const PORTULONG_SNIPPETS = [
   {
@@ -2217,8 +2294,8 @@ module.exports = {
                   </span>
                 </div>
                 <div className="p-4 bg-slate-950/80 max-h-[160px] overflow-y-auto">
-                  <pre className="text-amber-400/90 font-mono text-[11px] leading-5 whitespace-pre">
-                    {pythonEquivalent || "# Codifique acima para começar a compilação..."}
+                  <pre className="text-slate-200 font-mono text-[11px] leading-5 whitespace-pre scrollbar-thin">
+                    {highlightPython(pythonEquivalent || "# Codifique acima para começar a compilação...")}
                   </pre>
                 </div>
               </div>
@@ -2525,12 +2602,29 @@ module.exports = {
                   <Code size={13} />
                   Código em Python de Entrada (.py inglês)
                 </label>
-                <textarea
-                  value={inputPython}
-                  onChange={(e) => setInputPython(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs focus:outline-none focus:border-indigo-500 text-amber-300 min-h-[340px] resize-none"
-                  spellCheck="false"
-                />
+                <div className="relative flex-1 flex flex-col bg-slate-950 border border-slate-800 rounded-xl min-h-[340px] overflow-hidden">
+                  {/* Underlay Colorized Display */}
+                  <pre
+                    className="absolute inset-0 p-4 text-slate-350 font-mono text-xs leading-5 whitespace-pre pointer-events-none select-none overflow-hidden border-0 m-0 bg-transparent scrollbar-none"
+                  >
+                    {highlightPython(inputPython || "# Cole seu código Python aqui...")}
+                  </pre>
+                  {/* Overlay Interactive Textarea */}
+                  <textarea
+                    value={inputPython}
+                    onChange={(e) => setInputPython(e.target.value)}
+                    onScroll={(e) => {
+                      const pre = e.currentTarget.previousSibling as HTMLPreElement;
+                      if (pre) {
+                        pre.scrollTop = e.currentTarget.scrollTop;
+                        pre.scrollLeft = e.currentTarget.scrollLeft;
+                      }
+                    }}
+                    className="absolute inset-0 bg-transparent p-4 text-transparent caret-white font-mono text-xs leading-5 focus:outline-none resize-none w-full h-full whitespace-pre overflow-auto font-medium border-0 m-0 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent"
+                    placeholder="Cole seu código Python de entrada aqui..."
+                    spellCheck="false"
+                  />
+                </div>
               </div>
 
               {/* Portulong Right Target Column */}
@@ -2540,13 +2634,9 @@ module.exports = {
                   Código Processado em Portulong (.ptg português)
                 </label>
                 <div className="relative flex-1 flex flex-col bg-slate-950 border border-slate-800 rounded-xl min-h-[340px] overflow-hidden">
-                  <textarea
-                    readOnly
-                    value={translatedPortulong}
-                    className="flex-1 bg-transparent p-4 font-mono text-xs focus:outline-none text-emerald-400 cursor-text resize-none"
-                    placeholder="# Clique em Traduzir para processar as palavras-chave..."
-                    spellCheck="false"
-                  />
+                  <pre className="flex-1 p-4 font-mono text-xs leading-5 whitespace-pre overflow-auto select-text text-slate-300 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent pb-16">
+                    {highlightPortulong(translatedPortulong || "# Clique em Traduzir para processar as palavras-chave...")}
+                  </pre>
                   {translatedPortulong && (
                     <button
                       id="copy-translated-btn"

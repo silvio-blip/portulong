@@ -53,6 +53,12 @@ package_json = {
         "path": "./syntaxes/portulong.tmLanguage.json"
       }
     ],
+    "snippets": [
+      {
+        "language": "portulong",
+        "path": "./snippets/portulong.json"
+      }
+    ],
     "commands": [
       {
         "command": "portulong.executar",
@@ -117,7 +123,16 @@ tmlanguage_json = {
       "include": "#strings"
     },
     {
+      "include": "#definitions"
+    },
+    {
+      "include": "#decorators"
+    },
+    {
       "include": "#keywords"
+    },
+    {
+      "include": "#operators"
     },
     {
       "include": "#constants"
@@ -140,6 +155,28 @@ tmlanguage_json = {
     },
     "strings": {
       "patterns": [
+        {
+          "name": "string.quoted.triple.double.portulong",
+          "begin": "\"\"\"",
+          "end": "\"\"\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.portulong",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.triple.single.portulong",
+          "begin": "'''",
+          "end": "'''",
+          "patterns": [
+            {
+              "name": "constant.character.escape.portulong",
+              "match": "\\\\."
+            }
+          ]
+        },
         {
           "name": "string.quoted.double.portulong",
           "begin": "\"",
@@ -164,6 +201,34 @@ tmlanguage_json = {
         }
       ]
     },
+    "definitions": {
+      "patterns": [
+        {
+          "name": "meta.function.portulong",
+          "match": "\\\\b(funcao|definir)\\\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.portulong" },
+            "2": { "name": "entity.name.function.portulong" }
+          }
+        },
+        {
+          "name": "meta.class.portulong",
+          "match": "\\\\b(classe)\\\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.portulong" },
+            "2": { "name": "entity.name.type.class.portulong" }
+          }
+        }
+      ]
+    },
+    "decorators": {
+      "patterns": [
+        {
+          "name": "meta.function.decorator.portulong",
+          "match": "@[a-zA-Z_][a-zA-Z0-9_.]*"
+        }
+      ]
+    },
     "keywords": {
       "patterns": [
         {
@@ -176,8 +241,20 @@ tmlanguage_json = {
         }
       ]
     },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.portulong",
+          "match": "\\\\+|-|\\\\*|/|//|%|=|==|!=|<|>|<=|>=|\\\\+=|-="
+        }
+      ]
+    },
     "constants": {
       "patterns": [
+        {
+          "name": "constant.numeric.portulong",
+          "match": "\\\\b([0-9]+(\\\\.[0-9]+)?)\\\\b"
+        },
         {
           "name": "constant.language.portulong",
           "match": "\\\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\\\b"
@@ -208,6 +285,157 @@ tmlanguage_json = {
         }
       ]
     }
+  }
+}
+
+snippets_json = {
+  "Novo Robô Discord": {
+    "prefix": "robo_novo",
+    "body": [
+      "importar discordia como discordia",
+      "",
+      "robo = discordia.Robo(prefixo=\"!\")",
+      "",
+      "@robo.evento",
+      "definir assincrono ao_iniciar():",
+      "    escrever(f\"Robô {robo.utilizador} ligado com sucesso!\")",
+      "",
+      "@robo.comando(nome=\"ping\")",
+      "definir assincrono cmd_ping(contexto):",
+      "    aguardar contexto.enviar(\"Pong! 🏓\")",
+      "",
+      "robo.iniciar(\"${1:SEU_TOKEN_AQUI}\")"
+    ],
+    "description": "Cria a estrutura de um novo Bot de Discord com evento de início e comando de teste."
+  },
+  "Definir Função": {
+    "prefix": "funcao",
+    "body": [
+      "funcao ${1:nome_da_funcao}(${2:argumentos}):",
+      "    ${3:passar}"
+    ],
+    "description": "Definir uma função/procedimento padrão"
+  },
+  "Definir": {
+    "prefix": "definir",
+    "body": [
+      "definir ${1:nome_da_funcao}(${2:argumentos}):",
+      "    ${3:passar}"
+    ],
+    "description": "Definir uma função ou método alternativo"
+  },
+  "Definir Assíncrono": {
+    "prefix": "definir assincrono",
+    "body": [
+      "definir assincrono ${1:nome_da_funcao}(${2:argumentos}):",
+      "    ${3:passar}"
+    ],
+    "description": "Definir uma função assíncrona"
+  },
+  "Estrutura Condicional Se": {
+    "prefix": "se",
+    "body": [
+      "se ${1:condicao}:",
+      "    ${2:passar}"
+    ],
+    "description": "Estrutura de decisão condicional 'se'"
+  },
+  "Estrutura Condicional Senão Se": {
+    "prefix": "senaose",
+    "body": [
+      "senaose ${1:condicao}:",
+      "    ${2:passar}"
+    ],
+    "description": "Condicional encadeada 'senaose'"
+  },
+  "Estrutura Condicional Senão": {
+    "prefix": "senao",
+    "body": [
+      "senao:",
+      "    ${1:passar}"
+    ],
+    "description": "Condicional alternativa 'senao'"
+  },
+  "Laço Para": {
+    "prefix": "para",
+    "body": [
+      "para ${1:item} em ${2:iteravel}:",
+      "    ${3:passar}"
+    ],
+    "description": "Laço de repetição determinado 'para'"
+  },
+  "Laço Enquanto": {
+    "prefix": "enquanto",
+    "body": [
+      "enquanto ${1:condicao}:",
+      "    ${2:passar}"
+    ],
+    "description": "Laço de repetição indeterminado 'enquanto'"
+  },
+  "Comando do Robô": {
+    "prefix": "robo_comando",
+    "body": [
+      "@robo.comando(nome=\"${1:nome_do_comando}\")",
+      "definir assincrono cmd_${1:nome_do_comando}(contexto${2:, membro: discordia.Membro}):",
+      "    aguardar contexto.enviar(\"${3:Resposta do comando}\")"
+    ],
+    "description": "Cria um novo comando assíncrono para o Robô do Discord."
+  },
+  "Evento do Robô": {
+    "prefix": "robo_evento",
+    "body": [
+      "@robo.evento",
+      "definir assincrono ao_${1:evento}():",
+      "    ${2:passar}"
+    ],
+    "description": "Regista uma escuta de evento assíncrono para o Robô (ex: ao_mensagem, ao_iniciar)."
+  },
+  "Mostrar ou Escrever": {
+    "prefix": "escrever",
+    "body": [
+      "escrever(${1:dados})"
+    ],
+    "description": "Escreve informações no ecrã/terminal"
+  },
+  "Retornar": {
+    "prefix": "retornar",
+    "body": [
+      "retornar ${1:valor}"
+    ],
+    "description": "Retorna um valor de uma função"
+  },
+  "Tentar / Exceto": {
+    "prefix": "tentar",
+    "body": [
+      "tentar:",
+      "    ${1:bloco_principal}",
+      "exceto ${2:Excessao} como ${3:erro}:",
+      "    escrever(f\"Ocorreu um erro: {${3:erro}}\")"
+    ],
+    "description": "Controlo de exceções e erros"
+  },
+  "Importar": {
+    "prefix": "importar",
+    "body": [
+      "importar ${1:modulo}"
+    ],
+    "description": "Importa um módulo ou pacote"
+  },
+  "Definir Classe": {
+    "prefix": "classe",
+    "body": [
+      "classe ${1:MinhaClasse}:",
+      "    definir __inicializar__(self${2:, argumentos}):",
+      "        ${3:passar}"
+    ],
+    "description": "Definir uma classe orientada a objetos"
+  },
+  "Aguardar": {
+    "prefix": "aguardar",
+    "body": [
+      "aguardar ${1:expressao_assincrona}"
+    ],
+    "description": "Aguardar execução de corrotina assíncrona"
   }
 }
 
@@ -310,6 +538,7 @@ def main():
     
     os.makedirs(ext_dir, exist_ok=True)
     os.makedirs(os.path.join(ext_dir, "syntaxes"), exist_ok=True)
+    os.makedirs(os.path.join(ext_dir, "snippets"), exist_ok=True)
     os.makedirs(os.path.join(ext_dir, "src"), exist_ok=True)
 
     with open(os.path.join(ext_dir, "package.json"), "w", encoding="utf-8") as f:
@@ -320,6 +549,9 @@ def main():
 
     with open(os.path.join(ext_dir, "syntaxes", "portulong.tmLanguage.json"), "w", encoding="utf-8") as f:
         json.dump(tmlanguage_json, f, indent=2, ensure_ascii=False)
+
+    with open(os.path.join(ext_dir, "snippets", "portulong.json"), "w", encoding="utf-8") as f:
+        json.dump(snippets_json, f, indent=2, ensure_ascii=False)
 
     with open(os.path.join(ext_dir, "src", "extension.js"), "w", encoding="utf-8") as f:
         f.write(extension_js)
