@@ -2573,18 +2573,7 @@ module.exports = {
             Dicionário / Guia
           </button>
 
-          <button
-            id="tab-pypi-btn"
-            onClick={() => setActiveTab("pypi")}
-            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono flex items-center gap-2 transition-all ${
-              activeTab === "pypi" 
-                ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700" 
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <Cpu size={14} />
-            Empacotar (PyPI)
-          </button>
+
         </nav>
       </header>
 
