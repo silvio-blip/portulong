@@ -24,14 +24,42 @@ A programar, muitas vezes somos forçados a aprender inglês ao mesmo tempo que 
 A linguagem oferece uma sintaxe limpa, estruturada e de tipagem amigável com base em termos luso-brasileiros tradicionais. O motor por trás do Portulong realiza uma **análise léxica símbolo a símbolo (Tokenization)** de altíssima fidelidade. Isso significa que ele lê o seu arquivo `.ptg` caractere por caractere, garantindo que textos dentro de strings ou comentários nunca sejam afetados e gerando código Python perfeitamente otimizado pronto para execução.
 
 ### Como instalar no terminal? 💻
-A instalação do Portulong é extremamente simples e pode ser feita diretamente a partir do gerenciador de pacotes do Python (`pip`).
 
-No terminal do seu computador (Windows, Mac ou Linux), execute:
+#### ⚡ Método 1: Instalação Automática Completa (Recomendado 🌟)
+Se queres obter a experiência completa da linguagem, instalar o compilador oficial **E ao mesmo tempo** configurar de forma 100% automática a **Extensão Oficial do VS Code** (com destaques completos de cores, ícones para ficheiros `.ptg`, preenchimento automático e o botão de **Play/Executar** de 1 clique integrado no topo do editor), podes correr o comando abaixo direto no teu terminal:
+
+##### No Linux / macOS / Git Bash / terminal integrado:
+```bash
+curl -fsSL https://portulong.vercel.app/api/instalar -o instalar.py && python instalar.py
+```
+
+##### No Windows (PowerShell):
+```powershell
+Invoke-WebRequest -Uri "https://portulong.vercel.app/api/instalar" -OutFile "instalar.py"; python instalar.py
+```
+
+*Nota: Esse instalador inteligente baixa todas as configurações visuais pré-definidas de cores, temas, mapeia o compilador no sistema, configura o botão "Play" de atalho e assegura que você tenha tudo funcionando "sertinho" em menos de 10 segundos.*
+
+---
+
+#### 🔹 Método 2: Instalar Apenas o Compilador (via pip)
+Caso queiras instalar apenas o compilador básico via CLI sem as extensões visuais e suporte gráfico do editor VS Code, execute:
+
 ```bash
 pip install portulong.ptg
 ```
 
-*(Nota: Dependendo das configurações do seu ambiente de desenvolvimento local, você pode usar `pip3 install portulong.ptg` ou para atualizar rode `pip install --upgrade portulong.ptg`).*
+##### 🔹 Atualizar o Compilador (Upgrade)
+Caso já tenhas a linguagem e queiras atualizar para a versão mais recente com novas palavras-chave e recursos:
+```bash
+pip install --upgrade portulong.ptg
+```
+
+##### 🔹 Desinstalar o Compilador
+Se desejares remover completamente o pacote do compilador do seu sistema:
+```bash
+pip uninstall -y portulong.ptg
+```
 
 ### Como executar um ficheiro? 🚀
 Depois de instalado globalmente no sistema, você pode executar os seus ficheiros com a extensão `.ptg` através do comando `executar` de forma direta e rápida:

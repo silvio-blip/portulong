@@ -1227,20 +1227,34 @@ Baseada diretamente no interpretador do **Python** e construída sobre a bibliot
 
 ## 🚀 Instalação e Gerenciamento
 
-### 🔹 1. Instalar o Compilador
-Para instalar o compilador e ambiente de execução oficial do Portulong no seu computador executando Python 3.8+:
+### ⚡ Método 1: Instalação Automática Completa (Recomendado 🌟)
+Se queres obter a experiência completa da linguagem, instalar o compilador oficial **E ao mesmo tempo** configurar de forma 100% automática a **Extensão Oficial do VS Code** (com destaques completos de cores para ficheiros \`.ptg\`, ícones personalizados, preenchimento automático e o botão de **Play/Executar** de 1 clique integrado no topo do editor), podes rodar o instalador inteligente:
+
+\`\`\`bash
+# No Linux / macOS / Git Bash:
+curl -fsSL https://portulong.vercel.app/api/instalar -o instalar.py && python instalar.py
+
+# No Windows (PowerShell):
+Invoke-WebRequest -Uri "https://portulong.vercel.app/api/instalar" -OutFile "instalar.py"; python instalar.py
+\`\`\`
+
+---
+
+### 🔹 Método 2: Instalar Apenas o Compilador (via pip)
+Caso pretendas instalar unicamente o compilador básico por linha de comando sem as integrações visuais do editor de código, basta rodar o comando abaixo no terminal (requer Python 3.8+):
+
 \`\`\`bash
 pip install portulong.ptg
 \`\`\`
 
-### 🔹 2. Atualizar o Pacote (Upgrade)
-Caso você já tenha a linguagem instalada e queira atualizar para a versão mais recente com novos recursos:
+#### 🔹 Atualizar o Compilador (Upgrade)
+Caso já tenhas a linguagem e queiras atualizar para a versão mais recente com novos recursos:
 \`\`\`bash
 pip install --upgrade portulong.ptg
 \`\`\`
 
-### 🔹 3. Desinstalar a Linguagem
-Se desejar remover completamente o pacote do compilador do seu sistema:
+#### 🔹 Desinstalar o Compilador
+Se desejares remover completamente o pacote do compilador do seu sistema:
 \`\`\`bash
 pip uninstall -y portulong.ptg
 \`\`\`
