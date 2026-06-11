@@ -258,6 +258,186 @@ app.get("/portulong.png", (req, res) => {
   });
 });
 
+function translatePythonToPortulongDeterministic(pythonCode: string): string {
+  const strings: string[] = [];
+  const comments: string[] = [];
+
+  // 1. Proteger aspas triplas
+  let processed = pythonCode.replace(/"""([\s\S]*?)"""/g, (match) => {
+    strings.push(match);
+    return `__TRIPLE_STR_PLACEHOLDER_${strings.length - 1}__`;
+  });
+  processed = processed.replace(/'''([\s\S]*?)'''/g, (match) => {
+    strings.push(match);
+    return `__TRIPLE_STR_PLACEHOLDER_${strings.length - 1}__`;
+  });
+
+  // 2. Proteger strings normais
+  processed = processed.replace(/"([^"\\]|\\.)*"/g, (match) => {
+    strings.push(match);
+    return `__STR_PLACEHOLDER_${strings.length - 1}__`;
+  });
+  processed = processed.replace(/'([^'\\]|\\.)*'/g, (match) => {
+    strings.push(match);
+    return `__STR_PLACEHOLDER_${strings.length - 1}__`;
+  });
+
+  // 3. Proteger comentários
+  processed = processed.replace(/#.*/g, (match) => {
+    comments.push(match);
+    return `__COM_PLACEHOLDER_${comments.length - 1}__`;
+  });
+
+  // 4. Inversão de Estrutura: 'async def' vira 'definir assincrono'
+  processed = processed.replace(/\basync\s+def\b/g, "definir assincrono");
+
+  // Dicionário reverso de Tradução determinística
+  const reverseMap: Record<string, string> = {
+    // Palavras-chave
+    "elif": "senaose",
+    "else": "senao",
+    "if": "se",
+    "for": "para",
+    "while": "enquanto",
+    "def": "definir",
+    "class": "classe",
+    "import": "importar",
+    "from": "de",
+    "as": "como",
+    "return": "retornar",
+    "try": "tentar",
+    "except": "exceto",
+    "finally": "finally",
+    "with": "com",
+    "lambda": "lambda",
+    "pass": "passar",
+    "break": "parar",
+    "continue": "continuar",
+    "True": "Verdadeiro",
+    "False": "Falso",
+    "None": "Nulo",
+    "and": "e",
+    "or": "ou",
+    "not": "nao",
+    "in": "em",
+    "is not": "nao_eh",
+    "is": "eh",
+    "assert": "asseverar",
+    "global": "global",
+    "nonlocal": "naolocal",
+    "raise": "levantar",
+    "yield": "produzir",
+    "async": "assincrono",
+    "await": "aguardar",
+
+    // Funções Embutidas (Builtins)
+    "print": "escrever",
+    "input": "ler",
+    "len": "tamanho",
+    "int": "inteiro",
+    "str": "texto",
+    "float": "real",
+    "bool": "boleano",
+    "list": "lista",
+    "dict": "dicionario",
+    "set": "conjunto",
+    "tuple": "tupla",
+    "range": "intervalo",
+    "open": "abrir",
+    "type": "tipo",
+    "sum": "somar",
+    "abs": "absoluto",
+    "max": "maximo",
+    "min": "minimo",
+    "round": "arredondar",
+    "map": "mapear",
+    "filter": "filtrar",
+    "sorted": "ordenado",
+    "super": "super",
+    "property": "propriedade",
+    "zip": "zipar",
+    "enumerate": "enumerar",
+    "object": "objeto",
+    "any": "qualquer",
+    "all": "todos",
+    "help": "ajuda",
+    "id": "identidade",
+    "reversed": "reversivel",
+    "format": "formatar",
+    "getattr": "obter_atributo",
+    "setattr": "definir_atributo",
+    "hasattr": "tem_atributo",
+    "delattr": "excluir_atributo",
+    "repr": "representacao",
+    "next": "proximo",
+    "iter": "iterador",
+    "isinstance": "eh_instancia",
+    "issubclass": "eh_subclasse",
+
+    // Exceções comuns
+    "Exception": "Excessao",
+    "ValueError": "ErroDeValor",
+    "TypeError": "ErroDeTipo",
+    "NameError": "ErroDeNome",
+    "IndexError": "ErroDeIndice",
+    "KeyError": "ErroDeChave",
+    "ImportError": "ErroDeImportacao",
+    "AttributeError": "ErroDeAtributo",
+    "ZeroDivisionError": "ErroDivisaoPorZero",
+    "MemoryError": "FaltaDeMemoria",
+    "StopIteration": "ParadaDeIteracao",
+    "OSError": "ErroDoSistema",
+    "FileNotFoundError": "ArquivoNaoEncontrado",
+    "KeyboardInterrupt": "InterrupcaoPeloTeclado",
+    "AssertionError": "ErroDeAsseveracao",
+    "RuntimeError": "ErroDeExecucao",
+    "NotImplementedError": "ErroNaoImplementado",
+
+    // Discord API comuns para bots legados
+    "Bot": "Robo",
+    "command_prefix": "prefixo",
+    "event": "evento",
+    "command": "comando",
+    "send": "enviar",
+    "reply": "responder",
+    "delete": "deletar",
+    "add_reaction": "adicionar_reacao",
+    "remove_reaction": "remover_reacao",
+    "kick": "expulsar",
+    "ban": "banir",
+    "purge": "limpar",
+    "content": "conteudo",
+    "author": "autor",
+    "channel": "canal",
+    "guild": "servidor",
+    "message": "mensagem",
+    "user": "usuario",
+    "ctx": "contexto"
+  };
+
+  const sortedKeys = Object.keys(reverseMap).sort((a, b) => b.length - a.length);
+
+  for (const key of sortedKeys) {
+    const value = reverseMap[key];
+    const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`\\b${escapedKey}\\b`, "g");
+    processed = processed.replace(regex, value);
+  }
+
+  // 5. Restaurar os comentários
+  for (let i = comments.length - 1; i >= 0; i--) {
+    processed = processed.replace(`__COM_PLACEHOLDER_${i}__`, comments[i]);
+  }
+
+  // 6. Restaurar as strings
+  for (let i = strings.length - 1; i >= 0; i--) {
+    processed = processed.replace(`__STR_PLACEHOLDER_${i}__`, strings[i]);
+    processed = processed.replace(`__TRIPLE_STR_PLACEHOLDER_${i}__`, strings[i]);
+  }
+
+  return processed;
+}
+
 app.post("/api/ai/translate", async (req, res) => {
   try {
     const { pythonCode } = req.body;
@@ -265,107 +445,10 @@ app.post("/api/ai/translate", async (req, res) => {
       return res.status(400).json({ error: "Código Python não fornecido." });
     }
 
-    const ai = getAIClient();
-    const systemPrompt = `Você é um compilador e especialista na linguagem "Portulong" (PTG) — uma linguagem de programação em português para criar bots do Discord baseada em Python.
-Sua única tarefa é traduzir o código Python fornecido para Portulong seguindo rigorosamente estas regras de mapeamento:
-
-Mapeamentos de Palavras-Chave:
-- if -> se
-- else -> senao
-- elif -> senaose
-- for -> para
-- while -> enquanto
-- def -> definir (ou funcao)
-- class -> classe
-- import -> importar
-- from -> de
-- as -> como
-- return -> retornar
-- try -> tentar
-- except -> exceto
-- finally -> finalmente
-- with -> com
-- lambda -> lambda
-- pass -> passar
-- break -> parar
-- continue -> continuar
-- True -> Verdadeiro
-- False -> Falso
-- None -> Nulo
-- and -> e
-- or -> ou
-- not -> nao
-- in -> em
-- is -> eh
-- assert -> asseverar
-- global -> global
-- nonlocal -> naolocal
-- raise -> levantar
-- yield -> produzir
-- async -> assincrono
-- await -> aguardar
-
-Funções Embutidas:
-- print -> escrever
-- input -> ler
-- len -> tamanho
-- int -> inteiro
-- str -> texto
-- float -> real
-- bool -> boleano
-- list -> lista
-- dict -> dicionario
-- set -> conjunto
-- tuple -> tupla
-- range -> intervalo
-- open -> abrir
-- type -> tipo
-- sum -> somar
-- abs -> absoluto
-- max -> maximo
-- min -> minimo
-- round -> arredondar
-
-No Discord (REGRA CRÍTICA: Mantenha o termo "discord" ou "Discord" literal. NUNCA traduza ou mude "discord" ou "Discord" para "discordia" ou "Discordia" ou "Discordia" — isso causará erros catastróficos e é terminantemente proibido!):
-- discord -> discord (NUNCA mude para "discordia" ou "Discordia", sempre use exatamente "discord")
-- Bot -> Robo
-- command_prefix -> prefixo
-- event -> evento
-- command -> comando
-- name -> nome
-- help -> ajuda
-- ctx -> contexto
-- send -> enviar
-- reply -> responder
-- delete -> deletar
-- author -> autor
-- name -> nome
-- id -> id
-- content -> conteudo
-- user -> usuario
-- msg / message -> mensagem
-- guild -> servidor
-
-Você DEVE produzir APENAS o código Portulong equivalente, limpo, sem explicações adicionais, e sem blocos extras de diálogo. Apenas o código.`;
-
-    const response = await generateContentWithRetry({
-      contents: `Traduza o seguinte código Python para Portulong:\n\n${pythonCode}`,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.1,
-      },
-    });
-
-    let code = response.text || "";
-    // Clean up Markdown code blocks if any
-    code = code.replace(/```ptg\n?/gi, "").replace(/```python\n?/gi, "").replace(/```[\s\S]*?\n?/gi, "");
-    if (code.endsWith("```")) {
-      code = code.slice(0, -3);
-    }
-
-    return res.json({ ptgCode: code.trim() });
+    const ptgCode = translatePythonToPortulongDeterministic(pythonCode);
+    return res.json({ ptgCode: ptgCode.trim() });
   } catch (error: any) {
-    console.error("Erro na tradução:", error);
+    console.error("Erro na tradução determinística:", error);
     return res.status(500).json({ error: error.message || "Erro interno ao traduzir o código." });
   }
 });
