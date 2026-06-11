@@ -238,6 +238,42 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
     "id", "canal_sistema", "permissoes", "expulsar_membros", "gerenciar_mensagens"
   ]);
 
+  // English Python keywords mapped to Portulong suggestions to raise instant IDE syntax checking alerts
+  const PYTHON_SUGGESTIONS: Record<string, string> = {
+    "if": "se",
+    "else": "senao",
+    "elif": "senaose",
+    "for": "para",
+    "while": "enquanto",
+    "def": "definir",
+    "class": "classe",
+    "import": "importar",
+    "from": "de",
+    "as": "como",
+    "return": "retornar",
+    "try": "tentar",
+    "except": "exceto",
+    "finally": "finalmente",
+    "with": "com",
+    "lambda": "lambda",
+    "pass": "passar",
+    "break": "parar",
+    "continue": "continuar",
+    "True": "Verdadeiro",
+    "False": "Falso",
+    "None": "Nulo",
+    "and": "e",
+    "or": "ou",
+    "not": "nao",
+    "in": "em",
+    "is": "eh",
+    "print": "escrever",
+    "input": "ler",
+    "len": "tamanho"
+  };
+
+  const PYTHON_ERRORS = new Set(Object.keys(PYTHON_SUGGESTIONS));
+
   while ((match = regex.exec(rawCode)) !== null) {
     if (match.index > lastIndex) {
       elements.push(<span key={key++}>{rawCode.slice(lastIndex, match.index)}</span>);
@@ -254,6 +290,17 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
     } else if (word) {
       if (KEYWORDS.has(word)) {
         elements.push(<span key={key++} className="text-pink-400 font-bold font-mono">{word}</span>);
+      } else if (PYTHON_ERRORS.has(word)) {
+        const suggestion = PYTHON_SUGGESTIONS[word];
+        elements.push(
+          <span 
+            key={key++} 
+            title={`Erro de Sintaxe: Escreva '${suggestion}' em vez de '${word}' em Portulong.`} 
+            className="text-red-400 bg-red-950/40 border-b-2 border-red-500 font-bold font-mono px-0.5 rounded cursor-help animate-pulse"
+          >
+            {word}
+          </span>
+        );
       } else if (BUILTINS.has(word)) {
         elements.push(<span key={key++} className="text-cyan-400 font-medium font-mono">{word}</span>);
       } else if (DISCORD.has(word)) {
@@ -1415,7 +1462,16 @@ tmlanguage_json = {
       "include": "#strings"
     },
     {
+      "include": "#definitions"
+    },
+    {
+      "include": "#decorators"
+    },
+    {
       "include": "#keywords"
+    },
+    {
+      "include": "#operators"
     },
     {
       "include": "#constants"
@@ -1425,6 +1481,12 @@ tmlanguage_json = {
     },
     {
       "include": "#discord"
+    },
+    {
+      "include": "#function-calls"
+    },
+    {
+      "include": "#properties"
     }
   ],
   "repository": {
@@ -1432,20 +1494,42 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "comment.line.number-sign.portulong",
-          "match": "#.*$"
+          "match": r"#.*$"
         }
       ]
     },
     "strings": {
       "patterns": [
         {
-          "name": "string.quoted.double.portulong",
-          "begin": "\\"",
-          "end": "\\"",
+          "name": "string.quoted.triple.double.portulong",
+          "begin": '"""',
+          "end": '"""',
           "patterns": [
             {
               "name": "constant.character.escape.portulong",
-              "match": "\\\\\\\\."
+              "match": r"\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.triple.single.portulong",
+          "begin": "'''",
+          "end": "'''",
+          "patterns": [
+            {
+              "name": "constant.character.escape.portulong",
+              "match": r"\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.portulong",
+          "begin": '"',
+          "end": '"',
+          "patterns": [
+            {
+              "name": "constant.character.escape.portulong",
+              "match": r"\\\\."
             }
           ]
         },
@@ -1456,29 +1540,101 @@ tmlanguage_json = {
           "patterns": [
             {
               "name": "constant.character.escape.portulong",
-              "match": "\\\\\\\\."
+              "match": r"\\\\."
             }
           ]
+        }
+      ]
+    },
+    "definitions": {
+      "patterns": [
+        {
+          "name": "meta.function.portulong",
+          "match": r"\\b(funcao|definir)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "storage.type.function.portulong" },
+            "2": { "name": "entity.name.function.portulong" }
+          }
+        },
+        {
+          "name": "meta.class.portulong",
+          "match": r"\\b(classe)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "storage.type.class.portulong" },
+            "2": { "name": "entity.name.type.class.portulong" }
+          }
+        }
+      ]
+    },
+    "decorators": {
+      "patterns": [
+        {
+          "name": "meta.function.decorator.portulong",
+          "match": r"(@)([a-zA-Z_][a-zA-Z0-9_.]*)",
+          "captures": {
+            "1": { "name": "punctuation.definition.decorator.portulong" },
+            "2": { "name": "entity.name.function.decorator.portulong" }
+          }
         }
       ]
     },
     "keywords": {
       "patterns": [
         {
+          "name": "keyword.control.import.portulong",
+          "match": r"\\b(importar|de|como)\\b"
+        },
+        {
+          "name": "keyword.control.conditional.portulong",
+          "match": r"\\b(se|senao|senaose)\\b"
+        },
+        {
+          "name": "keyword.control.repeat.portulong",
+          "match": r"\\b(para|enquanto)\\b"
+        },
+        {
+          "name": "keyword.control.flow.portulong",
+          "match": r"\\b(retornar|parar|continuar|passar)\\b"
+        },
+        {
+          "name": "keyword.control.exception.portulong",
+          "match": r"\\b(tentar|exceto|finalmente|levantar)\\b"
+        },
+        {
+          "name": "keyword.control.async.portulong",
+          "match": r"\\b(assincrono|aguardar)\\b"
+        },
+        {
           "name": "keyword.control.portulong",
-          "match": "\\\\\\\\b(se|senao|senaose|para|enquanto|definir|funcao|classe|importar|de|como|retornar|tentar|exceto|finalmente|com|lambda|passar|parar|continuar|global|naolocal|levantar|produzir|assincrono|aguardar)\\\\\\\\b"
+          "match": r"\\b(com|lambda|global|naolocal|produzir|asseverar)\\b"
         },
         {
           "name": "keyword.operator.logical.portulong",
-          "match": "\\\\\\\\b(e|ou|nao|em|eh|nao_eh)\\\\\\\\b"
+          "match": r"\\b(e|ou|nao|em|eh|nao_eh)\\b"
+        },
+        {
+          "name": "variable.language.special.self.portulong",
+          "match": r"\\b(self|contexto)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.portulong",
+          "match": r"\\+|-|\\*|/|//|%|=|==|!=|<|>|<=|>=|\\+=|-="
         }
       ]
     },
     "constants": {
       "patterns": [
         {
+          "name": "constant.numeric.portulong",
+          "match": r"\\b([0-9]+(\\.[0-9]+)?)\\b"
+        },
+        {
           "name": "constant.language.portulong",
-          "match": "\\\\\\\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\\\\\\\b"
+          "match": r"\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\b"
         }
       ]
     },
@@ -1486,11 +1642,11 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.function.builtin.portulong",
-          "match": "\\\\\\\\b(escrever|mostrar|ler|tamanho|inteiro|texto|real|decimal|boleano|lista|dicionario|conjunto|tupla|intervalo|abrir|tipo|somar|absoluto|maximo|minimo|arredondar|mapear|filtrar|ordenado|super|propriedade|zipar|enumerar|objeto|qualquer|todos|ajuda|identidade|reversivel|formatar|obter_atributo|definir_atributo|tem_atributo|excluir_atributo|representacao|proximo|iterador|eh_instancia|eh_subclasse)\\\\\\\\b"
+          "match": r"\\b(escrever|mostrar|ler|tamanho|inteiro|texto|real|decimal|boleano|lista|dicionario|conjunto|tupla|intervalo|abrir|tipo|somar|absoluto|maximo|minimo|arredondar|mapear|filtrar|ordenado|super|propriedade|zipar|enumerar|objeto|qualquer|todos|ajuda|identidade|reversivel|formatar|obter_atributo|definir_atributo|tem_atributo|excluir_atributo|representacao|proximo|iterador|eh_instancia|eh_subclasse)\\b"
         },
         {
           "name": "support.type.exception.portulong",
-          "match": "\\\\\\\\b(Excessao|ErroDeValor|ErroDeTipo|ErroDeNome|ErroDeIndice|ErroDeChave|ErroDeImportacao|ErroDeAtributo|ErroDivisaoPorZero|FaltaDeMemoria|ParadaDeIteracao|ErroDoSistema|ArquivoNaoEncontrado|InterrupcaoPeloTeclado|ErroDeAsseveracao|ErroDeExecucao|ErroNaoImplementado)\\\\\\\\b"
+          "match": r"\\b(Excessao|ErroDeValor|ErroDeTipo|ErroDeNome|ErroDeIndice|ErroDeChave|ErroDeImportacao|ErroDeAtributo|ErroDivisaoPorZero|FaltaDeMemoria|ParadaDeIteracao|ErroDoSistema|ArquivoNaoEncontrado|InterrupcaoPeloTeclado|ErroDeAsseveracao|ErroDeExecucao|ErroNaoImplementado)\\b"
         }
       ]
     },
@@ -1498,11 +1654,27 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.class.discord.portulong",
-          "match": "\\\\\\\\b(Robo|discord|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\\\\\b"
+          "match": r"\\b(Robo|discord|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
         },
         {
           "name": "support.function.discord.portulong",
-          "match": "\\\\\\\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\\\\\\\b"
+          "match": r"\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\b"
+        }
+      ]
+    },
+    "function-calls": {
+      "patterns": [
+        {
+          "name": "meta.function-call.portulong",
+          "match": r"\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()"
+        }
+      ]
+    },
+    "properties": {
+      "patterns": [
+        {
+          "name": "variable.other.property.portulong",
+          "match": r"(?<=\\.)[a-zA-Z_][a-zA-Z0-9_]*\\b"
         }
       ]
     }
@@ -1718,33 +1890,49 @@ def main():
 
     # Mover instalador e desinstalador para dentro da pasta portulong-vscode para manter a raiz limpa
     try:
-        script_atual = sys.argv[0]
-        if os.path.exists(script_atual) and os.path.basename(script_atual).endswith(".py"):
-            shutil.copy(script_atual, os.path.join(ext_dir, os.path.basename(script_atual)))
-            info(f"Cópia de '{os.path.basename(script_atual)}' salva com sucesso em '{ext_dir}/'!")
-
-        if os.path.exists("desinstalar.py"):
-            shutil.copy("desinstalar.py", os.path.join(ext_dir, "desinstalar.py"))
-            info("Cópia de 'desinstalar.py' salva com sucesso em 'portulong-vscode/'!")
+        script_atual = os.path.abspath(sys.argv[0])
+        script_basename = os.path.basename(script_atual)
+        
+        # Copia instalar.py (script atual) para dentro de ext_dir
+        if os.path.exists(script_atual) and script_basename.endswith(".py"):
+            shutil.copy(script_atual, os.path.join(ext_dir, "instalar.py"))
+            info(f"Cópia do instalador salva com sucesso em '{ext_dir}/instalar.py'!")
+            
+        # Copia desinstalar.py para dentro de ext_dir
+        # Procura tanto no diretório atual quanto no mesmo diretório do script atual
+        des_orig = "desinstalar.py"
+        if not os.path.exists(des_orig):
+            parent_dir = os.path.dirname(script_atual)
+            possible_des = os.path.join(parent_dir, "desinstalar.py")
+            if os.path.exists(possible_des):
+                des_orig = possible_des
+                
+        if os.path.exists(des_orig):
+            shutil.copy(des_orig, os.path.join(ext_dir, "desinstalar.py"))
+            info(f"Cópia do desinstalador salva com sucesso em '{ext_dir}/desinstalar.py'!")
     except Exception as e_copy:
         warn(f"Aviso ao organizar arquivos de suporte na pasta da extensão: {e_copy}")
 
-    # Tenta remover os arquivos externos de instalar e desinstalar se tudo tiver sido copiado com sucesso
+    # Remove os arquivos externos (de fora) para manter a raiz totalmente limpa
     try:
-        script_name = os.path.basename(sys.argv[0])
+        # Se copiou com sucesso para dentro, tenta apagar o de fora
         inside_instador = os.path.join(ext_dir, "instalar.py")
         if os.path.exists(inside_instador) and os.path.getsize(inside_instador) > 0:
-            if script_name == "instalar.py" and os.path.exists("instalar.py"):
-                os.remove("instalar.py")
-                success("Arquivo 'instalar.py' externo removido para manter a raiz limpa!")
+            script_atual = os.path.abspath(sys.argv[0])
+            # Garante que não estamos tentando deletar o arquivo de dentro da pasta portulong-vscode!
+            if os.path.exists(script_atual) and "portulong-vscode" not in script_atual:
+                os.remove(script_atual)
+                success("Arquivo de instalação externo ('instalar.py' de fora) removido com sucesso para manter os seus diretórios perfeitamente limpos!")
                 
+        # Tenta apagar o desinstalar.py externo se copiado
         inside_desinstalador = os.path.join(ext_dir, "desinstalar.py")
         if os.path.exists(inside_desinstalador) and os.path.getsize(inside_desinstalador) > 0:
-            if os.path.exists("desinstalar.py"):
-                os.remove("desinstalar.py")
-                success("Arquivo 'desinstalar.py' externo removido para manter a raiz limpa!")
-    except Exception:
-        pass
+            des_orig = "desinstalar.py"
+            if os.path.exists(des_orig) and os.path.abspath(des_orig) != os.path.abspath(inside_desinstalador):
+                os.remove(des_orig)
+                success("Arquivo de desinstalação externo ('desinstalar.py' de fora) removido com sucesso!")
+    except Exception as e_del:
+        warn(f"Durante a limpeza dos arquivos externos temporários: {e_del}")
 
     print("\\\\033[1;32m")
     print("="*60)
@@ -2263,7 +2451,7 @@ module.exports = {
                     {/* Rendered Colored Text (Underlay) */}
                     <pre
                       ref={preRef}
-                      className="absolute inset-0 p-4 text-slate-300 font-mono text-xs leading-5 whitespace-pre pointer-events-none select-none overflow-auto border-0 m-0 bg-transparent scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent"
+                      className="absolute inset-0 p-4 text-slate-300 font-mono text-xs leading-5 whitespace-pre pointer-events-none select-none overflow-hidden border-0 m-0 bg-transparent font-medium"
                     >
                       {highlightPortulong(code)}
                     </pre>

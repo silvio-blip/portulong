@@ -326,8 +326,8 @@ Funções Embutidas:
 - min -> minimo
 - round -> arredondar
 
-No Discord:
-- discord -> discord
+No Discord (REGRA CRÍTICA: Mantenha o termo "discord" ou "Discord" literal. NUNCA traduza ou mude "discord" ou "Discord" para "discordia" ou "Discordia" ou "Discordia" — isso causará erros catastróficos e é terminantemente proibido!):
+- discord -> discord (NUNCA mude para "discordia" ou "Discordia", sempre use exatamente "discord")
 - Bot -> Robo
 - command_prefix -> prefixo
 - event -> evento
