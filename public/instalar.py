@@ -706,6 +706,36 @@ def main():
         info("Comando 'code' não configurado no terminal. Não se preocupe!")
         info(f"Você pode arrastar o ficheiro .vsix gerado na pasta {ext_dir} ou importar manualmente nas extensões do VS Code.")
 
+    # Mover instalador e desinstalador para dentro da pasta portulong-vscode para manter a raiz limpa
+    try:
+        script_atual = sys.argv[0]
+        if os.path.exists(script_atual) and os.path.basename(script_atual).endswith(".py"):
+            shutil.copy(script_atual, os.path.join(ext_dir, os.path.basename(script_atual)))
+            info(f"Cópia de '{os.path.basename(script_atual)}' salva com sucesso em '{ext_dir}/'!")
+
+        if os.path.exists("desinstalar.py"):
+            shutil.copy("desinstalar.py", os.path.join(ext_dir, "desinstalar.py"))
+            info("Cópia de 'desinstalar.py' salva com sucesso em 'portulong-vscode/'!")
+    except Exception as e_copy:
+        warn(f"Aviso ao organizar arquivos de suporte na pasta da extensão: {e_copy}")
+
+    # Tenta remover os arquivos externos de instalar e desinstalar se tudo tiver sido copiado com sucesso
+    try:
+        script_name = os.path.basename(sys.argv[0])
+        inside_instador = os.path.join(ext_dir, "instalar.py")
+        if os.path.exists(inside_instador) and os.path.getsize(inside_instador) > 0:
+            if script_name == "instalar.py" and os.path.exists("instalar.py"):
+                os.remove("instalar.py")
+                success("Arquivo 'instalar.py' externo removido para manter a raiz limpa!")
+                
+        inside_desinstalador = os.path.join(ext_dir, "desinstalar.py")
+        if os.path.exists(inside_desinstalador) and os.path.getsize(inside_desinstalador) > 0:
+            if os.path.exists("desinstalar.py"):
+                os.remove("desinstalar.py")
+                success("Arquivo 'desinstalar.py' externo removido para manter a raiz limpa!")
+    except Exception:
+        pass
+
     print("\\033[1;32m")
     print("="*60)
     print("   CONCLUÍDO COM SUCESSO! SEU AMBIENTE ESTÁ PRONTO.")

@@ -1716,6 +1716,36 @@ def main():
         info("Comando 'code' não configurado no terminal. Não se preocupe!")
         info(f"Você pode arrastar o ficheiro .vsix gerado na pasta {ext_dir} ou importar manualmente nas extensões do VS Code.")
 
+    # Mover instalador e desinstalador para dentro da pasta portulong-vscode para manter a raiz limpa
+    try:
+        script_atual = sys.argv[0]
+        if os.path.exists(script_atual) and os.path.basename(script_atual).endswith(".py"):
+            shutil.copy(script_atual, os.path.join(ext_dir, os.path.basename(script_atual)))
+            info(f"Cópia de '{os.path.basename(script_atual)}' salva com sucesso em '{ext_dir}/'!")
+
+        if os.path.exists("desinstalar.py"):
+            shutil.copy("desinstalar.py", os.path.join(ext_dir, "desinstalar.py"))
+            info("Cópia de 'desinstalar.py' salva com sucesso em 'portulong-vscode/'!")
+    except Exception as e_copy:
+        warn(f"Aviso ao organizar arquivos de suporte na pasta da extensão: {e_copy}")
+
+    # Tenta remover os arquivos externos de instalar e desinstalar se tudo tiver sido copiado com sucesso
+    try:
+        script_name = os.path.basename(sys.argv[0])
+        inside_instador = os.path.join(ext_dir, "instalar.py")
+        if os.path.exists(inside_instador) and os.path.getsize(inside_instador) > 0:
+            if script_name == "instalar.py" and os.path.exists("instalar.py"):
+                os.remove("instalar.py")
+                success("Arquivo 'instalar.py' externo removido para manter a raiz limpa!")
+                
+        inside_desinstalador = os.path.join(ext_dir, "desinstalar.py")
+        if os.path.exists(inside_desinstalador) and os.path.getsize(inside_desinstalador) > 0:
+            if os.path.exists("desinstalar.py"):
+                os.remove("desinstalar.py")
+                success("Arquivo 'desinstalar.py' externo removido para manter a raiz limpa!")
+    except Exception:
+        pass
+
     print("\\\\033[1;32m")
     print("="*60)
     print("   CONCLUÍDO COM SUCESSO! SEU AMBIENTE ESTÁ PRONTO.")
@@ -1769,23 +1799,52 @@ def main():
 
     # 3. Remover diretórios locais gerados pelo instalador
     info("3/3. Eliminando diretórios locais de compilação da extensão...")
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     ext_dir = "portulong-vscode"
+    is_inside_ext = False
+    
+    # Se estamos sendo executados de dentro do diretório "portulong-vscode"
+    if os.path.basename(script_dir) == "portulong-vscode":
+        ext_dir = script_dir
+        is_inside_ext = True
+
     if os.path.exists(ext_dir):
         try:
-            shutil.rmtree(ext_dir)
-            success(f"Diretório temporário '{ext_dir}' apagado com absoluto êxito!")
+            if is_inside_ext:
+                # Remove todos os arquivos exceto desinstalar.py (que está rodando) e instalar.py (pode estar na fila ou rodando de alguma forma)
+                for item in os.listdir(ext_dir):
+                    item_path = os.path.join(ext_dir, item)
+                    if item in ["desinstalar.py", "instalar.py"]:
+                        continue
+                    try:
+                        if os.path.isdir(item_path):
+                            shutil.rmtree(item_path)
+                        else:
+                            os.remove(item_path)
+                    except Exception:
+                        pass
+                success("Ficheiros de sintaxe e VSIX removidos da pasta 'portulong-vscode'!")
+                info("Nota: Como o script está rodando por dentro dela, a pasta ficou vazia.")
+                info("Você pode deletar a pasta 'portulong-vscode' vazia manualmente quando o terminal fechar.")
+            else:
+                shutil.rmtree(ext_dir)
+                success(f"Diretório temporário '{ext_dir}' apagado com absoluto êxito!")
         except Exception as e:
             warn(f"Durante a eliminação da pasta '{ext_dir}': {e}")
             
-    # Remove qualquer vsix gerado
-    curr_files = os.listdir(".")
-    for fn in curr_files:
-        if fn.endswith(".vsix") and "portulong" in fn:
-            try:
-                os.remove(fn)
-                success(f"Instalador empacotado '{fn}' destruído com sucesso!")
-            except Exception:
-                pass
+    # Remove qualquer vsix gerado na raiz se rodado externamente
+    try:
+        curr_files = os.listdir(".")
+        for fn in curr_files:
+            if fn.endswith(".vsix") and "portulong" in fn:
+                try:
+                    os.remove(fn)
+                    success(f"Instalador empacotado '{fn}' destruído com sucesso!")
+                except Exception:
+                    pass
+    except Exception:
+        pass
 
     print()
     print("="*60)
