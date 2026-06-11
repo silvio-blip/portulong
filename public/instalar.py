@@ -338,9 +338,7 @@ def main():
             info("Ícone 'portulong.png' não encontrado localmente. Procurando fontes alternativas...")
             urls = [
                 "https://i.imgur.com/Wsii1RU.png",
-                "https://raw.githubusercontent.com/silvio-blip/portulong/main/portulong.png",
-                "https://raw.githubusercontent.com/silvio-blip/portulong/master/portulong.png",
-                "https://portulong.vercel.app/portulong.png"
+              
             ]
             downloaded = False
             for url in urls:
