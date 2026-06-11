@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "publisher": "silvio-blip",
   "icon": "portulong.png",
-  "homepage": "https://portulando.vercel.app/",
+  "homepage": "https://portulong.vercel.app/",
   "repository": {
     "type": "git",
     "url": "https://github.com/silvio-blip/portulong"

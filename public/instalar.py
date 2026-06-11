@@ -12,7 +12,7 @@ package_json = {
   "version": "1.0.0",
   "publisher": "silvio-blip",
   "icon": "portulong.png",
-  "homepage": "https://portulando.vercel.app/",
+  "homepage": "https://portulong.vercel.app/",
   "repository": {
     "type": "git",
     "url": "https://github.com/silvio-blip/portulong"
@@ -335,7 +335,7 @@ def main():
             info("Ícone 'portulong.png' não encontrado localmente. Baixando diretamente para a pasta da extensão...")
             try:
                 import urllib.request
-                urllib.request.urlretrieve("https://portulando.vercel.app/portulong.png", ext_icon_path)
+                urllib.request.urlretrieve("https://portulong.vercel.app/portulong.png", ext_icon_path)
                 success("Ícone 'portulong.png' transferido diretamente para a extensão com sucesso!")
             except Exception as e_dl:
                 warn(f"Não foi possível transferir o ícone automaticamente: {e_dl}")

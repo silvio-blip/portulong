@@ -44,7 +44,7 @@ app.get("/api/instalar", (req, res) => {
   try {
     let content = fs.readFileSync(filePath, "utf8");
     const proto = req.headers["x-forwarded-proto"] || req.protocol || "https";
-    const host = req.get("host") || "portulando.vercel.app";
+    const host = req.get("host") || "portulong.vercel.app";
     const siteUrl = `${proto}://${host}`;
     
     // Dynamically adjust any Vercel domain to the active request domain
@@ -68,7 +68,7 @@ app.get("/api/desinstalar", (req, res) => {
   try {
     let content = fs.readFileSync(filePath, "utf8");
     const proto = req.headers["x-forwarded-proto"] || req.protocol || "https";
-    const host = req.get("host") || "portulando.vercel.app";
+    const host = req.get("host") || "portulong.vercel.app";
     const siteUrl = `${proto}://${host}`;
     
     content = content.replace(/https:\/\/portulong\.vercel\.app/g, siteUrl);

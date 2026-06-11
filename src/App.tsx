@@ -386,10 +386,10 @@ const PORTULONG_SNIPPETS = [
 export default function App() {
   const currentHost = typeof window !== "undefined" && !window.location.hostname.includes("ai.studio") && !window.location.hostname.includes("run.app") && !window.location.hostname.includes("localhost")
     ? window.location.hostname
-    : "portulando.vercel.app";
+    : "portulong.vercel.app";
   const currentOrigin = typeof window !== "undefined"
     ? window.location.origin
-    : "https://portulando.vercel.app";
+    : "https://portulong.vercel.app";
 
   const [activeTab, setActiveTab] = useState<"ide" | "translator" | "docs" | "pypi">("ide");
   const [code, setCode] = useState(TEMPLATES[0].code);
