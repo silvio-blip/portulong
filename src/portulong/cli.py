@@ -45,10 +45,10 @@ def iniciar_projeto():
     codigo_template = """# Exemplo de bot de Boas-vindas em Portulong
 # Arquivo: main.ptg
 
-importar portulong.discord_pt como discordia
+importar portulong.discord_pt como discord
 
 # Inicializa o bot com o prefixo '!'
-robo = discordia.Robo(prefixo="!")
+robo = discord.Robo(prefixo="!")
 
 # Evento ativado quando o robô se conecta
 @robo.evento

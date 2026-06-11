@@ -2,19 +2,19 @@
   "Novo Robô Discord": {
     "prefix": "robo_novo",
     "body": [
-      "importar discordia como discordia",
+      "importar portulong.discord_pt como discord",
       "",
-      "robo = discordia.Robo(prefixo=\"!\")",
+      "robo = discord.Robo(prefixo=\"!\")",
       "",
       "@robo.evento",
       "definir assincrono ao_iniciar():",
-      "    escrever(f\"Robô {robo.utilizador} ligado com sucesso!\")",
+      "    escrever(f\"Robô {robo.usuario} ligado com sucesso!\")",
       "",
       "@robo.comando(nome=\"ping\")",
       "definir assincrono cmd_ping(contexto):",
       "    aguardar contexto.enviar(\"Pong! 🏓\")",
       "",
-      "robo.iniciar(\"${1:SEU_TOKEN_AQUI}\")"
+      "robo.run(\"${1:SEU_TOKEN_AQUI}\")"
     ],
     "description": "Cria a estrutura de um novo Bot de Discord com evento de início e comando de teste."
   },
@@ -86,7 +86,7 @@
     "prefix": "robo_comando",
     "body": [
       "@robo.comando(nome=\"${1:nome_do_comando}\")",
-      "definir assincrono cmd_${1:nome_do_comando}(contexto${2:, membro: discordia.Membro}):",
+      "definir assincrono cmd_${1:nome_do_comando}(contexto${2:, membro: discord.Membro}):",
       "    aguardar contexto.enviar(\"${3:Resposta do comando}\")"
     ],
     "description": "Cria um novo comando assíncrono para o Robô do Discord."

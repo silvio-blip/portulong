@@ -35,7 +35,7 @@ export interface TerminalLog {
 export interface DictionaryItem {
   portulong: string;
   python: string;
-  category: "palavra-chave" | "embutido" | "discordia";
+  category: "palavra-chave" | "embutido" | "discord";
   description: string;
   example: string;
 }

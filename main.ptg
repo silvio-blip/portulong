@@ -1,10 +1,10 @@
 # Exemplo de Teste do Bot em Portulong (PT-PT)
 # Arquivo: main.ptg
 
-importar portulong.discord_pt como discordia
+importar portulong.discord_pt como discord
 
 # Inicializa o bot com o prefixo selecionado
-robo = discordia.Robo(prefixo="!")
+robo = discord.Robo(prefixo="!")
 
 @robo.evento
 definir assincrono ao_iniciar():

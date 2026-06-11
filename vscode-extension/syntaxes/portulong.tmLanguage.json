@@ -29,6 +29,12 @@
     },
     {
       "include": "#discord"
+    },
+    {
+      "include": "#function-calls"
+    },
+    {
+      "include": "#properties"
     }
   ],
   "repository": {
@@ -95,7 +101,7 @@
           "match": "\\b(funcao|definir)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
           "captures": {
             "1": {
-              "name": "keyword.control.portulong"
+              "name": "storage.type.function.portulong"
             },
             "2": {
               "name": "entity.name.function.portulong"
@@ -107,7 +113,7 @@
           "match": "\\b(classe)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
           "captures": {
             "1": {
-              "name": "keyword.control.portulong"
+              "name": "storage.type.class.portulong"
             },
             "2": {
               "name": "entity.name.type.class.portulong"
@@ -120,19 +126,55 @@
       "patterns": [
         {
           "name": "meta.function.decorator.portulong",
-          "match": "@[a-zA-Z_][a-zA-Z0-9_.]*"
+          "match": "(@)([a-zA-Z_][a-zA-Z0-9_.]*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.decorator.portulong"
+            },
+            "2": {
+              "name": "entity.name.function.decorator.portulong"
+            }
+          }
         }
       ]
     },
     "keywords": {
       "patterns": [
         {
+          "name": "keyword.control.import.portulong",
+          "match": "\\b(importar|de|como)\\b"
+        },
+        {
+          "name": "keyword.control.conditional.portulong",
+          "match": "\\b(se|senao|senaose)\\b"
+        },
+        {
+          "name": "keyword.control.repeat.portulong",
+          "match": "\\b(para|enquanto)\\b"
+        },
+        {
+          "name": "keyword.control.flow.portulong",
+          "match": "\\b(retornar|parar|continuar|passar)\\b"
+        },
+        {
+          "name": "keyword.control.exception.portulong",
+          "match": "\\b(tentar|exceto|finalmente|levantar)\\b"
+        },
+        {
+          "name": "keyword.control.async.portulong",
+          "match": "\\b(assincrono|aguardar)\\b"
+        },
+        {
           "name": "keyword.control.portulong",
-          "match": "\\b(se|senao|senaose|para|enquanto|definir|funcao|classe|importar|de|como|retornar|tentar|exceto|finalmente|com|lambda|passar|parar|continuar|global|naolocal|levantar|produzir|assincrono|aguardar)\\b"
+          "match": "\\b(com|lambda|global|naolocal|produzir|asseverar)\\b"
         },
         {
           "name": "keyword.operator.logical.portulong",
           "match": "\\b(e|ou|nao|em|eh|nao_eh)\\b"
+        },
+        {
+          "name": "variable.language.special.self.portulong",
+          "match": "\\b(self|contexto)\\b"
         }
       ]
     },
@@ -172,11 +214,32 @@
       "patterns": [
         {
           "name": "support.class.discord.portulong",
-          "match": "\\b(Robo|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
+          "match": "\\b(Robo|discord|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
         },
         {
           "name": "support.function.discord.portulong",
           "match": "\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\b"
+        }
+      ]
+    },
+    "function-calls": {
+      "patterns": [
+        {
+          "name": "meta.function-call.portulong",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.portulong"
+            }
+          }
+        }
+      ]
+    },
+    "properties": {
+      "patterns": [
+        {
+          "name": "variable.other.property.portulong",
+          "match": "(?<=\\.)[a-zA-Z_][a-zA-Z0-9_]*\\b"
         }
       ]
     }

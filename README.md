@@ -94,9 +94,9 @@ portulong executar main.ptg
 
 ```python
 # Bot de Boas-vindas e Comandos em Portulong
-importar portulong.discord_pt como discordia
+importar portulong.discord_pt como discord
 
-robo = discordia.Robo(prefixo="!")
+robo = discord.Robo(prefixo="!")
 
 @robo.evento
 definir assincrono ao_iniciar():

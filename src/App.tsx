@@ -41,7 +41,7 @@ const DICTIONARY: DictionaryItem[] = [
   { portulong: "enquanto", python: "while", category: "palavra-chave", description: "Loop de repetição por condição contínua.", example: "enquanto repetindo:\n    escrever('Ativo')" },
   { portulong: "definir / funcao", python: "def", category: "palavra-chave", description: "Cria e define uma nova função ou comando.", example: "definir somar(a, b):\n    retornar a + b" },
   { portulong: "classe", python: "class", category: "palavra-chave", description: "Cria um modelo de objeto (classe).", example: "classe Jogador:\n    def __init__(self):\n        self.pontos = 0" },
-  { portulong: "importar", python: "import", category: "palavra-chave", description: "Importa módulos externos.", example: "importar discordia como discordia" },
+  { portulong: "importar", python: "import", category: "palavra-chave", description: "Importa módulos externos.", example: "importar portulong.discord_pt como discord" },
   { portulong: "retornar", python: "return", category: "palavra-chave", description: "Retorna um valor de dentro de uma função.", example: "definir dobro(n):\n    retornar n * 2" },
   { portulong: "tentar", python: "try", category: "palavra-chave", description: "Tenta rodar um trecho capturando possíveis erros.", example: "tentar:\n    escrever(1 / 0)\nexcluir ZeroDivisionError:\n    escrever('Não divida por zero')" },
   { portulong: "exceto", python: "except", category: "palavra-chave", description: "Captura erros disparados dentro do bloco 'tentar'.", example: "tentar:\n    fazer()\nexcleto:\n    escrever('Deu erro')" },
@@ -60,14 +60,14 @@ const DICTIONARY: DictionaryItem[] = [
   { portulong: "intervalo", python: "range", category: "embutido", description: "Gera índices de controle sequencial.", example: "intervalo(1, 10)" },
   
   // Discord-specific additions
-  { portulong: "discordia", python: "discord", category: "discordia", description: "Módulo principal do Wrapper do Discord.", example: "importar discordia como discordia" },
-  { portulong: "Robo(prefixo)", python: "commands.Bot(command_prefix)", category: "discordia", description: "Cria e configura a instância do bot do discord.", example: "robo = discordia.Robo(prefixo='!')" },
-  { portulong: "@robo.evento", python: "@bot.event", category: "discordia", description: "Registra gatilhos de eventos automáticos do Discord.", example: "@robo.evento\ndefinir assincrono ao_iniciar():\n    escrever('Pronto!')" },
-  { portulong: "@robo.comando(nome)", python: "@bot.command(name)", category: "discordia", description: "Registra comandos escritos pelos usuários.", example: "@robo.comando(nome='ola')\ndefinir assincrono comando_ola(contexto):\n    aguardar contexto.enviar('Oi!')" },
-  { portulong: "contexto.enviar(...)", python: "ctx.send(...)", category: "discordia", description: "Envia uma mensagem no canal de texto ativo.", example: "aguardar contexto.enviar('Mensagem')" },
-  { portulong: "contexto.autor.nome", python: "ctx.author.name", category: "discordia", description: "Retorna o apelido/nome da pessoa que mandou o comando.", example: "aguardar contexto.enviar(f'{contexto.autor.nome} chamou o comando!')" },
-  { portulong: "membro.expulsar()", python: "member.kick()", category: "discordia", description: "Gatilho para expulsar um usuário do servidor Discord.", example: "aguardar membro.expulsar()" },
-  { portulong: "canal.limpar(limite)", python: "channel.purge(limit)", category: "discordia", description: "Exclui um número determinado de mensagens anteriores.", example: "aguardar contexto.canal.limpar(limite=50)" },
+  { portulong: "discord", python: "discord", category: "discord", description: "Módulo principal do Wrapper do Discord.", example: "importar portulong.discord_pt como discord" },
+  { portulong: "Robo(prefixo)", python: "commands.Bot(command_prefix)", category: "discord", description: "Cria e configura a instância do bot do discord.", example: "robo = discord.Robo(prefixo='!')" },
+  { portulong: "@robo.evento", python: "@bot.event", category: "discord", description: "Registra gatilhos de eventos automáticos do Discord.", example: "@robo.evento\ndefinir assincrono ao_iniciar():\n    escrever('Pronto!')" },
+  { portulong: "@robo.comando(nome)", python: "@bot.command(name)", category: "discord", description: "Registra comandos escritos pelos usuários.", example: "@robo.comando(nome='ola')\ndefinir assincrono comando_ola(contexto):\n    aguardar contexto.enviar('Oi!')" },
+  { portulong: "contexto.enviar(...)", python: "ctx.send(...)", category: "discord", description: "Envia uma mensagem no canal de texto ativo.", example: "aguardar contexto.enviar('Mensagem')" },
+  { portulong: "contexto.autor.nome", python: "ctx.author.name", category: "discord", description: "Retorna o apelido/nome da pessoa que mandou o comando.", example: "aguardar contexto.enviar(f'{contexto.autor.nome} chamou o comando!')" },
+  { portulong: "membro.expulsar()", python: "member.kick()", category: "discord", description: "Gatilho para expulsar um usuário do servidor Discord.", example: "aguardar membro.expulsar()" },
+  { portulong: "canal.limpar(limite)", python: "channel.purge(limit)", category: "discord", description: "Exclui um número determinado de mensagens anteriores.", example: "aguardar contexto.canal.limpar(limite=50)" },
 ];
 
 const TEMPLATES: CodeTemplate[] = [
@@ -79,10 +79,10 @@ const TEMPLATES: CodeTemplate[] = [
     code: `# Exemplo 1: Bot de Boas-vindas em Portulong
 # Arquivo: bot_boas_vindas.ptg
 
-importar discordia como discordia
+importar portulong.discord_pt como discord
 
 # Inicializa o bot com o prefixo '!'
-robo = discordia.Robo(prefixo="!")
+robo = discord.Robo(prefixo="!")
 
 # Evento ativado quando o robô se conecta
 @robo.evento
@@ -106,9 +106,9 @@ definir assincrono ao_entrar_membro(membro):
     code: `# Exemplo 2: Bot de Comandos Interativos
 # Arquivo: comandos_interativos.ptg
 
-importar discordia como discordia
+importar portulong.discord_pt como discord
 
-robo = discordia.Robo(prefixo="!")
+robo = discord.Robo(prefixo="!")
 
 @robo.evento
 definir assincrono ao_iniciar():
@@ -139,9 +139,9 @@ definir assincrono resposta_pergunta(contexto, pergunta):
     code: `# Exemplo 3: Bot de Moderação de Canais
 # Arquivo: seguranca.ptg
 
-importar discordia como discordia
+importar portulong.discord_pt como discord
 
-robo = discordia.Robo(prefixo="!")
+robo = discord.Robo(prefixo="!")
 
 @robo.evento
 definir assincrono ao_iniciar():
@@ -159,7 +159,7 @@ definir assincrono limpar_chat(contexto, quantidade: inteiro = 10):
 
 # Comando !expulsar <membro>
 @robo.comando(nome="expulsar")
-definir assincrono expulsar_membro(contexto, membro: discordia.Membro):
+definir assincrono expulsar_membro(contexto, membro: discord.Membro):
     se contexto.autor.permissoes.expulsar_membros:
         aguardar membro.expulsar()
         aguardar contexto.enviar(f"🚨 {membro.nome} foi banido/expulso por violar as regras do servidor!")
@@ -175,9 +175,9 @@ definir assincrono expulsar_membro(contexto, membro: discordia.Membro):
     code: `# Exemplo 4: Bot de Matemática e Cálculo
 # Arquivo: calculadora.ptg
 
-importar discordia como discordia
+importar portulong.discord_pt como discord
 
-robo = discordia.Robo(prefixo="!")
+robo = discord.Robo(prefixo="!")
 
 @robo.evento
 definir assincrono ao_iniciar():
@@ -231,7 +231,7 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
   ]);
 
   const DISCORD = new Set([
-    "Robo", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem", "discordia",
+    "Robo", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem", "discord",
     "comando", "evento", "contexto", "membro", "canal", "servidor", "mensagem", 
     "usuario", "enviar", "responder", "deletar", "adicionar_reacao", 
     "remover_reacao", "expulsar", "banir", "limpar", "conteudo", "autor", 
@@ -406,8 +406,8 @@ const PORTULONG_SNIPPETS = [
   },
   {
     key: "robo",
-    displayName: "robo = discordia.Robo(...)",
-    snippet: "robo = discordia.Robo(prefixo=\"!\")\n",
+    displayName: "robo = discord.Robo(...)",
+    snippet: "robo = discord.Robo(prefixo=\"!\")\n",
     description: "Instancia e configura um novo robô do Discord"
   },
   {
@@ -432,7 +432,7 @@ const PORTULONG_SNIPPETS = [
     key: "enviar",
     displayName: "contexto.enviar(...)",
     snippet: "aguardar contexto.enviar(\"Sua mensagem aqui!\")",
-    description: "Envia uma mensagem de texto simples ao canal ativo"
+    description: "Envia uma mensagem de text simples ao canal ativo"
   },
   {
     key: "responder",
@@ -449,7 +449,7 @@ const PORTULONG_SNIPPETS = [
   {
     key: "importar",
     displayName: "importar portulong.discord_pt",
-    snippet: "importar portulong.discord_pt como discordia\n",
+    snippet: "importar portulong.discord_pt como discord\n",
     description: "Importa a ponte adaptada em português para o discord.py"
   },
   {
@@ -485,7 +485,7 @@ export default function App() {
   const [chatInput, setChatInput] = useState("");
   const [simulatorLogs, setSimulatorLogs] = useState<TerminalLog[]>([
     { id: "1", type: "info", time: "21:20:00", message: "Inicializando compilador virtual do Portulong CLI v1.0.0..." },
-    { id: "2", type: "success", time: "21:20:01", message: "Verificando dependências de 'discordia.py' (dependente de 'discord.py')..." },
+    { id: "2", type: "success", time: "21:20:01", message: "Verificando dependências de 'discord_pt.py' wrapper (dependente de 'discord.py')..." },
     { id: "3", type: "success", time: "21:20:02", message: "Ambiente pronto para simulação no navegador!" }
   ]);
   const [discordMessages, setDiscordMessages] = useState<DiscordMessage[]>([
@@ -522,7 +522,7 @@ async def greet(ctx):
 
   // Guide search filtering
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<"tudo" | "palavra-chave" | "embutido" | "discordia">("tudo");
+  const [categoryFilter, setCategoryFilter] = useState<"tudo" | "palavra-chave" | "embutido" | "discord">("tudo");
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const discordEndRef = useRef<HTMLDivElement>(null);
@@ -976,9 +976,9 @@ pip install portulong.ptg
 Escreva o seu primeiro arquivo \`.ptg\`! Por exemplo, crie um arquivo chamado \`meu_bot.ptg\`:
 
 \`\`\`python
-importar discordia como discordia
+importar portulong.discord_pt como discord
 
-robo = discordia.Robo(prefixo="!")
+robo = discord.Robo(prefixo="!")
 
 @robo.evento
 definir assincrono ao_iniciar():
@@ -1005,7 +1005,7 @@ Desenvolvido com carinho para a comunidade brasileira 🇧🇷`);
     const packageFolder = zip.folder("portulong")!;
     
     packageFolder.file("__init__.py", `from .transpiler import transpile
-from .discordia import Robo, wrap_object
+from .discord_pt import Robo, wrap_object
 `);
 
     packageFolder.file("transpiler.py", `import re
@@ -1168,7 +1168,7 @@ def main():
     exec(py_code, {'__name__': '__main__'})
 `);
 
-    packageFolder.file("discordia.py", `import discord
+    packageFolder.file("discord_pt.py", `import discord
 from discord.ext import commands
 import asyncio
 
@@ -1498,7 +1498,7 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.class.discord.portulong",
-          "match": "\\\\\\\\b(Robo|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\\\\\b"
+          "match": "\\\\\\\\b(Robo|discord|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\\\\\b"
         },
         {
           "name": "support.function.discord.portulong",
@@ -1953,7 +1953,7 @@ if __name__ == "__main__":
           patterns: [
             {
               name: "support.class.discord.portulong",
-              match: "\\b(Robo|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
+              match: "\\b(Robo|discord|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
             },
             {
               name: "support.function.discord.portulong",
@@ -2718,12 +2718,12 @@ module.exports = {
                   Funções Embutidas
                 </button>
                 <button
-                  onClick={() => setCategoryFilter("discordia")}
+                  onClick={() => setCategoryFilter("discord")}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    categoryFilter === "discordia" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+                    categoryFilter === "discord" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
                   }`}
                 >
-                  Discord (Discordia)
+                  Discord
                 </button>
               </div>
             </div>
@@ -2875,7 +2875,7 @@ module.exports = {
                   <div className="flex items-center gap-2 pl-8 text-amber-300">📄 __init__.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Inicialização do módulo</span></div>
                   <div className="flex items-center gap-2 pl-8 text-amber-300">📄 transpiler.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Core de tradução Python</span></div>
                   <div className="flex items-center gap-2 pl-8 text-amber-300">📄 cli.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Executor terminal (portulong script.ptg)</span></div>
-                  <div className="flex items-center gap-2 pl-8 text-amber-300">📄 discordia.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Wrapper Discord.py em PT</span></div>
+                  <div className="flex items-center gap-2 pl-8 text-amber-300">📄 discord_pt.py <span className="text-slate-600 text-[10px] font-mono ml-1 font-normal"># Wrapper Discord.py em PT</span></div>
                   <div className="flex items-center gap-2 pl-4 text-emerald-400">
                     <PortulongLogo size={14} />
                     <span>meu_bot.ptg</span>

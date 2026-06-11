@@ -108,10 +108,7 @@ language_configuration = {
     ["(", ")"],
     ["\"", "\""],
     ["'", "'"]
-  ]
-}
-
-tmlanguage_json = {
+  tmlanguage_json = {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "Portulong",
   "scopeName": "source.portulong",
@@ -142,6 +139,12 @@ tmlanguage_json = {
     },
     {
       "include": "#discord"
+    },
+    {
+      "include": "#function-calls"
+    },
+    {
+      "include": "#properties"
     }
   ],
   "repository": {
@@ -207,7 +210,7 @@ tmlanguage_json = {
           "name": "meta.function.portulong",
           "match": "\\\\b(funcao|definir)\\\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
           "captures": {
-            "1": { "name": "keyword.control.portulong" },
+            "1": { "name": "storage.type.function.portulong" },
             "2": { "name": "entity.name.function.portulong" }
           }
         },
@@ -215,7 +218,7 @@ tmlanguage_json = {
           "name": "meta.class.portulong",
           "match": "\\\\b(classe)\\\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
           "captures": {
-            "1": { "name": "keyword.control.portulong" },
+            "1": { "name": "storage.type.class.portulong" },
             "2": { "name": "entity.name.type.class.portulong" }
           }
         }
@@ -225,19 +228,51 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "meta.function.decorator.portulong",
-          "match": "@[a-zA-Z_][a-zA-Z0-9_.]*"
+          "match": "(@)([a-zA-Z_][a-zA-Z0-9_.]*)",
+          "captures": {
+            "1": { "name": "punctuation.definition.decorator.portulong" },
+            "2": { "name": "entity.name.function.decorator.portulong" }
+          }
         }
       ]
     },
     "keywords": {
       "patterns": [
         {
+          "name": "keyword.control.import.portulong",
+          "match": "\\\\b(importar|de|como)\\\\b"
+        },
+        {
+          "name": "keyword.control.conditional.portulong",
+          "match": "\\\\b(se|senao|senaose)\\\\b"
+        },
+        {
+          "name": "keyword.control.repeat.portulong",
+          "match": "\\\\b(para|enquanto)\\\\b"
+        },
+        {
+          "name": "keyword.control.flow.portulong",
+          "match": "\\\\b(retornar|parar|continuar|passar)\\\\b"
+        },
+        {
+          "name": "keyword.control.exception.portulong",
+          "match": "\\\\b(tentar|exceto|finalmente|levantar)\\\\b"
+        },
+        {
+          "name": "keyword.control.async.portulong",
+          "match": "\\\\b(assincrono|aguardar)\\\\b"
+        },
+        {
           "name": "keyword.control.portulong",
-          "match": "\\\\b(se|senao|senaose|para|enquanto|definir|funcao|classe|importar|de|como|retornar|tentar|exceto|finalmente|com|lambda|passar|parar|continuar|global|naolocal|levantar|produzir|assincrono|aguardar)\\b"
+          "match": "\\\\b(com|lambda|global|naolocal|produzir|asseverar)\\\\b"
         },
         {
           "name": "keyword.operator.logical.portulong",
-          "match": "\\\\b(e|ou|nao|em|eh|nao_eh)\\b"
+          "match": "\\\\b(e|ou|nao|em|eh|nao_eh)\\\\b"
+        },
+        {
+          "name": "variable.language.special.self.portulong",
+          "match": "\\\\b(self|contexto)\\\\b"
         }
       ]
     },
@@ -257,7 +292,7 @@ tmlanguage_json = {
         },
         {
           "name": "constant.language.portulong",
-          "match": "\\\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\b"
+          "match": "\\\\b(verdadeiro|falso|nulo|Verdadeiro|Falso|Nulo)\\\\b"
         }
       ]
     },
@@ -265,11 +300,11 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.function.builtin.portulong",
-          "match": "\\\\b(escrever|mostrar|ler|tamanho|inteiro|texto|real|decimal|boleano|lista|dicionario|conjunto|tupla|intervalo|abrir|tipo|somar|absoluto|maximo|minimo|arredondar|mapear|filtrar|ordenado|super|propriedade|zipar|enumerar|objeto|qualquer|todos|ajuda|identidade|reversivel|formatar|obter_atributo|definir_atributo|tem_atributo|excluir_atributo|representacao|proximo|iterador|eh_instancia|eh_subclasse)\\b"
+          "match": "\\\\b(escrever|mostrar|ler|tamanho|inteiro|texto|real|decimal|boleano|lista|dicionario|conjunto|tupla|intervalo|abrir|tipo|somar|absoluto|maximo|minimo|arredondar|mapear|filtrar|ordenado|super|propriedade|zipar|enumerar|objeto|qualquer|todos|ajuda|identidade|reversivel|formatar|obter_atributo|definir_atributo|tem_atributo|excluir_atributo|representacao|proximo|iterador|eh_instancia|eh_subclasse)\\\\b"
         },
         {
           "name": "support.type.exception.portulong",
-          "match": "\\\\b(Excessao|ErroDeValor|ErroDeTipo|ErroDeNome|ErroDeIndice|ErroDeChave|ErroDeImportacao|ErroDeAtributo|ErroDivisaoPorZero|FaltaDeMemoria|ParadaDeIteracao|ErroDoSistema|ArquivoNaoEncontrado|InterrupcaoPeloTeclado|ErroDeAsseveracao|ErroDeExecucao|ErroNaoImplementado)\\b"
+          "match": "\\\\b(Excessao|ErroDeValor|ErroDeTipo|ErroDeNome|ErroDeIndice|ErroDeChave|ErroDeImportacao|ErroDeAtributo|ErroDivisaoPorZero|FaltaDeMemoria|ParadaDeIteracao|ErroDoSistema|ArquivoNaoEncontrado|InterrupcaoPeloTeclado|ErroDeAsseveracao|ErroDeExecucao|ErroNaoImplementado)\\\\b"
         }
       ]
     },
@@ -277,11 +312,30 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.class.discord.portulong",
-          "match": "\\\\b(Robo|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
+          "match": "\\\\b(Robo|discord|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\b"
         },
         {
           "name": "support.function.discord.portulong",
-          "match": "\\\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\b"
+          "match": "\\\\b(prefixo|evento|comando|nome|ajuda|enviar|responder|deletar|adicionar_reacao|remover_reacao|expulsar|banir|limpar|conteudo|autor|canal|servidor|mensagem|usuario|id)\\\\b"
+        }
+      ]
+    },
+    "function-calls": {
+      "patterns": [
+        {
+          "name": "meta.function-call.portulong",
+          "match": "\\\\b([a-zA-Z_][a-zA-Z0-9_]*)\\\\s*(?=\\\\()",
+          "captures": {
+            "1": { "name": "entity.name.function.portulong" }
+          }
+        }
+      ]
+    },
+    "properties": {
+      "patterns": [
+        {
+          "name": "variable.other.property.portulong",
+          "match": "(?<=.)[a-zA-Z_][a-zA-Z0-9_]*\\\\b"
         }
       ]
     }
@@ -292,19 +346,19 @@ snippets_json = {
   "Novo Robô Discord": {
     "prefix": "robo_novo",
     "body": [
-      "importar discordia como discordia",
+      "importar portulong.discord_pt como discord",
       "",
-      "robo = discordia.Robo(prefixo=\"!\")",
+      "robo = discord.Robo(prefixo=\"!\")",
       "",
       "@robo.evento",
       "definir assincrono ao_iniciar():",
-      "    escrever(f\"Robô {robo.utilizador} ligado com sucesso!\")",
+      "    escrever(f\"Robô {robo.usuario} ligado com sucesso!\")",
       "",
       "@robo.comando(nome=\"ping\")",
       "definir assincrono cmd_ping(contexto):",
       "    aguardar contexto.enviar(\"Pong! 🏓\")",
       "",
-      "robo.iniciar(\"${1:SEU_TOKEN_AQUI}\")"
+      "robo.run(\"${1:SEU_TOKEN_AQUI}\")"
     ],
     "description": "Cria a estrutura de um novo Bot de Discord com evento de início e comando de teste."
   },
@@ -376,7 +430,7 @@ snippets_json = {
     "prefix": "robo_comando",
     "body": [
       "@robo.comando(nome=\"${1:nome_do_comando}\")",
-      "definir assincrono cmd_${1:nome_do_comando}(contexto${2:, membro: discordia.Membro}):",
+      "definir assincrono cmd_${1:nome_do_comando}(contexto${2:, membro: discord.Membro}):",
       "    aguardar contexto.enviar(\"${3:Resposta do comando}\")"
     ],
     "description": "Cria um novo comando assíncrono para o Robô do Discord."
