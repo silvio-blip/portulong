@@ -107,26 +107,3 @@ BUILTINS_MAP = {
     "ErroNaoImplementado": "NotImplementedError",
 }
 
-DISCORD_MAP = {
-    "Robo": "Bot",
-    "prefixo": "command_prefix",
-    "evento": "event",
-    "comando": "command",
-    "nome": "name",
-    "ajuda": "help",
-    "enviar": "send",
-    "responder": "reply",
-    "deletar": "delete",
-    "adicionar_reacao": "add_reaction",
-    "remover_reacao": "remove_reaction",
-    "expulsar": "kick",
-    "banir": "ban",
-    "limpar": "purge",
-    "conteudo": "content",
-    "autor": "author",
-    "canal": "channel",
-    "servidor": "guild",
-    "mensagem": "message",
-    "usuario": "user",
-    "id": "id",
-}

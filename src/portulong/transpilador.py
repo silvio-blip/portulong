@@ -3,7 +3,7 @@ Mecanismo de transpilação que converte código Portulong para código Python e
 """
 
 import re
-from .core_keywords import KEYWORDS_MAP, BUILTINS_MAP, DISCORD_MAP
+from .core_keywords import KEYWORDS_MAP, BUILTINS_MAP
 
 def transpilar_codigo(codigo_fonte: str) -> str:
     """
@@ -35,16 +35,21 @@ def transpilar_codigo(codigo_fonte: str) -> str:
     
     processed = re.sub(r'#.*', salvar_comentario, processed)
     
+    # 4. Correções explícitas antes de traduzir palavras-chave individuais
+    # Garante que 'definir assincrono' ou 'funcao assincrono' virem 'async def' sem causar erros de sintaxe (def async)
+    processed = processed.replace("definir assincrono", "async def")
+    processed = processed.replace("funcao assincrono", "async def")
+    processed = re.sub(r'\b(definir|funcao)\s+assincrono\b', 'async def', processed)
+
     # Unir todos os mapeamentos para substituição
     mapeamento_completo = {}
     mapeamento_completo.update(KEYWORDS_MAP)
     mapeamento_completo.update(BUILTINS_MAP)
-    mapeamento_completo.update(DISCORD_MAP)
     
     # Ordenar chaves pelo tamanho de forma decrescente para não quebrar prefixos
     chaves_ordenadas = sorted(mapeamento_completo.keys(), key=len, reverse=True)
     
-    # 4. Substituir palavras-chave usando limites de fronteira de palavra (\b)
+    # 5. Substituir palavras-chave usando limites de fronteira de palavra (\b)
     for chave in chaves_ordenadas:
         valor = mapeamento_completo[chave]
         chave_escapada = re.escape(chave)
@@ -52,11 +57,11 @@ def transpilar_codigo(codigo_fonte: str) -> str:
         regex_fronteira = rf'\b{chave_escapada}\b'
         processed = re.sub(regex_fronteira, valor, processed)
         
-    # 5. Restaurar os comentários originais de trás para frente
+    # 6. Restaurar os comentários originais de trás para frente
     for i in reversed(range(len(comments))):
         processed = processed.replace(f"__COM_PLACEHOLDER_{i}__", comments[i])
          
-    # 6. Restaurar as strings originais de trás para frente
+    # 7. Restaurar as strings originais de trás para frente
     for i in reversed(range(len(strings))):
         processed = processed.replace(f"__STR_PLACEHOLDER_{i}__", strings[i])
         processed = processed.replace(f"__TRIPLE_STR_PLACEHOLDER_{i}__", strings[i])
