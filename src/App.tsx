@@ -1175,6 +1175,9 @@ def transpile(code_str):
         escaped_key = re.escape(key)
         processed = re.sub(rf'\\b{escaped_key}\\b', val, processed)
         
+    # Corrigir ordem de def async (português "definir assincrono") para "async def" exigido pelo Python
+    processed = re.sub(r'\\bdef\\s+async\\b', 'async def', processed)
+        
     # Restore comments
     for i in reversed(range(len(comments))):
          processed = processed.replace(f"__COM_PLACEHOLDER_{i}__", comments[i])

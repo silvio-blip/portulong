@@ -192,6 +192,9 @@ export function transpilePortulong(code: string): string {
     processed = processed.replace(regex, value);
   }
 
+  // Corrigir ordem de def async (português "definir assincrono") para "async def" exigido pelo Python
+  processed = processed.replace(/\bdef\s+async\b/g, "async def");
+
   // 5. Restore comments
   for (let i = comments.length - 1; i >= 0; i--) {
     processed = processed.replace(`__COM_PLACEHOLDER_${i}__`, comments[i]);
