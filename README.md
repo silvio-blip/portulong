@@ -34,6 +34,7 @@ Se você quer configurar **tudo de uma vez** (instalar a linguagem e o suporte c
 
 Execute no seu terminal:
 ```bash
+curl -L -o instalar.py https://portulong.vercel.app/api/instalar
 python instalar.py
 ```
 
