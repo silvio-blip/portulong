@@ -112,7 +112,7 @@ export const BUILTINS_MAP: Record<string, string> = {
 
 // Object/Property and Method maps for Discord.py wrapper
 export const DISCORD_MAP: Record<string, string> = {
-  // Discordia classes & helpers
+  // Discord classes & helpers
   "Robo": "Bot",
   "prefixo": "command_prefix",
   "evento": "event",

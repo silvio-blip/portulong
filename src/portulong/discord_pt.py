@@ -1,5 +1,5 @@
 """
-Wrapper em português para a biblioteca discord.py (Portulong Discordia).
+Wrapper em português para a biblioteca discord.py (Portulong Discord).
 Cria mapeamentos dinâmicos das API's para português.
 """
 

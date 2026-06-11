@@ -1498,7 +1498,7 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.class.discord.portulong",
-          "match": "\\\\\\\\b(Robo|discord|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\\\\\b"
+          "match": "\\\\\\\\b(Robo|discord|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\\\\\b"
         },
         {
           "name": "support.function.discord.portulong",
@@ -1953,7 +1953,7 @@ if __name__ == "__main__":
           patterns: [
             {
               name: "support.class.discord.portulong",
-              match: "\\b(Robo|discord|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
+              match: "\\b(Robo|discord|Intencoes|Membro|Canal|Servidor|Mensagem)\\b"
             },
             {
               name: "support.function.discord.portulong",
@@ -2355,7 +2355,7 @@ module.exports = {
                   <div className="flex items-center gap-2">
                     <Bot size={18} className="text-indigo-400" />
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-indigo-100 leading-tight">Simulador Discordia</span>
+                      <span className="text-xs font-bold text-indigo-100 leading-tight">Simulador Discord</span>
                       <span className="text-[10px] text-slate-500 font-mono leading-none">Ambiente de Testes Virtual</span>
                     </div>
                   </div>

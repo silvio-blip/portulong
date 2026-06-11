@@ -68,29 +68,31 @@ async function generateContentWithRetry(params: {
         return response;
       } catch (err: any) {
         lastError = err;
-        console.warn(`[AI WARN] Failed with model ${model}, retries left: ${retries}. Error:`, err.message || err);
-        
         const errorMessage = String(err.message || err).toLowerCase();
-        const isTransient = err.status === 503 || err.status === 429 || err.status === 500 || 
-                            err.code === 503 || err.code === 429 || err.code === 500 ||
-                            errorMessage.includes("503") || errorMessage.includes("unavailable") ||
-                            errorMessage.includes("demand") || errorMessage.includes("rate limit") ||
-                            errorMessage.includes("quota") || errorMessage.includes("overloaded");
         
-        if (!isTransient) {
-          // If it's a configuration, validation or bad request error, don't try other models
-          break;
-        }
-
         // Critical Optimization: If the model is experiencing high demand, overloaded, or is unavailable,
         // do NOT perform standard retries on this specific model. Immediately failover to the next model.
-        const isHighDemandOrUnavailable = errorMessage.includes("503") || 
+        const isHighDemandOrUnavailable = err.status === 503 || 
+                                         err.code === 503 || 
+                                         errorMessage.includes("503") || 
                                          errorMessage.includes("unavailable") || 
                                          errorMessage.includes("demand") || 
                                          errorMessage.includes("overloaded");
         if (isHighDemandOrUnavailable) {
-          console.warn(`[AI WARN] Model ${model} is unavailable or high demand. Skipping retries and trying fallback model immediately.`);
+          console.log(`[AI INFO] Model ${model} is temporarily experiencing high demand/unavailable. Fast-failing over to the next fallback model...`);
           retries = -1; // Exits the while loop for this model
+          break;
+        }
+        
+        console.warn(`[AI WARN] Failed with model ${model}, retries left: ${retries}. Error:`, err.message || err);
+        
+        const isTransient = err.status === 429 || err.status === 500 || 
+                            err.code === 429 || err.code === 500 ||
+                            errorMessage.includes("rate limit") ||
+                            errorMessage.includes("quota");
+        
+        if (!isTransient) {
+          // If it's a configuration, validation or bad request error, don't try other models
           break;
         }
         
@@ -136,27 +138,29 @@ async function sendChatMessageWithRetry(messagesList: any[], systemInstruction: 
         return response;
       } catch (err: any) {
         lastError = err;
-        console.warn(`[AI CHAT WARN] Failed with model ${model}, retries left: ${retries}. Error:`, err.message || err);
-
         const errorMessage = String(err.message || err).toLowerCase();
-        const isTransient = err.status === 503 || err.status === 429 || err.status === 500 || 
-                            err.code === 503 || err.code === 429 || err.code === 500 ||
-                            errorMessage.includes("503") || errorMessage.includes("unavailable") ||
-                            errorMessage.includes("demand") || errorMessage.includes("rate limit") ||
-                            errorMessage.includes("quota") || errorMessage.includes("overloaded");
-
-        if (!isTransient) {
-          break;
-        }
 
         // Critical Optimization: Skip retries on high demand/unavailability and failover immediately
-        const isHighDemandOrUnavailable = errorMessage.includes("503") || 
+        const isHighDemandOrUnavailable = err.status === 503 || 
+                                         err.code === 503 || 
+                                         errorMessage.includes("503") || 
                                          errorMessage.includes("unavailable") || 
                                          errorMessage.includes("demand") || 
                                          errorMessage.includes("overloaded");
         if (isHighDemandOrUnavailable) {
-          console.warn(`[AI CHAT WARN] Model ${model} is unavailable or high demand. Skipping retries and trying fallback model immediately.`);
+          console.log(`[AI INFO] Model ${model} is temporarily experiencing high demand/unavailable. Fast-failing over to the next fallback model...`);
           retries = -1; // Exits the while loop for this model
+          break;
+        }
+
+        console.warn(`[AI CHAT WARN] Failed with model ${model}, retries left: ${retries}. Error:`, err.message || err);
+
+        const isTransient = err.status === 429 || err.status === 500 || 
+                            err.code === 429 || err.code === 500 ||
+                            errorMessage.includes("rate limit") ||
+                            errorMessage.includes("quota");
+
+        if (!isTransient) {
           break;
         }
 
@@ -323,7 +327,7 @@ Funções Embutidas:
 - round -> arredondar
 
 No Discord:
-- discord -> discordia
+- discord -> discord
 - Bot -> Robo
 - command_prefix -> prefixo
 - event -> evento

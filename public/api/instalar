@@ -315,7 +315,7 @@ tmlanguage_json = {
       "patterns": [
         {
           "name": "support.class.discord.portulong",
-          "match": "\\\\b(Robo|discord|discordia|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\b"
+          "match": "\\\\b(Robo|discord|Intencoes|Membro|Canal|Servidor|Mensagem)\\\\b"
         },
         {
           "name": "support.function.discord.portulong",
