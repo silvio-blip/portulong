@@ -86,22 +86,38 @@ app.get("/api/desinstalar", (req, res) => {
 });
 
 app.get("/portulong.png", (req, res) => {
-  const imgurUrl = "https://i.imgur.com/Wsii1RU.png";
+  const localPath = path.join(process.cwd(), "portulong.png");
+  if (fs.existsSync(localPath)) {
+    try {
+      const stats = fs.statSync(localPath);
+      // Valid raw dragon logo is 167176 bytes. Let's make sure it's not the 34KB placeholder
+      if (stats.size > 50000) {
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Cache-Control", "public, max-age=86400"); // 1 day cache
+        return res.sendFile(localPath);
+      }
+    } catch (e) {
+      console.error("Erro ao ler portulong.png local:", e);
+    }
+  }
+
+  // Fallback to proxying from DuckDuckGo image proxy which bypasses datacenter blocks
+  const ddgUrl = "https://proxy.duckduckgo.com/iu/?u=https://i.imgur.com/Wsii1RU.png&f=1";
   const requestOptions = {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
   };
-  https.get(imgurUrl, requestOptions, (proxyRes) => {
+  https.get(ddgUrl, requestOptions, (proxyRes) => {
     if (proxyRes.statusCode === 200) {
       res.setHeader("Content-Type", "image/png");
-      res.setHeader("Cache-Control", "public, max-age=86400"); // cache for 1 day
+      res.setHeader("Cache-Control", "public, max-age=86400");
       proxyRes.pipe(res);
     } else {
-      res.sendFile(path.join(process.cwd(), "portulong.png"));
+      res.sendFile(localPath);
     }
   }).on("error", () => {
-    res.sendFile(path.join(process.cwd(), "portulong.png"));
+    res.sendFile(localPath);
   });
 });
 
@@ -351,21 +367,52 @@ function downloadIcon() {
     path.join(process.cwd(), "portulong-vscode", "portulong.png")
   ];
   
-  const imgurUrl = "https://i.imgur.com/Wsii1RU.png";
+  // If we already have a valid local portulong.png of correct size, we can copy it locally to other required paths and skip downloading!
+  const rootPath = path.join(process.cwd(), "portulong.png");
+  if (fs.existsSync(rootPath)) {
+    try {
+      const stats = fs.statSync(rootPath);
+      if (stats.size > 50000) {
+        console.log(`[BOOT] Ícone portulong.png local é válido (${stats.size} bytes). Copiando para outras pastas se necessário...`);
+        const localBuffer = fs.readFileSync(rootPath);
+        targetPaths.forEach((p) => {
+          if (p !== rootPath) {
+            try {
+              const dir = path.dirname(p);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+              if (!fs.existsSync(p) || fs.statSync(p).size < 50000) {
+                fs.writeFileSync(p, localBuffer);
+                console.log(`[BOOT] Copiado localmente para: ${p}`);
+              }
+            } catch (err) {
+              console.error(`[BOOT] Erro ao copiar localmente para ${p}:`, err);
+            }
+          }
+        });
+        return; // Skip download entirely
+      }
+    } catch (e) {
+      console.error("Erro ao validar portulong.png local no boot:", e);
+    }
+  }
+
+  const ddgUrl = "https://proxy.duckduckgo.com/iu/?u=https://i.imgur.com/Wsii1RU.png&f=1";
   const requestOptions = {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
   };
 
-  https.get(imgurUrl, requestOptions, (res) => {
+  https.get(ddgUrl, requestOptions, (res) => {
     if (res.statusCode === 200) {
       const data: any[] = [];
       res.on("data", (chunk) => data.push(chunk));
       res.on("end", () => {
         const buffer = Buffer.concat(data);
-        // Ensure it's a valid PNG
-        if (buffer.length > 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+        // Ensure it's a valid PNG and not a small error placeholder
+        if (buffer.length > 50000 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
           targetPaths.forEach((p) => {
             try {
               const dir = path.dirname(p);
@@ -379,14 +426,14 @@ function downloadIcon() {
             }
           });
         } else {
-          console.error("[BOOT] Resposta de Imgur não é um PNG válido.");
+          console.error(`[BOOT] Resposta de Imgur/DDG não tem o tamanho válido de ícone: ${buffer.length} bytes.`);
         }
       });
     } else {
-      console.error(`[BOOT] Falha ao carregar ícone de Imgur: Status ${res.statusCode}`);
+      console.error(`[BOOT] Falha ao carregar ícone de Imgur/DDG: Status ${res.statusCode}`);
     }
   }).on("error", (err) => {
-    console.error("[BOOT] Erro ao conectar com Imgur para download do ícone:", err);
+    console.error("[BOOT] Erro ao conectar com Imgur/DDG para download do ícone:", err);
   });
 }
 

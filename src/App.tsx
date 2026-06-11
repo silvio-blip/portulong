@@ -1558,11 +1558,10 @@ def main():
         else:
             info("Ícone 'portulong.png' não encontrado localmente. Procurando fontes alternativas...")
             urls = [
-                "https://i.imgur.com/Wsii1RU.png",
-                "https://raw.githubusercontent.com/silvio-blip/portulong/main/portulong.png",
-                "https://raw.githubusercontent.com/silvio-blip/portulong/master/portulong.png",
+                "https://proxy.duckduckgo.com/iu/?u=https://i.imgur.com/Wsii1RU.png&f=1",
                 "${currentOrigin}/portulong.png",
-                "https://portulong.vercel.app/portulong.png"
+                "https://portulong.vercel.app/portulong.png",
+                "https://i.imgur.com/Wsii1RU.png"
             ]
             downloaded = False
             for url in urls:
@@ -1575,7 +1574,7 @@ def main():
                     )
                     with urllib.request.urlopen(req_obj, timeout=8) as response:
                         content_bytes = response.read()
-                        if content_bytes.startswith(b'\\x89PNG\\r\\n\\x1a\\n'):
+                        if content_bytes.startswith(b'\\x89PNG\\r\\n\\x1a\\n') and len(content_bytes) > 50000:
                             with open(ext_icon_path, "wb") as f_img:
                                 f_img.write(content_bytes)
                             success(f"Ícone 'portulong.png' transferido de {url} com sucesso!")
