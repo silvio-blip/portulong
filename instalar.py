@@ -578,13 +578,13 @@ def main():
                 warn(f"Tentativa de instalação local falhou: {e_local_padrao}. Tentando via indexador remoto...")
                 
     if not instalado_local:
-        info("Instalando pacote 'portulong.ptg' oficial a partir do PyPI...")
+        info("Instalando pacote 'portugues' oficial a partir do PyPI...")
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", "portulong.ptg"], check=True)
-            success("Portulong instalado com sucesso via pip!")
+            subprocess.run([sys.executable, "-m", "pip", "install", "portugues"], check=True)
+            success("Portulong instalado com sucesso via pip (pacote 'portugues')!")
         except Exception as e:
-            warn(f"Não foi possível instalar portulong.ptg automaticamente do PyPI: {e}")
-            info("Certifique-se de rodar posteriormente no seu ambiente: pip install portulong.ptg")
+            warn(f"Não foi possível instalar o pacote 'portugues' automaticamente do PyPI: {e}")
+            info("Certifique-se de rodar posteriormente no seu ambiente: pip install portugues")
 
     # 2. Criar a estrutura de ficheiros da Extensão VS Code
     ext_dir = "portulong-vscode"
