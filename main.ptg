@@ -1,19 +1,63 @@
-# Exemplo de Teste do Bot em Portulong (PT-PT)
-# Arquivo: main.ptg
+importar discord
+de discord.ext importar commands
+de discord importar ui
 
-importar portulong.discord_pt como discord
+# Configuração base do bot
+intents = discord.Intents.default()
+intents.message_content = Verdadeiro
+bot = commands.Robo(prefixo="!", intents=intents)
 
-# Inicializa o bot com o prefixo selecionado
-robo = discord.Robo(prefixo="!")
+@bot.evento
+definir assincrono on_ready():
+    escrever(f"O robô {bot.user} ligou com sucesso e está pronto para os testes!")
 
-@robo.evento
-definir assincrono ao_iniciar():
-    escrever(f"Robô online! Conectado sob a linguagem Portulong como: {robo.usuario}")
+# 1. Comando Básico: Olá
+@bot.comando()
+definir assincrono ola(contexto):
+    aguardar contexto.enviar(f"Olá, {contexto.autor.name}! Bem-vindo ao servidor.")
 
-@robo.comando(nome="ping")
-definir assincrono resposta_ping(contexto):
-    aguardar contexto.enviar("🏓 Pong! Resposta direta do motor de simulação em Portulong!")
+# 2. Comando Básico: Bom dia
+@bot.comando()
+definir assincrono bom_dia(contexto):
+    aguardar contexto.enviar("☀️ Bom dia! Que o teu dia seja incrível e muito produtivo!")
 
-@robo.comando(nome="falar")
-definir assincrono resposta_falar(contexto, texto):
-    aguardar contexto.enviar(f"Repetindo a pedido do usuário {contexto.autor.nome}: {texto}")
+# 3. Comando Intermédio: Embed (Cartão Bonito)
+@bot.comando()
+definir assincrono info(contexto):
+    # Criar o Embed com cor e título
+    cartao = discord.Embed(
+        title="✨ Informações do Sistema",
+        description="Este é um Embed gerado para testar o motor matemático!",
+        color=discord.Color.blue()
+    )
+    # Adicionar campos de informação
+    cartao.add_field(name="Usuário", value=contexto.autor.name, inline=Verdadeiro)
+    cartao.add_field(name="Servidor", value=contexto.servidor.name, inline=Verdadeiro)
+    cartao.set_footer(text="Processado com excelência.")
+    
+    aguardar contexto.enviar(embed=cartao)
+
+# 4. Comando Avançado: Modal (Formulário via Botão)
+
+# Passo A: Criar a classe do Modal
+classe MeuModal(ui.Modal, title='Formulário de Teste'):
+    resposta = ui.TextInput(label='O que achas desta funcionalidade?', style=discord.TextStyle.paragraph)
+
+    definir assincrono on_submit(self, interaction: discord.Interaction):
+        # O que acontece quando o utilizador clica em "Enviar" no modal
+        aguardar interaction.response.send_message(f"Obrigado pela tua resposta: {self.resposta.value}", ephemeral=Verdadeiro)
+
+# Passo B: Criar a classe do Botão que vai abrir o Modal
+classe BotaoModal(ui.View):
+    @discord.ui.button(label="Abrir Formulário", style=discord.ButtonStyle.green)
+    definir assincrono abrir(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Abre o modal na cara do utilizador
+        aguardar interaction.response.send_modal(MeuModal())
+
+# Passo C: O comando que envia a mensagem com o botão no chat
+@bot.comando()
+definir assincrono formulario(contexto):
+    aguardar contexto.enviar("Clica no botão abaixo para abrir o Modal de teste!", view=BotaoModal())
+
+# Iniciar o bot
+bot.run("COLOCA_O_TEU_TOKEN_AQUI")

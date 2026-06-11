@@ -40,11 +40,6 @@ def transpilar_fallback(codigo_fonte: str) -> str:
     
     processed = re.sub(r'#.*', salvar_comentario, processed)
     
-    # 4. Correções explícitas antes de traduzir palavras-chave individuais
-    processed = processed.replace("definir assincrono", "async def")
-    processed = processed.replace("funcao assincrono", "async def")
-    processed = re.sub(r'\b(definir|funcao)\s+assincrono\b', 'async def', processed)
-
     # Unir todos os mapeamentos para substituição
     mapeamento_completo = {}
     mapeamento_completo.update(KEYWORDS_MAP)
@@ -53,18 +48,16 @@ def transpilar_fallback(codigo_fonte: str) -> str:
     # Ordenar chaves pelo tamanho de forma decrescente para não quebrar prefixos
     chaves_ordenadas = sorted(mapeamento_completo.keys(), key=len, reverse=True)
     
-    # 5. Substituir palavras-chave usando limites de fronteira de palavra (\b)
+    # 4. Substituir palavras-chave usando limites de fronteira de palavra (\b)
     for chave in chaves_ordenadas:
         valor = mapeamento_completo[chave]
         chave_escapada = re.escape(chave)
         regex_fronteira = rf'\b{chave_escapada}\b'
         processed = re.sub(regex_fronteira, valor, processed)
         
-    # 6. Restaurar os comentários originais de trás para frente
+    # 5. Restaurar
     for i in reversed(range(len(comments))):
         processed = processed.replace(f"__COM_PLACEHOLDER_{i}__", comments[i])
-         
-    # 7. Restaurar as strings originais de trás para frente
     for i in reversed(range(len(strings))):
         processed = processed.replace(f"__STR_PLACEHOLDER_{i}__", strings[i])
         processed = processed.replace(f"__TRIPLE_STR_PLACEHOLDER_{i}__", strings[i])
@@ -145,30 +138,28 @@ def transpilar_codigo(codigo_fonte: str) -> str:
     
     while i < n_tokens:
         tok = tokens[i]
+        
+        # Estratégia de Lookahead: Detectar pares 'definir/funcao' + 'assincrono'
+        if i + 1 < n_tokens:
+            tok_next = tokens[i+1]
+            if tok.type == tokenize.NAME and tok_next.type == tokenize.NAME:
+                str1, str2 = tok.string, tok_next.string
+                # Verificações de paridade async-def
+                def_async = (str1 in ('definir', 'funcao') and str2 == 'assincrono')
+                async_def = (str1 == 'assincrono' and str2 in ('definir', 'funcao'))
+                
+                if def_async or async_def:
+                    # Inserir tokens substitutos: nome, string, start (original), end (original/next), orig_len
+                    # async
+                    modified_tokens.append((tokenize.NAME, "async", tok.start, tok.end, len(str1)))
+                    # def
+                    modified_tokens.append((tokenize.NAME, "def", tok_next.start, tok_next.end, len(str2)))
+                    i += 2 # Pular os dois tokens
+                    continue
+        
         tok_type = tok.type
         tok_str = tok.string
         
-        # Padrão Especial: 'definir assincrono' / 'funcao assincrono' ou 'assincrono definir' / 'assincrono funcao' -> 'async def'
-        is_async_def_pair = False
-        if i + 1 < n_tokens and tok_type == tokenize.NAME and tokens[i+1].type == tokenize.NAME:
-            next_tok = tokens[i+1]
-            first_is_def = tok_str in ("definir", "funcao")
-            second_is_async = next_tok.string == "assincrono"
-            first_is_async = tok_str == "assincrono"
-            second_is_def = next_tok.string in ("definir", "funcao")
-            
-            if (first_is_def and second_is_async) or (first_is_async and second_is_def):
-                is_async_def_pair = True
-                
-        if is_async_def_pair:
-            # Swapping semântico preciso: o primeiro token vira 'async', o segundo vira 'def'
-            # Isso mantém a ordem de colunas e espaçamentos perfeitamente reconstituída
-            modified_tokens.append((tokenize.NAME, "async", tok.start, tok.end, len(tok_str)))
-            tok_next = tokens[i+1]
-            modified_tokens.append((tokenize.NAME, "def", tok_next.start, tok_next.end, len(tok_next.string)))
-            i += 2
-            continue
-            
         # Tradução estrutural apenas de tokens de identificação (NAME)
         if tok_type == tokenize.NAME:
             orig_len = len(tok_str)
