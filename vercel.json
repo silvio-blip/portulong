@@ -11,6 +11,14 @@
       "destination": "/instalar.py"
     },
     {
+      "source": "/api/desinstalar",
+      "destination": "/desinstalar.py"
+    },
+    {
+      "source": "/api/desinstalar.py",
+      "destination": "/desinstalar.py"
+    },
+    {
       "source": "/portulong.png",
       "destination": "/portulong.png"
     }

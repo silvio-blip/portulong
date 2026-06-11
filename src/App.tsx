@@ -384,6 +384,13 @@ const PORTULONG_SNIPPETS = [
 ];
 
 export default function App() {
+  const currentHost = typeof window !== "undefined" && !window.location.hostname.includes("ai.studio") && !window.location.hostname.includes("run.app") && !window.location.hostname.includes("localhost")
+    ? window.location.hostname
+    : "portulando.vercel.app";
+  const currentOrigin = typeof window !== "undefined"
+    ? window.location.origin
+    : "https://portulando.vercel.app";
+
   const [activeTab, setActiveTab] = useState<"ide" | "translator" | "docs" | "pypi">("ide");
   const [code, setCode] = useState(TEMPLATES[0].code);
   const [pythonEquivalent, setPythonEquivalent] = useState("");
@@ -1226,7 +1233,7 @@ package_json = {
   "version": "1.0.0",
   "publisher": "silvio-blip",
   "icon": "portulong.png",
-  "homepage": "https://portulong.vercel.app/",
+  "homepage": "${currentOrigin}/",
   "repository": {
     "type": "git",
     "url": "https://github.com/silvio-blip/portulong"
@@ -1549,7 +1556,7 @@ def main():
             info("Ícone 'portulong.png' não encontrado localmente. Baixando diretamente para a pasta da extensão...")
             try:
                 import urllib.request
-                urllib.request.urlretrieve("https://portulong.vercel.app/portulong.png", ext_icon_path)
+                urllib.request.urlretrieve("${currentOrigin}/portulong.png", ext_icon_path)
                 success("Ícone 'portulong.png' transferido diretamente para a extensão com sucesso!")
             except Exception as e_dl:
                 warn(f"Não foi possível transferir o ícone automaticamente: {e_dl}")
@@ -1615,6 +1622,76 @@ if __name__ == '__main__':
     main()
 `);
 
+    // Add uninstaller script to the ZIP bundle
+    zip.file("desinstalar.py", `import os
+import sys
+import subprocess
+import shutil
+
+def info(msg):
+    print(f"[*] {msg}")
+
+def success(msg):
+    print(f"[+] {msg}")
+
+def warn(msg):
+    print(f"[!] {msg}")
+
+def main():
+    print("="*60)
+    print("   DESINSTALADOR COMPLETO DO PORTULONG E DA EXTENSÃO VS CODE")
+    print("="*60)
+
+    # 1. Desinstalar pacotes do pip
+    info("1/3. Desinstalando linguagens e bibliotecas Python instaladas...")
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "portulong.ptg"], check=False)
+        success("Pacote 'portulong.ptg' desinstalado do pip com sucesso!")
+    except Exception as e:
+        warn(f"Erro ao desinstalar pelo pip: {e}")
+
+    # 2. Desinstalar Extensão do VS Code
+    info("2/3. Removendo a extensão diretamente do VS Code...")
+    code_path = shutil.which("code")
+    if code_path:
+        try:
+            subprocess.run([code_path, "--uninstall-extension", "silvio-blip.portulong-vscode"], check=True, shell=os.name == 'nt')
+            success("Suporte à linguagem Portulong removido do VS Code com sucesso!")
+        except Exception as e:
+            warn(f"Erro ao pedir remoção automática da extensão ao comando 'code': {e}")
+    else:
+        info("Aviso: Comando 'code' não detetado no terminal. Se estiver na sua máquina local,")
+        print("  abra as extensões no VS Code, procure por 'Portulong support' e clique em 'Desinstalar'.")
+
+    # 3. Remover diretórios locais gerados pelo instalador
+    info("3/3. Eliminando diretórios locais de compilação da extensão...")
+    ext_dir = "portulong-vscode"
+    if os.path.exists(ext_dir):
+        try:
+            shutil.rmtree(ext_dir)
+            success(f"Diretório temporário '{ext_dir}' apagado com absoluto êxito!")
+        except Exception as e:
+            warn(f"Durante a eliminação da pasta '{ext_dir}': {e}")
+            
+    # Remove qualquer vsix gerado
+    curr_files = os.listdir(".")
+    for fn in curr_files:
+        if fn.endswith(".vsix") and "portulong" in fn:
+            try:
+                os.remove(fn)
+                success(f"Instalador empacotado '{fn}' destruído com sucesso!")
+            except Exception:
+                pass
+
+    print()
+    print("="*60)
+    print("   DESINSTALADO COM SUCESSO! SEU AMBIENTE RETORNOU AO ORIGINAL")
+    print("="*60)
+
+if __name__ == "__main__":
+    main()
+`);
+
     // VS Code Extension directories structure inside Zip
     const extFolder = zip.folder("portulong-vscode")!;
 
@@ -1630,7 +1707,7 @@ if __name__ == '__main__':
       version: "1.0.0",
       publisher: "silvio-blip",
       icon: "portulong.png",
-      homepage: "https://portulong.vercel.app/",
+      homepage: currentOrigin + "/",
       repository: {
         type: "git",
         url: "https://github.com/silvio-blip/portulong"
@@ -1855,7 +1932,7 @@ module.exports = {
               </span>
             </div>
             <p className="text-xs text-slate-400 tracking-tight flex items-center gap-1.5 flex-wrap">
-              Criador de Bots do Discord em Português • <a id="main-header-vercel-link" href="https://portulong.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 font-mono font-medium">portulong.vercel.app</a>
+              Criador de Bots do Discord em Português • <a id="main-header-vercel-link" href={currentOrigin} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 font-mono font-medium">{currentHost}</a>
             </p>
           </div>
         </div>
@@ -2610,7 +2687,7 @@ module.exports = {
             </div>
 
             {/* 🛸 NOVO: INSTALAÇÃO AUTOMÁTICA EM 1 CLIQUE */}
-            <div className="p-5 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950/20 to-slate-950/40 shadow-inner flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div className="p-5 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950/20 to-slate-950/40 shadow-inner flex flex-col lg:flex-row lg:items-center justify-between gap-5">
               <div className="flex-1">
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono tracking-wider bg-emerald-500/20 text-emerald-400 uppercase border border-emerald-500/30">
                   RECOMENDADO
@@ -2621,28 +2698,44 @@ module.exports = {
                 <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-3xl">
                   Quer configurar a linguagem <code className="text-emerald-400 bg-slate-950 px-1 py-0.2 rounded font-mono">portulong.ptg</code> instalada do PyPI e ao mesmo tempo habilitar a <strong>Extensão Oficial do VS Code</strong> (com Destaque de Cores e o botão <strong>Play/Run</strong>) no seu terminal e editor de forma instantânea?
                 </p>
-                <div className="flex flex-wrap items-center gap-3 mt-3">
-                  <span className="text-xs font-mono font-bold text-slate-400">Só precisa de rodar:</span>
-                  <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 flex items-center gap-2 font-mono text-xs text-emerald-400 shadow-inner select-all">
-                    <span>python instalar.py</span>
+                <div className="flex flex-wrap items-center gap-6 mt-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-slate-400">Para Instalar:</span>
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 flex items-center gap-2 font-mono text-xs text-emerald-400 shadow-inner select-all">
+                      <span>python instalar.py</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-slate-400">Para Desinstalar:</span>
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 flex items-center gap-2 font-mono text-xs text-rose-400 shadow-inner select-all">
+                      <span>python desinstalar.py</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-wrap sm:flex-nowrap gap-3">
                 <a
                   href="/api/instalar"
                   download="instalar.py"
-                  className="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black font-mono tracking-wider text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                  className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black font-mono tracking-wider text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
                 >
                   <Download size={14} />
                   BAIXAR INSTALADOR
                 </a>
+                <a
+                  href="/api/desinstalar"
+                  download="desinstalar.py"
+                  className="px-4 py-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-rose-400 hover:text-rose-300 font-bold font-mono tracking-wider text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <Download size={14} className="text-rose-500" />
+                  DESINSTALADOR
+                </a>
                 <button
                   onClick={() => setActiveTab("docs")}
-                  className="px-5 py-3 bg-slate-950 hover:bg-slate-900 border border-slate-850 text-slate-300 font-bold font-mono text-xs rounded-xl transition-all flex items-center justify-center gap-2"
+                  className="px-4 py-3 bg-slate-950 hover:bg-slate-900 border border-slate-850 text-slate-300 font-bold font-mono text-xs rounded-xl transition-all flex items-center justify-center gap-2"
                 >
                   <BookOpen size={14} className="text-slate-500" />
-                  VER DICIONÁRIO
+                  DICIONÁRIO
                 </button>
               </div>
             </div>

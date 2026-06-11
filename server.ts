@@ -5,6 +5,7 @@
 
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -39,7 +40,48 @@ function getAIClient(): GoogleGenAI {
 
 // AI API endpoints
 app.get("/api/instalar", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "instalar.py"));
+  const filePath = path.join(process.cwd(), "instalar.py");
+  try {
+    let content = fs.readFileSync(filePath, "utf8");
+    const proto = req.headers["x-forwarded-proto"] || req.protocol || "https";
+    const host = req.get("host") || "portulando.vercel.app";
+    const siteUrl = `${proto}://${host}`;
+    
+    // Dynamically adjust any Vercel domain to the active request domain
+    content = content.replace(/https:\/\/portulong\.vercel\.app/g, siteUrl);
+    content = content.replace(/portulong\.vercel\.app/g, host);
+    
+    // Support portulando as well
+    content = content.replace(/https:\/\/portulando\.vercel\.app/g, siteUrl);
+    content = content.replace(/portulando\.vercel\.app/g, host);
+
+    res.setHeader("Content-Type", "text/x-python");
+    res.setHeader("Content-Disposition", "attachment; filename=instalar.py");
+    res.send(content);
+  } catch (err) {
+    res.sendFile(filePath);
+  }
+});
+
+app.get("/api/desinstalar", (req, res) => {
+  const filePath = path.join(process.cwd(), "desinstalar.py");
+  try {
+    let content = fs.readFileSync(filePath, "utf8");
+    const proto = req.headers["x-forwarded-proto"] || req.protocol || "https";
+    const host = req.get("host") || "portulando.vercel.app";
+    const siteUrl = `${proto}://${host}`;
+    
+    content = content.replace(/https:\/\/portulong\.vercel\.app/g, siteUrl);
+    content = content.replace(/portulong\.vercel\.app/g, host);
+    content = content.replace(/https:\/\/portulando\.vercel\.app/g, siteUrl);
+    content = content.replace(/portulando\.vercel\.app/g, host);
+
+    res.setHeader("Content-Type", "text/x-python");
+    res.setHeader("Content-Disposition", "attachment; filename=desinstalar.py");
+    res.send(content);
+  } catch (err) {
+    res.sendFile(filePath);
+  }
 });
 
 app.get("/portulong.png", (req, res) => {
