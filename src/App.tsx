@@ -2573,7 +2573,6 @@ module.exports = {
             Dicionário / Guia
           </button>
 
-
         </nav>
       </header>
 
