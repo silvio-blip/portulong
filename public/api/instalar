@@ -329,16 +329,43 @@ def main():
     ext_icon_path = os.path.join(ext_dir, "portulong.png")
     if not os.path.exists(ext_icon_path):
         if os.path.exists("portulong.png"):
-            shutil.copy("portulong.png", ext_icon_path)
-            info("Ícone 'portulong.png' copiado localmente para o diretório da extensão!")
-        else:
-            info("Ícone 'portulong.png' não encontrado localmente. Baixando diretamente para a pasta da extensão...")
             try:
-                import urllib.request
-                urllib.request.urlretrieve("https://portulong.vercel.app/portulong.png", ext_icon_path)
-                success("Ícone 'portulong.png' transferido diretamente para a extensão com sucesso!")
-            except Exception as e_dl:
-                warn(f"Não foi possível transferir o ícone automaticamente: {e_dl}")
+                shutil.copy("portulong.png", ext_icon_path)
+                info("Ícone 'portulong.png' copiado localmente para o diretório da extensão!")
+            except Exception:
+                pass
+        else:
+            info("Ícone 'portulong.png' não encontrado localmente. Procurando fontes alternativas...")
+            urls = [
+                "https://i.imgur.com/Wsii1RU.png",
+                "https://raw.githubusercontent.com/silvio-blip/portulong/main/portulong.png",
+                "https://raw.githubusercontent.com/silvio-blip/portulong/master/portulong.png",
+                "https://portulong.vercel.app/portulong.png"
+            ]
+            downloaded = False
+            for url in urls:
+                try:
+                    info(f"Tentando baixar ícone de: {url}")
+                    import urllib.request
+                    req_obj = urllib.request.Request(
+                        url, 
+                        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+                    )
+                    with urllib.request.urlopen(req_obj, timeout=8) as response:
+                        content_bytes = response.read()
+                        if content_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
+                            with open(ext_icon_path, "wb") as f_img:
+                                f_img.write(content_bytes)
+                            success(f"Ícone 'portulong.png' transferido de {url} com sucesso!")
+                            downloaded = True
+                            break
+                        else:
+                            warn(f"Resposta de {url} não é um PNG válido (tipo incorreto).")
+                except Exception as e_dl:
+                    warn(f"Erro ao baixar de {url}: {e_dl}")
+            
+            if not downloaded:
+                warn("Não foi possível transferir o ícone automaticamente. Você pode colocar manualmente um arquivo 'portulong.png' dentro de 'portulong-vscode/'.")
 
     # Limpeza de qualquer ícone duplicado no diretório atual (fora de qualquer pasta/raiz)
     # se o usuário tiver rodado o instalador que gerou o arquivo no diretório pai

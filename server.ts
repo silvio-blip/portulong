@@ -6,6 +6,7 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import https from "https";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -85,7 +86,23 @@ app.get("/api/desinstalar", (req, res) => {
 });
 
 app.get("/portulong.png", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "portulong.png"));
+  const imgurUrl = "https://i.imgur.com/Wsii1RU.png";
+  const requestOptions = {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+  };
+  https.get(imgurUrl, requestOptions, (proxyRes) => {
+    if (proxyRes.statusCode === 200) {
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Cache-Control", "public, max-age=86400"); // cache for 1 day
+      proxyRes.pipe(res);
+    } else {
+      res.sendFile(path.join(process.cwd(), "portulong.png"));
+    }
+  }).on("error", () => {
+    res.sendFile(path.join(process.cwd(), "portulong.png"));
+  });
 });
 
 app.post("/api/ai/translate", async (req, res) => {
@@ -326,8 +343,56 @@ async function setupVite() {
   }
 }
 
+// Helper to download the correct icon locally if needed
+function downloadIcon() {
+  const targetPaths = [
+    path.join(process.cwd(), "portulong.png"),
+    path.join(process.cwd(), "public", "portulong.png"),
+    path.join(process.cwd(), "portulong-vscode", "portulong.png")
+  ];
+  
+  const imgurUrl = "https://i.imgur.com/Wsii1RU.png";
+  const requestOptions = {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+  };
+
+  https.get(imgurUrl, requestOptions, (res) => {
+    if (res.statusCode === 200) {
+      const data: any[] = [];
+      res.on("data", (chunk) => data.push(chunk));
+      res.on("end", () => {
+        const buffer = Buffer.concat(data);
+        // Ensure it's a valid PNG
+        if (buffer.length > 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+          targetPaths.forEach((p) => {
+            try {
+              const dir = path.dirname(p);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+              fs.writeFileSync(p, buffer);
+              console.log(`[BOOT] Ícone de portulong gravado com sucesso em: ${p}`);
+            } catch (err) {
+              console.error(`[BOOT] Erro ao gravar ícone em ${p}:`, err);
+            }
+          });
+        } else {
+          console.error("[BOOT] Resposta de Imgur não é um PNG válido.");
+        }
+      });
+    } else {
+      console.error(`[BOOT] Falha ao carregar ícone de Imgur: Status ${res.statusCode}`);
+    }
+  }).on("error", (err) => {
+    console.error("[BOOT] Erro ao conectar com Imgur para download do ícone:", err);
+  });
+}
+
 // Start Server
 setupVite().then(() => {
+  downloadIcon();
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Portulong Studio Server running on http://0.0.0.0:${PORT}`);
   });
