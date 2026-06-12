@@ -1,52 +1,41 @@
-import io
 import re
-import tokenize
 from .core_keywords import KEYWORDS_MAP, BUILTINS_MAP
 
-def pre_processar_code(codigo_fonte: str) -> str:
-    """
-    Blindagem absoluta: Corrige estrutura 'definir assincrono' para 'async def'
-    antes de qualquer tokenização.
-    """
+def transpilar_codigo(codigo_fonte: str) -> str:
+    # 1. Proteger strings e comentários
     strings = []
     comments = []
+    def salvar_str(m):
+        strings.append(m.group(0))
+        return f"__STR_{len(strings)-1}__"
+    def salvar_com(m):
+        comments.append(m.group(0))
+        return f"__COM_{len(comments)-1}__"
+        
+    processed = re.sub(r'"""[\s\S]*?"""|''' + "'''|'[^']*'|\"[^\"]*\"", salvar_str, codigo_fonte)
+    processed = re.sub(r'#.*', salvar_com, processed)
     
-    # 1. Proteger estruturas
-    def salvar(m, arr, prefijo):
-        arr.append(m.group(0))
-        return f"__{prefijo}_{len(arr)-1}__"
-    
-    processed = re.sub(r'"""[\s\S]*?"""|''' + "'''|'[^']*'|\"[^\"]*\"", lambda m: salvar(m, strings, 'STR'), codigo_fonte)
-    processed = re.sub(r'#.*', lambda m: salvar(m, comments, 'COM'), processed)
-    
-    # 2. Blindagem de Async
+    # 2. Corrigir estrutura assíncrona (reordenação)
+    # Reordenar 'definir assincrono' ou 'funcao assincrono' para 'async def'
     processed = re.sub(r'\b(definir|funcao)\s+assincrono\b', 'async def', processed)
     processed = re.sub(r'\bassincrono\s+(definir|funcao)\b', 'async def', processed)
+    processed = re.sub(r'\bassincrono\s+com\b', 'async with', processed)
+    processed = re.sub(r'\bassincrono\s+para\b', 'async for', processed)
     
-    # 3. Restaurar
+    # 3. Mapeamento robusto de palavras-chave e builtins
+    full_map = {**KEYWORDS_MAP, **BUILTINS_MAP}
+    sorted_keys = sorted(full_map.keys(), key=len, reverse=True)
+    
+    for key in sorted_keys:
+        val = full_map[key]
+        # Usar fronteira de palavra para substituição segura
+        pattern = r'\b' + re.escape(key) + r'\b'
+        processed = re.sub(pattern, val, processed)
+        
+    # 4. Restaurar comentários e strings
     for i in reversed(range(len(comments))):
         processed = processed.replace(f"__COM_{i}__", comments[i])
     for i in reversed(range(len(strings))):
         processed = processed.replace(f"__STR_{i}__", strings[i])
         
     return processed
-
-def transpilar_codigo(codigo_fonte: str) -> str:
-    codigo_fonte = pre_processar_code(codigo_fonte)
-    
-    # Substituição final em tokens NAME usando KEYWORDS_MAP e BUILTINS_MAP
-    def substituir_nome(tok_str):
-        if tok_str in KEYWORDS_MAP: return KEYWORDS_MAP[tok_str]
-        if tok_str in BUILTINS_MAP: return BUILTINS_MAP[tok_str]
-        return tok_str
-        
-    tokens = tokenize.generate_tokens(io.StringIO(codigo_fonte).readline)
-    
-    transpilado = ""
-    for tok_type, tok_str, start, end, line in tokens:
-        if tok_type == tokenize.NAME:
-            transpilado += substituir_nome(tok_str)
-        else:
-            transpilado += tok_str
-            
-    return transpilado
