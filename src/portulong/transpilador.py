@@ -12,27 +12,28 @@ def transpilar_codigo(codigo_fonte: str) -> str:
         comments.append(m.group(0))
         return f"__COM_{len(comments)-1}__"
         
-    processed = re.sub(r'"""[\s\S]*?"""|''' + "'''|'[^']*'|\"[^\"]*\"", salvar_str, codigo_fonte)
+    # Regex brutal que apanha todas as aspas (triplas, duplas e simples)
+    regex_strings = r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'|"[^"\\]*(?:\\.[^"\\]*)*"|\'[^\'\\]*(?:\\.[^\'\\]*)*\''
+    processed = re.sub(regex_strings, salvar_str, codigo_fonte)
+    
     processed = re.sub(r'#.*', salvar_com, processed)
     
-    # 2. Corrigir estrutura assíncrona (reordenação)
-    # Reordenar 'definir assincrono' ou 'funcao assincrono' para 'async def'
+    # 2. Corrigir estrutura assíncrona blindada
     processed = re.sub(r'\b(definir|funcao)\s+assincrono\b', 'async def', processed)
     processed = re.sub(r'\bassincrono\s+(definir|funcao)\b', 'async def', processed)
     processed = re.sub(r'\bassincrono\s+com\b', 'async with', processed)
     processed = re.sub(r'\bassincrono\s+para\b', 'async for', processed)
     
-    # 3. Mapeamento robusto de palavras-chave e builtins
+    # 3. Mapeamento robusto
     full_map = {**KEYWORDS_MAP, **BUILTINS_MAP}
     sorted_keys = sorted(full_map.keys(), key=len, reverse=True)
     
     for key in sorted_keys:
         val = full_map[key]
-        # Usar fronteira de palavra para substituição segura
         pattern = r'\b' + re.escape(key) + r'\b'
         processed = re.sub(pattern, val, processed)
         
-    # 4. Restaurar comentários e strings
+    # 4. Restaurar tudo
     for i in reversed(range(len(comments))):
         processed = processed.replace(f"__COM_{i}__", comments[i])
     for i in reversed(range(len(strings))):
