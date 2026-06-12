@@ -16,10 +16,10 @@ def transpilar_codigo(codigo_fonte: str) -> str:
     
     processed = re.sub(r'#.*', salvar_com, processed)
     
-    processed = re.sub(r'\b(definir|funcao)\s+assincrono\b', 'async def', processed)
-    processed = re.sub(r'\bassincrono\s+(definir|funcao)\b', 'async def', processed)
-    processed = re.sub(r'\bassincrono\s+com\b', 'async with', processed)
-    processed = re.sub(r'\bassincrono\s+para\b', 'async for', processed)
+    # 2. Corrigir estrutura assíncrona de forma robusta
+    processed = re.sub(r'\b(definir|funcao|def)\s+(assincrono|async)\b', 'async def', processed, flags=re.IGNORECASE)
+    processed = re.sub(r'\b(assincrono|async)\s+(com)\b', 'async with', processed, flags=re.IGNORECASE)
+    processed = re.sub(r'\b(assincrono|async)\s+(para)\b', 'async for', processed, flags=re.IGNORECASE)
     
     full_map = {**KEYWORDS_MAP, **BUILTINS_MAP}
     sorted_keys = sorted(full_map.keys(), key=len, reverse=True)
