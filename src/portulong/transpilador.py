@@ -12,12 +12,12 @@ def pre_processar_code(codigo_fonte: str) -> str:
     comments = []
     
     # 1. Proteger estruturas
-    def salvar(m, arr):
+    def salvar(m, arr, prefijo):
         arr.append(m.group(0))
-        return f"__PLACEHOLDER_{len(arr)-1}__"
+        return f"__{prefijo}_{len(arr)-1}__"
     
-    processed = re.sub(r'"""[\s\S]*?"""|''' + "'''|'[^']*'|\"[^\"]*\"", lambda m: salvar(m, strings), codigo_fonte)
-    processed = re.sub(r'#.*', lambda m: salvar(m, comments), processed)
+    processed = re.sub(r'"""[\s\S]*?"""|''' + "'''|'[^']*'|\"[^\"]*\"", lambda m: salvar(m, strings, 'STR'), codigo_fonte)
+    processed = re.sub(r'#.*', lambda m: salvar(m, comments, 'COM'), processed)
     
     # 2. Blindagem de Async
     processed = re.sub(r'\b(definir|funcao)\s+assincrono\b', 'async def', processed)
@@ -25,9 +25,9 @@ def pre_processar_code(codigo_fonte: str) -> str:
     
     # 3. Restaurar
     for i in reversed(range(len(comments))):
-        processed = processed.replace(f"__PLACEHOLDER_{i}__", comments[i])
+        processed = processed.replace(f"__COM_{i}__", comments[i])
     for i in reversed(range(len(strings))):
-        processed = processed.replace(f"__PLACEHOLDER_{i}__", strings[i])
+        processed = processed.replace(f"__STR_{i}__", strings[i])
         
     return processed
 
