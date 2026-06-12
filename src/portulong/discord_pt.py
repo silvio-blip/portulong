@@ -4,6 +4,16 @@ import asyncio
 import functools
 import inspect
 
+def unwrap_object(obj):
+    return obj._obj if hasattr(obj, '_obj') else obj
+
+def wrap_object(obj):
+    if obj is None or hasattr(obj, '_obj'): return obj
+    if isinstance(obj, discord.Embed): return Embutido(obj)
+    if not isinstance(obj, (str, int, float, bool, dict, list, tuple, set)):
+        return ObjetoProxy(obj)
+    return obj
+
 class ObjetoProxy:
     def __init__(self, obj):
         super().__setattr__('_obj', obj)
@@ -23,7 +33,7 @@ class ObjetoProxy:
             @functools.wraps(original_attr)
             def metodo_empacotado(*args, **kwargs):
                 if 'nome' in kwargs: kwargs['name'] = kwargs.pop('nome')
-                if 'embutido' in kwargs: kwargs['embed'] = kwargs.pop('embutido')
+                if 'embutido' in kwargs: kwargs['embed'] = unwrap_object(kwargs.pop('embutido'))
                 
                 args_desempacotados = [unwrap_object(arg) for arg in args]
                 kwargs_desempacotados = {k: unwrap_object(v) for k, v in kwargs.items()}
@@ -72,16 +82,6 @@ class Embutido(discord.Embed):
     def definir_autor(self, nome, icone_url=None):
         self.set_author(name=nome, icon_url=icone_url)
         return self
-
-def wrap_object(obj):
-    if obj is None or hasattr(obj, '_obj'): return obj
-    if isinstance(obj, discord.Embed): return Embutido(obj)
-    if not isinstance(obj, (str, int, float, bool, dict, list, tuple, set)):
-        return ObjetoProxy(obj)
-    return obj
-
-def unwrap_object(obj):
-    return obj._obj if hasattr(obj, '_obj') else obj
 
 class Robo(commands.Bot):
     def __init__(self, prefixo, intents, *args, **kwargs):
