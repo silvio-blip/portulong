@@ -48,9 +48,9 @@ class ObjetoProxy:
             return metodo_empacotado
         return wrap_object(original_attr)
 
-class ContextoPT:
+class ContextoPT(ObjetoProxy):
     def __init__(self, ctx):
-        self._ctx = ctx
+        super().__init__(ctx)
         self.autor = wrap_object(ctx.author)
         self.canal = wrap_object(ctx.channel)
         self.servidor = wrap_object(ctx.guild)
@@ -58,10 +58,11 @@ class ContextoPT:
 
     async def enviar(self, *args, **kwargs):
         if 'embutido' in kwargs: kwargs['embed'] = unwrap_object(kwargs.pop('embutido'))
-        return wrap_object(await self._ctx.send(*args, **kwargs))
+        return wrap_object(await self._obj.send(*args, **kwargs))
 
-    def __getattr__(self, name):
-        return getattr(self._ctx, name)
+    async def responder(self, *args, **kwargs):
+        if 'embutido' in kwargs: kwargs['embed'] = unwrap_object(kwargs.pop('embutido'))
+        return wrap_object(await self._obj.reply(*args, **kwargs))
 
 class Intencoes:
     @classmethod
@@ -84,10 +85,16 @@ class Embutido(discord.Embed):
         return self
 
 class Robo(commands.Bot):
-    def __init__(self, prefixo, intents, *args, **kwargs):
-        super().__init__(command_prefix=prefixo, intents=intents, *args, **kwargs)
+    def __init__(self, prefixo=None, intents=None, *args, **kwargs):
+        # Suporta tanto passagem de parâmetro em português quanto inglês (original)
+        pref = prefixo or kwargs.pop('prefixo', None) or kwargs.pop('command_prefix', None)
+        intt = intents or kwargs.pop('intents', None) or kwargs.pop('intencoes', None)
+        super().__init__(command_prefix=pref, intents=intt, *args, **kwargs)
 
     def comando(self, *args_cmd, **kwargs_cmd):
+        if 'nome' in kwargs_cmd: kwargs_cmd['name'] = kwargs_cmd.pop('nome')
+        if 'ajuda' in kwargs_cmd: kwargs_cmd['help'] = kwargs_cmd.pop('ajuda')
+        
         def decorador(func):
             sig = inspect.signature(func)
             @functools.wraps(func)
@@ -95,14 +102,24 @@ class Robo(commands.Bot):
                 ctx_pt = ContextoPT(ctx)
                 return await func(ctx_pt, *args, **kwargs)
             wrapper.__signature__ = sig
-            self.add_command(commands.Command(wrapper, name=func.__name__, *args_cmd, **kwargs_cmd))
+            self.add_command(commands.Command(wrapper, name=kwargs_cmd.get('name', func.__name__), *args_cmd, **kwargs_cmd))
             return wrapper
         return decorador
 
+    command = comando
+
     def evento(self, func):
-        mapeamento = {'ao_iniciar': 'on_ready', 'ao_mensagem': 'on_message'}
-        func.__name__ = mapeamento.get(func.__name__, func.__name__)
-        return self.event(func)
+        mapeamento = {
+            'ao_iniciar': 'on_ready',
+            'ao_mensagem': 'on_message',
+            'ao_pronto': 'on_ready'
+        }
+        name = func.__name__
+        mapped_name = mapeamento.get(name, name)
+        func.__name__ = mapped_name
+        return super().event(func)
+
+    event = evento
 
     def executar(self, token):
         self.run(token)
@@ -111,3 +128,23 @@ class Robo(commands.Bot):
 Embed = Embutido
 Color = Cor
 Intents = Intencoes
+
+import discord.ui as ui
+
+# Wrapper para o módulo discord.ext.commands
+class CommandsWrapper:
+    def __init__(self):
+        from discord.ext import commands as _real_commands
+        self._real_commands = _real_commands
+        self.Robo = Robo
+        self.Bot = Robo
+
+    def __getattr__(self, name):
+        return getattr(self._real_commands, name)
+
+commands = CommandsWrapper()
+
+def __getattr__(name):
+    # Fallback para o módulo discord original para qualquer atributo não mapeado
+    return getattr(discord, name)
+Bot = Robo

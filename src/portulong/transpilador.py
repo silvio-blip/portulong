@@ -1,5 +1,5 @@
 import re
-from .core_keywords import KEYWORDS_MAP, BUILTINS_MAP
+from .core_keywords import KEYWORDS_MAP, BUILTINS_MAP, DISCORD_MAP
 
 def transpilar_codigo(codigo_fonte: str) -> str:
     strings = []
@@ -16,12 +16,17 @@ def transpilar_codigo(codigo_fonte: str) -> str:
     
     processed = re.sub(r'#.*', salvar_com, processed)
     
-    # 2. Corrigir estrutura assíncrona de forma robusta
+    # 2. Interceptar e mapear os imports do discord padrão para o wrapper em português
+    processed = re.sub(r'\b(importar|import)\s+discord\b', 'import portulong.discord_pt as discord', processed)
+    processed = re.sub(r'\b(de|from)\s+discord\.ext\s+(importar|import)\s+commands\b', 'from portulong.discord_pt import commands', processed)
+    processed = re.sub(r'\b(de|from)\s+discord\s+(importar|import)\s+ui\b', 'from portulong.discord_pt import ui', processed)
+
+    # 3. Corrigir estrutura assíncrona de forma robusta
     processed = re.sub(r'\b(definir|funcao|def)\s+(assincrono|async)\b', 'async def', processed, flags=re.IGNORECASE)
     processed = re.sub(r'\b(assincrono|async)\s+(com)\b', 'async with', processed, flags=re.IGNORECASE)
     processed = re.sub(r'\b(assincrono|async)\s+(para)\b', 'async for', processed, flags=re.IGNORECASE)
     
-    full_map = {**KEYWORDS_MAP, **BUILTINS_MAP}
+    full_map = {**KEYWORDS_MAP, **BUILTINS_MAP, **DISCORD_MAP}
     sorted_keys = sorted(full_map.keys(), key=len, reverse=True)
     
     for key in sorted_keys:

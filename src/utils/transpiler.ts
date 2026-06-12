@@ -170,6 +170,11 @@ export function transpilePortulong(code: string): string {
     return `__COM_PLACEHOLDER_${comments.length - 1}__`;
   });
 
+  // Intercept and map standard discord imports to wrapper in Portuguese
+  processed = processed.replace(/\b(importar|import)\s+discord\b/g, "import portulong.discord_pt as discord");
+  processed = processed.replace(/\b(de|from)\s+discord\.ext\s+(importar|import)\s+commands\b/g, "from portulong.discord_pt import commands");
+  processed = processed.replace(/\b(de|from)\s+discord\s+(importar|import)\s+ui\b/g, "from portulong.discord_pt import ui");
+
   // Combine maps for regex replacement
   const fullMap = {
     ...KEYWORDS_MAP,
