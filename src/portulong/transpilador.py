@@ -9,11 +9,61 @@ import re
 import tokenize
 from .core_keywords import KEYWORDS_MAP, BUILTINS_MAP
 
+def pre_processar_async_def(codigo_fonte: str) -> str:
+    """
+    Substitui todas as variações de definir/funcao assincrono para async def
+    garantindo que strings e comentários fiquem protegidos de modificações indevidas.
+    """
+    strings = []
+    comments = []
+    
+    # 1. Proteger strings multilaterais de aspas triplas
+    def salvar_aspas_triplas(m):
+        strings.append(m.group(0))
+        return f"__TRIPLE_STR_PLACEHOLDER_{len(strings)-1}__"
+    
+    processed = re.sub(r'"""[\s\S]*?"""', salvar_aspas_triplas, codigo_fonte)
+    processed = re.sub(r"'''[\s\S]*?'''", salvar_aspas_triplas, processed)
+    
+    # 2. Proteger strings compostas padrões de aspas simples/duplas
+    def salvar_string(m):
+        strings.append(m.group(0))
+        return f"__STR_PLACEHOLDER_{len(strings)-1}__"
+    
+    processed = re.sub(r'"([^"\\\\]|\\\\.)*"', salvar_string, processed)
+    processed = re.sub(r"'([^'\\\\]|\\\\.)*'", salvar_string, processed)
+    
+    # 3. Proteger os comentários (linhas iniciadas por #)
+    def salvar_comentario(m):
+        comments.append(m.group(0))
+        return f"__COM_PLACEHOLDER_{len(comments)-1}__"
+    
+    processed = re.sub(r'#.*', salvar_comentario, processed)
+    
+    # 4. Substituições exatas preservando a indentação
+    # Variações: (definir|funcao) assincrono ou assincrono (definir|funcao)
+    processed = re.sub(r'\b(definir|funcao)\s+assincrono\b', 'async def', processed)
+    processed = re.sub(r'\bassincrono\s+(definir|funcao)\b', 'async def', processed)
+    
+    # 5. Restaurar os comentários de trás para frente
+    for i in reversed(range(len(comments))):
+        processed = processed.replace(f"__COM_PLACEHOLDER_{i}__", comments[i])
+        
+    # 6. Restaurar as strings de trás para frente
+    for i in reversed(range(len(strings))):
+        processed = processed.replace(f"__STR_PLACEHOLDER_{i}__", strings[i])
+        processed = processed.replace(f"__TRIPLE_STR_PLACEHOLDER_{i}__", strings[i])
+        
+    return processed
+
 def transpilar_fallback(codigo_fonte: str) -> str:
     """
     Traduz o código Portulong de forma resiliente baseada em regex.
     Usado como fallback em casos de erros sintáticos temporários enquanto o usuário digita.
     """
+    # 1. Aplicar a substituição prévia e unificada para async def
+    codigo_fonte = pre_processar_async_def(codigo_fonte)
+
     strings = []
     comments = []
     
@@ -120,8 +170,10 @@ def transpilar_codigo(codigo_fonte: str) -> str:
     """
     Transpila o código Portulong para Python via análise léxica (Tokenization).
     """
+    # 1. Aplicar a blindagem absoluta via regex pré-processadora
+    dados_entrada = pre_processar_async_def(codigo_fonte)
+    
     # Garantir uma quebra de linha final para assegurar conformidade do gerador de tokens
-    dados_entrada = codigo_fonte
     if not dados_entrada.endswith("\n"):
         dados_entrada += "\n"
         
@@ -139,7 +191,7 @@ def transpilar_codigo(codigo_fonte: str) -> str:
     while i < n_tokens:
         tok = tokens[i]
         
-        # Estratégia de Lookahead: Detectar pares 'definir/funcao' + 'assincrono'
+        # Estratégia de Lookahead: Detectar pares 'definir/funcao' + 'assincrono' (como redundância segura)
         if i + 1 < n_tokens:
             tok_next = tokens[i+1]
             if tok.type == tokenize.NAME and tok_next.type == tokenize.NAME:

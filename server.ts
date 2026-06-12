@@ -288,12 +288,14 @@ function translatePythonToPortulongDeterministic(pythonCode: string): string {
     return `__COM_PLACEHOLDER_${comments.length - 1}__`;
   });
 
-  // 4. Inversão de Estrutura: 'async def' vira 'definir assincrono'
+  // 4. Inversão estrutural de 'async def' para 'definir assincrono'
   processed = processed.replace(/\basync\s+def\b/g, "definir assincrono");
+  processed = processed.replace(/\basync\s+with\b/g, "assincrono com");
+  processed = processed.replace(/\basync\s+for\b/g, "assincrono para");
 
-  // Dicionário reverso de Tradução determinística
+  // Dicionário reverso de Tradução determinística unificado e simétrico ao core_keywords.py
   const reverseMap: Record<string, string> = {
-    // Palavras-chave
+    // Palavras-chave fundamentais
     "elif": "senaose",
     "else": "senao",
     "if": "se",
@@ -307,7 +309,7 @@ function translatePythonToPortulongDeterministic(pythonCode: string): string {
     "return": "retornar",
     "try": "tentar",
     "except": "exceto",
-    "finally": "finally",
+    "finally": "finalmente",
     "with": "com",
     "lambda": "lambda",
     "pass": "passar",
@@ -374,7 +376,7 @@ function translatePythonToPortulongDeterministic(pythonCode: string): string {
     "isinstance": "eh_instancia",
     "issubclass": "eh_subclasse",
 
-    // Exceções comuns
+    // Exceções comuns de Python
     "Exception": "Excessao",
     "ValueError": "ErroDeValor",
     "TypeError": "ErroDeTipo",
@@ -393,11 +395,36 @@ function translatePythonToPortulongDeterministic(pythonCode: string): string {
     "RuntimeError": "ErroDeExecucao",
     "NotImplementedError": "ErroNaoImplementado",
 
-    // Discord API comuns para bots legados
+    // Classes e wrappers da biblioteca do Discord em português
+    "commands.Bot": "discord.Robo",
+    "commands.Context": "Contexto",
+    "discord.Message": "Mensagem",
+    "discord.Member": "Membro",
+    "discord.User": "Usuario",
+    "discord.Guild": "Servidor",
+    "discord.TextChannel": "CanalTexto",
+    "discord.VoiceChannel": "CanalVoz",
+    "discord.Role": "Cargo",
+    "discord.Embed": "Embutido",
+    "discord.Intents": "Intencoes",
+    "discord.Color": "Cor",
     "Bot": "Robo",
-    "command_prefix": "prefixo",
-    "event": "evento",
-    "command": "comando",
+    "Embed": "Embutido",
+    "Color": "Cor",
+    "Intents": "Intencoes",
+
+    // Propriedades, atributos e métodos de Discord
+    "content": "conteudo",
+    "author": "autor",
+    "channel": "canal",
+    "name": "nome",
+    "guild": "servidor",
+    "message": "mensagem",
+    "user": "usuario",
+    "system_channel": "canal_sistema",
+    "permissions": "permissoes",
+    "kick_members": "expulsar_membros",
+    "manage_messages": "gerenciar_mensagens",
     "send": "enviar",
     "reply": "responder",
     "delete": "deletar",
@@ -405,31 +432,38 @@ function translatePythonToPortulongDeterministic(pythonCode: string): string {
     "remove_reaction": "remover_reacao",
     "kick": "expulsar",
     "ban": "banir",
-    "purge": "limpar",
-    "content": "conteudo",
-    "author": "autor",
-    "channel": "canal",
-    "guild": "servidor",
-    "message": "mensagem",
-    "user": "usuario",
-    "ctx": "contexto"
+    "purge": "purgar",
+    "delete_after": "excluir_depois",
+    "limit": "limite",
+    "reason": "motivo",
+    "embed": "embutido",
+    "on_ready": "ao_iniciar",
+    "on_message": "ao_mensagem",
+    "on_member_join": "ao_entrar_membro",
+    "command_prefix": "prefixo",
+    "run": "executar",
+    "command": "comando",
+    "event": "evento"
   };
 
+  // Ordenar chaves por largura decrescente para evitar substituições parciais ou quebra de prefixos
   const sortedKeys = Object.keys(reverseMap).sort((a, b) => b.length - a.length);
 
   for (const key of sortedKeys) {
     const value = reverseMap[key];
     const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    
+    // Usar fronteira de palavra se for uma palavra (NAME)
     const regex = new RegExp(`\\b${escapedKey}\\b`, "g");
     processed = processed.replace(regex, value);
   }
 
-  // 5. Restaurar os comentários
+  // 5. Restaurar os comentários de trás para frente
   for (let i = comments.length - 1; i >= 0; i--) {
     processed = processed.replace(`__COM_PLACEHOLDER_${i}__`, comments[i]);
   }
 
-  // 6. Restaurar as strings
+  // 6. Restaurar as strings de trás para frente
   for (let i = strings.length - 1; i >= 0; i--) {
     processed = processed.replace(`__STR_PLACEHOLDER_${i}__`, strings[i]);
     processed = processed.replace(`__TRIPLE_STR_PLACEHOLDER_${i}__`, strings[i]);

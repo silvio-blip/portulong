@@ -1462,6 +1462,9 @@ def main():
     packageFolder.file("discord_pt.py", `import discord
 from discord.ext import commands
 import asyncio
+import functools
+import inspect
+from datetime import timedelta
 
 class DynamicProxy:
     def __init__(self, obj):
@@ -1494,6 +1497,7 @@ class DynamicProxy:
                 'expulsar': 'kick',
                 'banir': 'ban',
                 'limpar': 'purge',
+                'purgar': 'purge',
             }
             eng_method = method_translations.get(name, name)
             actual_method = getattr(self._obj, eng_method)
@@ -1505,6 +1509,10 @@ class DynamicProxy:
                     kwargs['delete_after'] = kwargs.pop('excluir_depois')
                 if 'limite' in kwargs:
                     kwargs['limit'] = kwargs.pop('limite')
+                if 'motivo' in kwargs:
+                    kwargs['reason'] = kwargs.pop('motivo')
+                if 'embutido' in kwargs:
+                    kwargs['embed'] = kwargs.pop('embutido')
                 
                 unwrapped_args = []
                 for arg in args:
@@ -1537,15 +1545,107 @@ class DynamicProxy:
         eng_name = translations.get(name, name)
         setattr(self._obj, eng_name, value)
 
+    def __str__(self):
+        return str(self._obj)
+
+    def __repr__(self):
+        return repr(self._obj)
+
+
+class Intencoes:
+    def __init__(self, original_intents=None):
+        self._obj = original_intents or discord.Intents.default()
+
+    @classmethod
+    def todas_as_intencoes(cls):
+        return cls(discord.Intents.all())
+
+    @classmethod
+    def default(cls):
+        return cls(discord.Intents.default())
+
+    @property
+    def todas(self):
+        self._obj = discord.Intents.all()
+        return self
+
+    def __getattr__(self, name):
+        return getattr(self._obj, name)
+
+    def __setattr__(self, name, value):
+        if name == '_obj':
+            super().__setattr__(name, value)
+        else:
+            setattr(self._obj, name, value)
+
+
+class Cor(discord.Color):
+    @classmethod
+    def azul(cls): return cls.blue()
+    @classmethod
+    def vermelho(cls): return cls.red()
+    @classmethod
+    def verde(cls): return cls.green()
+    @classmethod
+    def ouro(cls): return cls.gold()
+    @classmethod
+    def laranja(cls): return cls.orange()
+    @classmethod
+    def roxo(cls): return cls.purple()
+    @classmethod
+    def cinza(cls): return cls.grey()
+    @classmethod
+    def preto(cls): return cls.dark_theme()
+    @classmethod
+    def branco(cls): return cls.from_rgb(255, 255, 255)
+
+
+class Embutido(discord.Embed):
+    def __init__(self, titulo=None, descricao=None, cor=None, *args, **kwargs):
+        color_val = cor
+        if hasattr(cor, '_obj'):
+            color_val = cor._obj
+        elif isinstance(cor, int):
+            color_val = discord.Color(cor)
+        super().__init__(title=titulo, description=descricao, color=color_val, *args, **kwargs)
+
+    def adicionar_campo(self, nome, valor, em_linha=True):
+        self.add_field(name=nome, value=valor, inline=em_linha)
+        return self
+
+    def definir_rodape(self, texto, icone_url=None):
+        self.set_footer(text=texto, icon_url=icone_url)
+        return self
+
+    def definir_autor(self, nome, url=None, icone_url=None):
+        self.set_author(name=nome, url=url, icon_url=icone_url)
+        return self
+
+    def definir_imagem(self, url):
+        self.set_image(url=url)
+        return self
+
+    def definir_miniatura(self, url):
+        self.set_thumbnail(url=url)
+        return self
+
+
 def wrap_object(obj):
     if obj is None:
         return None
     if isinstance(obj, (str, int, float, bool, dict, list, tuple, set)):
         return obj
+    if hasattr(obj, '_obj'):
+        return obj
     return DynamicProxy(obj)
+
 
 class Robo(commands.Bot):
     def __init__(self, prefixo, *args, **kwargs):
+        if 'intents' not in kwargs:
+            kwargs['intents'] = discord.Intents.all()
+        if hasattr(kwargs['intents'], '_obj'):
+            kwargs['intents'] = kwargs['intents']._obj
         super().__init__(command_prefix=prefixo, *args, **kwargs)
 
     def comando(self, *args, **kwargs):
@@ -1555,19 +1655,19 @@ class Robo(commands.Bot):
             kwargs['help'] = kwargs.pop('ajuda')
         
         def decorator(func):
-            import functools
+            sig = inspect.signature(func)
             @functools.wraps(func)
             async def wrapper(ctx, *args, **kwargs):
                 wrapped_ctx = wrap_object(ctx)
                 wrapped_args = [wrap_object(a) for a in args]
                 wrapped_kwargs = {k: wrap_object(v) for k, v in kwargs.items()}
                 return await func(wrapped_ctx, *wrapped_args, **wrapped_kwargs)
+            wrapper.__signature__ = sig
             return super(Robo, self).command(*args, **kwargs)(wrapper)
         return decorator
 
     def evento(self, *args, **kwargs):
         def decorator(func):
-            import functools
             @functools.wraps(func)
             async def wrapper(*args, **kwargs):
                 wrapped_args = [wrap_object(a) for a in args]
@@ -1582,6 +1682,10 @@ class Robo(commands.Bot):
             wrapper.__name__ = mapped_name
             return super(Robo, self).event(*args, **kwargs)(wrapper)
         return decorator
+
+embed = Embutido
+Color = Cor
+Intents = Intencoes
 `);
 
     // 3. User's Code
