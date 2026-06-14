@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "portulong.ptg"
-version = "1.0.6"
+version = "1.0.61"
 description = "Uma linguagem de programação em português para criar bots do Discord baseada em Python"
 readme = "README.md"
 requires-python = ">=3.8"
