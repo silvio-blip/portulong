@@ -23,33 +23,29 @@ A programar, muitas vezes somos forçados a aprender inglês ao mesmo tempo que 
 
 A linguagem oferece uma sintaxe limpa, estruturada e de tipagem amigável com base em termos luso-brasileiros tradicionais. O motor por trás do Portulong realiza uma **análise léxica símbolo a símbolo (Tokenization)** de altíssima fidelidade. Isso significa que ele lê o seu arquivo `.ptg` caractere por caractere, garantindo que textos dentro de strings ou comentários nunca sejam afetados e gerando código Python perfeitamente otimizado pronto para execução.
 
-### Como instalar no terminal? 💻
+### Como instalar no terminal? 💻 (Novo Fluxo Simplificado v1.0.6 🌟)
 
-#### ⚡ Método 1: Instalação Automática Completa (Recomendado 🌟)
-Se queres obter a experiência completa da linguagem, instalar o compilador oficial **E ao mesmo tempo** configurar de forma 100% automática a **Extensão Oficial do VS Code** (com destaques completos de cores, ícones para ficheiros `.ptg`, preenchimento automático e o botão de **Play/Executar** de 1 clique integrado no topo do editor), podes correr o comando abaixo direto no teu terminal:
+Agora, obter a experiência completa da linguagem e as suas integrações mágicas ficou ainda mais simples e elegante! Eliminamos comandos complexos externos do tipo `curl` e incorporamos um fluxo de automação integrado direto do próprio terminal com a nossa CLI nativa.
 
-##### No Linux / macOS / Git Bash / terminal integrado:
-```bash
-curl -fsSL https://portulong.vercel.app/api/instalar -o instalar.py && python instalar.py
-```
+Siga estes 2 passos simples para preparar o ecossistema Portulong completo para programar:
 
-##### No Windows (PowerShell):
-```powershell
-Invoke-WebRequest -Uri "https://portulong.vercel.app/api/instalar" -OutFile "instalar.py"; python instalar.py
-```
-
-*Nota: Esse instalador inteligente baixa todas as configurações visuais pré-definidas de cores, temas, mapeia o compilador no sistema, configura o botão "Play" de atalho e assegura que você tenha tudo funcionando "sertinho" em menos de 10 segundos.*
-
----
-
-#### 🔹 Método 2: Instalar Apenas o Compilador (via pip)
-Caso queiras instalar apenas o compilador básico via CLI sem as extensões visuais e suporte gráfico do editor VS Code, execute:
-
+#### 🔹 Passo 1: Instalar o núcleo da linguagem e o compilador (via pip)
+No seu terminal ou consola de comandos de sistema, instale o pacote oficial da linguagem rodando:
 ```bash
 pip install portulong.ptg
 ```
 
-##### 🔹 Atualizar o Compilador (Upgrade)
+#### 🔹 Passo 2: Instalar os recursos adicionais, as cores e a Extensão (via CLI nativa)
+Assim que o núcleo da linguagem estiver no seu computador, você ganha acesso instantâneo ao novo comando auxiliar integrado que baixa todo o mapeamento de cores, ícones e a nossa extensão para o editor VS Code de forma automática:
+```bash
+portulong instalar
+```
+
+*Nota: O comando `portulong instalar` conecta-se de forma encriptada e segura aos nossos servidores centrais, lidando em frações de segundo com a instalação de destaque visual de cores, autocompletar e o botão de Play nativo no topo da sua IDE favorita. Sem downloads manuais adicionais envolvidos!*
+
+---
+
+#### 🔹 Atualizar o Compilador (Upgrade)
 Caso já tenhas a linguagem e queiras atualizar para a versão mais recente com novas palavras-chave e recursos:
 ```bash
 pip install --upgrade portulong.ptg
@@ -244,6 +240,195 @@ definir assincrono expulsar_membro(contexto, membro: discord.Membro, motivo=Nulo
     # Executa a expulsão usando o método nativo traduzido
     aguardar membro.expulsar(motivo=motivo)
     aguardar contexto.enviar(f"🚨 O membro {membro.nome} foi expulso com sucesso! Motivo: {motivo}")
+```
+
+### 🧩 4.1 Componentes Visuais e Interfaces Interativas (`discord.ui`)
+O Portulong possui suporte nativo completo para criar botões, menus de seleção e caixas de diálogo pop-up (Modals) por meio do submódulo `discord.ui`.
+
+*   **`discord.ui.Visualizacao`**: O contêiner de componentes que abriga botões (`Botao`) ou seletores (`Selecao`).
+*   **`discord.ui.Botao`**: Botões interativos de clique que podem disparar ações personalizadas via `ao_clicar`.
+*   **`discord.ui.Modal`**: Janelas pop-up com campos de formulário (`CaixaTexto`) que ajudam a coletar informações do utilizador via `ao_submeter`.
+
+Veja abaixo um exemplo detalhado de uma interface com botões e modals 100% interativa:
+
+```python
+# Cria uma visualização para abrigar nossos componentes
+painel = discord.ui.Visualizacao(tempo_esgotado=120)
+
+# Instancia o botão com estilo de sucesso (verde)
+meu_botao = discord.ui.Botao(rotulo="Iniciar Cadastro", estilo="sucesso", id_personalizado="start_reg")
+
+# Adiciona ao painel
+painel.adicionar_item(meu_botao)
+```
+
+---
+
+### 🚀 4.2 Código Completo de Demonstração (Para Testar Gratuitamente!)
+Para testar todos os recursos ao mesmo tempo no seu ambiente ou exportar diretamente ao Git, utilize o código oficial do **Bot Showroom Completo** abaixo. É obrigatório colocar o seu token de bot do Discord para colocar o robô em execução.
+
+```python
+# 🤖 BOT DE DEMONSTRAÇÃO COMPLETO EM PORTULONG 🐉
+# Este arquivo serve para você testar TODOS os recursos da linguagem e do wrapper do Discord!
+# Copie, transpile, modifique e divirta-se!
+
+importar portulong.discord_pt como discord
+
+# Instancia o robô com prefixo '!' e todas as intenções ativadas
+robo = discord.Robo(prefixo="!", intents=discord.Intencoes.tudo())
+
+# Evento: Disparado quando o robô faz login com sucesso na API
+@robo.evento
+definir assincrono ao_iniciar():
+    escrever("==================================================")
+    escrever(f"⚡ [SISTEMA] O robô {robo.usuario} está online!")
+    escrever("🚀 Programado 100% em Portulong (.ptg)")
+    escrever("== Use '!' no Discord para testar os comandos ===")
+    escrever("==================================================")
+
+# 1. COMANDO SIMPLES: Ajuda dinâmica do bot
+@robo.comando(nome="ajuda")
+definir assincrono enviar_ajuda(contexto):
+    # Cria um cartão de anúncio embutido (Embed) lindo
+    cartao = discord.Embutido(
+        titulo="🐉 Guia de Ajuda do Portulong Bot",
+        descricao="Bem-vindo ao robô oficial de testes construído na linguagem Portulong! Veja meus comandos abaixo:",
+        cor=discord.Cor.azul()
+    )
+    
+    # Adicionando campos informativos de utilidades
+    cartao.adicionar_campo(nome="🤖 !ajuda", valor="Mostra este belo menu interativo em português.", em_linha=Falso)
+    cartao.adicionar_campo(nome="📁 !painel", valor="Cria botões de interação que abrem um Modal de cadastro.", em_linha=Falso)
+    cartao.adicionar_campo(nome="🎯 !advinha", valor="Inicia um minijogo divertido de advinhação de número.", em_linha=Falso)
+    cartao.adicionar_campo(nome="🧮 !calc", valor="Realiza cálculos matemáticos rápidos (ex: !calc 10 + 5).", em_linha=Falso)
+    cartao.adicionar_campo(nome="🧹 !limpar", valor="Exclui mensagens do canal (para moderadores).", em_linha=Falso)
+    
+    cartao.definir_rodape(texto="Compilado perfeitamente de Portulong para Python 🐍")
+    
+    aguardar contexto.enviar(embutido=cartao)
+
+# 2. COMANDO AVANÇADO COM COMPONENTES VISUAIS (BOTOES, SELECOES E MODAL)
+@robo.comando(nome="painel")
+definir assincrono enviar_painel(contexto):
+    # Cria uma view interativa
+    painel = discord.ui.Visualizacao(tempo_esgotado=120)
+    
+    # Cria um botão de estilo sucesso
+    botao_registro = discord.ui.Botao(
+        rotulo="📝 Abrir Registro",
+        estilo="sucesso",
+        id_personalizado="botao_registrar_membro"
+    )
+    
+    # Callback disparado quando alguém clica no botão "Abrir Registro"
+    definir assincrono ao_clicar_registro(interacao):
+        # Constrói a janela popup interativa (Modal)
+        formulario = discord.ui.Modal(titulo="Cadastro da Comunidade Portulong", id_personalizado="form_cadastro")
+        
+        # Cria as caixas de texto internas do modal
+        input_nome = discord.ui.CaixaTexto(rotulo="Qual seu nome completo?", id_personalizado="nome_completo", estilo="curto")
+        input_hab = discord.ui.CaixaTexto(rotulo="Principal linguagem que você programa?", id_personalizado="vibe_ling", estilo="curto")
+        input_motivo = discord.ui.CaixaTexto(rotulo="Por que quer se juntar a nós?", id_personalizado="motivo_registro", estilo="longo")
+        
+        # Adiciona os inputs ao formulário do modal
+        formulario.adicionar_item(input_nome)
+        formulario.adicionar_item(input_hab)
+        formulario.adicionar_item(input_motivo)
+        
+        # Callback para processar o envio do formulário do Modal
+        definir assincrono ao_submeter_formulario(interacao_modal):
+            # Obtém as respostas digitadas pelo usuário de forma segura
+            nome = interacao_modal.dados["nome_completo"]
+            hab = interacao_modal.dados["vibe_ling"]
+            motivo = interacao_modal.dados["motivo_registro"]
+            
+            # Constrói o cartão de perfil do novo cadastrado
+            perfil = discord.Embutido(titulo="✅ Novo Cadastro Recebido!", cor=discord.Cor.verde())
+            perfil.adicionar_campo(nome="👤 Nome", valor=nome, em_linha=Verdadeiro)
+            perfil.adicionar_campo(nome="💻 Programa em", valor=hab, em_linha=Verdadeiro)
+            perfil.adicionar_campo(nome="📝 Motivação", valor=motivo, em_linha=Falso)
+            perfil.definir_autor(nome=interacao_modal.autor.nome)
+            
+            # Responde o modal informando que foi gravado
+            aguardar interacao_modal.responder(texto="Seu cadastro foi salvo com êxito!", embutido=perfil)
+            
+        formulario.ao_submeter = ao_submeter_formulario
+        
+        # Abre o modal no ecrã do utilizador que clicou
+        aguardar interacao.enviar_modal(formulario)
+        
+    # Vincula o gatilho de clique ao botão
+    botao_registro.ao_clicar = ao_clicar_registro
+    
+    # Adiciona o botão do painel
+    painel.adicionar_item(botao_registro)
+    
+    aguardar contexto.enviar(
+        conteudo="Clique no botão abaixo para abrir o formulário interativo de cadastro:",
+        visualizacao=painel
+    )
+
+# 3. COMANDO DIVERTIDO: Minijogo de Advinhação de Número
+@robo.comando(nome="advinha")
+definir assincrono iniciar_advinha(contexto):
+    importar random
+    numero_secreto = random.randint(1, 10)
+    
+    aguardar contexto.enviar("🎲 Eu pensei em um número entre **1 e 10**. Você tem **3 tentativas** para adivinhar! Qual o seu palpite?")
+    
+    # Função auxiliar para validar se a resposta vem da mesma pessoa e canal
+    definir verificar_resposta(mensagem):
+        retornar mensagem.autor == contexto.autor e mensagem.canal == contexto.canal
+        
+    tentativas = 0
+    enquanto tentativas < 3:
+        tentar:
+            # Aguarda o jogador enviar uma resposta por chat
+            palpite_msg = aguardar robo.aguardar_resposta(filtro=verificar_resposta, tempo_esgotado=30.0)
+            valor_palpite = inteiro(palpite_msg.conteudo)
+            
+            se valor_palpite == numero_secreto:
+                aguardar contexto.enviar(f"🎉 PARABÉNS! {contexto.autor.mencao} acertou o número secreto (**{numero_secreto}**)! Você é um gênio!")
+                retornar
+            senaose valor_palpite < numero_secreto:
+                aguardar contexto.enviar("🔼 Dica: O número secreto é **maior** do que seu palpite! Tente novamente:")
+            senao:
+                aguardar contexto.enviar("🔽 Dica: O número secreto é **menor** do que seu palpite! Tente novamente:")
+                
+            tentativas = tentativas + 1
+        exceto ErroDeValor:
+            aguardar contexto.enviar("⚠️ Por favor, digite um número inteiro válido!")
+        exceto Exception:
+            aguardar contexto.enviar(f"⏱️ O tempo acabou! O número secreto era **{numero_secreto}**.")
+            retornar
+            
+    aguardar contexto.enviar(f"😢 Suas tentativas acabaram! O número secreto era **{numero_secreto}**. Mais sorte na próxima!")
+
+# 4. COMANDO CALCULADORA DINÂMICA (Ex: !calc 15 * 3)
+@robo.comando(nome="calc")
+definir assincrono calcular_expressao(contexto, n1: real, operador, n2: real):
+    se operador == "+":
+        res = n1 + n2
+    senaose operador == "-":
+        res = n1 - n2
+    senaose operador == "*" ou operador == "x":
+        res = n1 * n2
+    senaose operador == "/":
+        se n2 == 0:
+            aguardar contexto.enviar("❌ Erro: Divisão por zero não é permitida matematicamente!")
+            retornar
+        res = n1 / n2
+    senao:
+        aguardar contexto.enviar("⚠️ Operador inválido. Use: +, -, * ou /")
+        retornar
+        
+    aguardar contexto.enviar(f"🧮 **Calculadora Portulong**\nExpressão: `{n1} {operador} {n2}`\nResultado: **{res}**")
+
+# ====================================================================
+# 🔑 SEÇÃO DE INICIALIZAÇÃO DO ROBÔ (TOKEN DO DISCORD)
+# Insira seu token confidencial do Discord abaixo para que o bot inicie.
+# ====================================================================
+robo.rodar("INSIRA_SEU_TOKEN_DE_DISCORD_AQUI")
 ```
 
 ---

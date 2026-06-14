@@ -91,8 +91,38 @@ def exibir_ajuda():
     print("🐉 CLI oficial da linguagem Portulong para bots do Discord em português.\n")
     print("Uso:")
     print("   portulong iniciar              - Inicializa um novo projeto com o template de bot")
+    print("   portulong instalar             - Descarrega e instala de forma autónoma as extensões, cores e complementos de sistema")
     print("   portulong executar <arq.ptg>   - Transpila e executa o arquivo")
     print("   portulong <arq.ptg>            - Executa o arquivo diretamente")
+
+def instalar_recursos():
+    """
+    Baixa e executa diretamente na memória o script de instalação oficial de recursos.
+    """
+    import urllib.request
+    import urllib.error
+    
+    print("⚡ [SISTEMA] Iniciando a instalação automática de cores, extensões e complementos do Portulong...")
+    url = "https://portolong.vercel.app/api/install"
+    
+    try:
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        )
+        with urllib.request.urlopen(req) as response:
+            conteudo_script = response.read().decode('utf-8')
+            
+        print("📥 Script descarregado com sucesso da nuvem. Executando instalação nativa...")
+        # Executa dinamicamente as tarefas de configuração do script
+        exec(conteudo_script, globals())
+        print("🐉 [SUCESSO] Instalação dos recursos e extensões concluída com êxito! Divirta-se programando!")
+    except urllib.error.URLError as e:
+        print(f"❌ [ERRO DE REDE] Não foi possível conectar ao servidor oficial em '{url}'.")
+        print(f"   Por favor, verifique sua conexão com a Internet. Detalhes: {e}")
+    except Exception as e:
+        print("❌ [ERRO DE SISTEMA] Ocorreu uma exceção inesperada durante o carregamento de recursos:")
+        print(f"   Detalhes: {e}")
 
 def main():
     if len(sys.argv) < 2:
@@ -107,6 +137,8 @@ def main():
         
     if cmd == "iniciar":
         iniciar_projeto()
+    elif cmd == "instalar":
+        instalar_recursos()
     elif cmd == "executar":
         if len(sys.argv) < 3:
             print("❌ Erro: Forneça o arquivo .ptg para executar. Ex: portulong executar main.ptg")
@@ -114,7 +146,12 @@ def main():
         executar_arquivo(sys.argv[2])
     else:
         # Se for qualquer outro argumento, assume-se que é o ficheiro a executar diretamente
-        executar_arquivo(cmd)
+        if cmd.endswith(".ptg") or os.path.exists(cmd):
+            executar_arquivo(cmd)
+        else:
+            print(f"❌ Erro: Comando ou arquivo '{cmd}' não reconhecido.")
+            exibir_ajuda()
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
