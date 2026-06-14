@@ -103,7 +103,7 @@ def instalar_recursos():
     import urllib.error
     
     print("⚡ [SISTEMA] Iniciando a instalação automática de cores, extensões e complementos do Portulong...")
-    url = "https://portolong.vercel.app/api/install"
+    url = "https://portulong.vercel.app/api/instalar"
     
     try:
         req = urllib.request.Request(
@@ -113,16 +113,16 @@ def instalar_recursos():
         with urllib.request.urlopen(req) as response:
             conteudo_script = response.read().decode('utf-8')
             
-        print("📥 Script descarregado com sucesso da nuvem. Executando instalação nativa...")
+        print("📥 Script de automação recuperado com sucesso. Executando configuração nativa...")
         # Executa dinamicamente as tarefas de configuração do script
         exec(conteudo_script, globals())
         print("🐉 [SUCESSO] Instalação dos recursos e extensões concluída com êxito! Divirta-se programando!")
     except urllib.error.URLError as e:
-        print(f"❌ [ERRO DE REDE] Não foi possível conectar ao servidor oficial em '{url}'.")
-        print(f"   Por favor, verifique sua conexão com a Internet. Detalhes: {e}")
+        print("❌ [ERRO DE CONEXÃO] Não foi possível conectar ao servidor de recursos remoto para a instalação.")
+        print("   Por favor, certifique-se de que o seu dispositivo está ligado à internet e tente novamente.")
     except Exception as e:
-        print("❌ [ERRO DE SISTEMA] Ocorreu uma exceção inesperada durante o carregamento de recursos:")
-        print(f"   Detalhes: {e}")
+        print("❌ [ERRO DE CONFIGURAÇÃO] Ocorreu uma exceção inesperada durante o carregamento de recursos:")
+        print("   Se o problema persistir, por favor descarregue os arquivos manualmente no portal oficial.")
 
 def main():
     if len(sys.argv) < 2:
