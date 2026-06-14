@@ -74,13 +74,40 @@ class Cor(discord.Color):
     def azul(cls): return cls.blue()
 
 class Embutido(discord.Embed):
-    def __init__(self, titulo=None, descricao=None, cor=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        titulo = kwargs.pop('titulo', None) or kwargs.pop('title', None)
+        descricao = kwargs.pop('descricao', None) or kwargs.pop('description', None)
+        cor = kwargs.pop('cor', None) or kwargs.pop('color', None)
+        
+        if args:
+            if len(args) >= 1: titulo = args[0]
+            if len(args) >= 2: descricao = args[1]
+            if len(args) >= 3: cor = args[2]
+            
         c = cor if isinstance(cor, (discord.Color, int)) else None
-        super().__init__(title=titulo, description=descricao, color=c, *args, **kwargs)
-    def adicionar_campo(self, nome, valor, em_linha=True):
+        super().__init__(title=titulo, description=descricao, color=c, **kwargs)
+
+    def adicionar_campo(self, *args, **kwargs):
+        nome = kwargs.pop('nome', None) or kwargs.pop('name', None)
+        valor = kwargs.pop('valor', None) or kwargs.pop('value', None)
+        em_linha = kwargs.pop('em_linha', None) if 'em_linha' in kwargs else (kwargs.pop('inline', True))
+        
+        if args:
+            if len(args) >= 1: nome = args[0]
+            if len(args) >= 2: valor = args[1]
+            if len(args) >= 3: em_linha = args[2]
+            
         self.add_field(name=nome, value=valor, inline=em_linha)
         return self
-    def definir_autor(self, nome, icone_url=None):
+
+    def definir_autor(self, *args, **kwargs):
+        nome = kwargs.pop('nome', None) or kwargs.pop('name', None)
+        icone_url = kwargs.pop('icone_url', None) or kwargs.pop('icon_url', None)
+        
+        if args:
+            if len(args) >= 1: nome = args[0]
+            if len(args) >= 2: icone_url = args[1]
+            
         self.set_author(name=nome, icon_url=icone_url)
         return self
 
