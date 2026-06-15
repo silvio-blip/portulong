@@ -2832,7 +2832,7 @@ package_json = {
   "name": "portulong-vscode",
   "displayName": "Portulong support",
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
-  "version": "1.0.0",
+  "version": "1.0.66",
   "publisher": "silvio-blip",
   "icon": "portulong.png",
   "homepage": "${currentOrigin}/",
@@ -3760,7 +3760,7 @@ if __name__ == "__main__":
       name: "portulong-vscode",
       displayName: "Portulong support",
       description: "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
-      version: "1.0.0",
+      version: "1.0.66",
       publisher: "silvio-blip",
       icon: "portulong.png",
       homepage: currentOrigin + "/",
@@ -3980,7 +3980,7 @@ module.exports = {
                 PORTU<span className="text-emerald-500 font-mono">LONG</span>
               </h1>
               <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-mono">
-                v1.0.0
+                v1.0.66
               </span>
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -4427,7 +4427,7 @@ module.exports = {
                             <span className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-400 font-bold border border-blue-500/20 flex items-center justify-center shrink-0 font-mono text-xs">1</span>
                             <div>
                               <h4 className="font-bold text-slate-200">Descarregue o Arquivo Extensão VSIX</h4>
-                              <p className="text-[11px] text-slate-400 mt-0.5">Faça download em um clique do ficheiro <code className="text-slate-300 font-mono">portulong-vscode-1.0.0.vsix</code> no menu "Descarregar" ao lado.</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Faça download em um clique do ficheiro <code className="text-slate-300 font-mono">portulong-vscode-1.0.66.vsix</code> no menu "Descarregar" ao lado.</p>
                             </div>
                           </div>
 
@@ -4538,13 +4538,13 @@ module.exports = {
                           </a>
 
                           <a
-                            href="/portulong-vscode-1.0.0.vsix"
-                            download="portulong-vscode-1.0.0.vsix"
+                            href="/portulong-vscode-1.0.66.vsix"
+                            download="portulong-vscode-1.0.66.vsix"
                             className="p-3 bg-slate-950 hover:bg-slate-800/60 border border-slate-800 hover:border-sky-500/30 rounded-xl flex flex-col gap-1.5 transition-all text-left text-slate-200 col-span-2"
                           >
                             <div className="flex items-center gap-1.5 font-bold font-mono text-xs text-sky-400">
                               <Laptop size={14} />
-                              portulong-vscode-1.0.0.vsix
+                              portulong-vscode-1.0.66.vsix
                             </div>
                             <span className="text-[10px] text-slate-400 leading-normal font-sans">Pacote empacotado da Extensão Oficial de realce, realce de cores e de ícones para o editor VS Code.</span>
                           </a>
