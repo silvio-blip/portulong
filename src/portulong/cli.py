@@ -98,7 +98,8 @@ def exibir_ajuda():
 def instalar_recursos():
     """
     Baixa o script de instalação oficial e executa-o localmente a partir de um arquivo físico
-    para garantir a persistência das configurações, extensões, realce de cores e compatibilidade.
+    dentro do diretório definitivo de persistência do Portulong (~/.portulong) para garantir 
+    a gravação de extensões, realces de cores e ícones de forma permanente e sem poluir o projeto.
     """
     import urllib.request
     import urllib.error
@@ -108,9 +109,15 @@ def instalar_recursos():
     
     print("⚡ [SISTEMA] Iniciando a instalação automática de cores, extensões e complementos do Portulong...")
     url = "https://portulong.vercel.app/api/instalar"
-    temp_filename = "instalar.py"
+    
+    # Define o diretório permanente local do Portulong
+    portulong_dir = os.path.abspath(os.path.expanduser("~/.portulong"))
+    temp_filename = os.path.join(portulong_dir, "instalar.py")
     
     try:
+        # Garante a criação do diretório usando os.makedirs de forma definitiva
+        os.makedirs(portulong_dir, exist_ok=True)
+        
         req = urllib.request.Request(
             url, 
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
@@ -118,18 +125,25 @@ def instalar_recursos():
         with urllib.request.urlopen(req) as response:
             conteudo_script = response.read().decode('utf-8')
             
-        print("📥 Script de automação recuperado com sucesso. Salvando arquivos locais para configuração...")
+        print("📥 Script de automação recuperado com sucesso. Gravando em diretório pessoal permanente...")
         
-        # Garante a persistência gravando o arquivo instalar.py fisicamente no sistema de arquivos local
+        # Garante a persistência real gravando o instalador via 'open' de forma definitiva no local persistente
         with open(temp_filename, "w", encoding="utf-8") as f:
             f.write(conteudo_script)
             
-        print("⚙️ Executando o motor de instalação integrado nativamente...")
+        print(f"⚙️ Executando o motor de instalação integrado no diretório permanente: {portulong_dir}")
         
-        # Executa o script gravado num subprocesso independente utilizando o executável atual do Python.
-        # Isto garante que todo o progresso (incluindo os.makedirs, npx vsce, code --install-extension)
-        # ocorra perfeitamente e exiba as instruções detalhadas de sucesso.
-        subprocess.run([sys.executable, temp_filename], check=True)
+        # Configura as variáveis de ambiente necessárias para o subprocesso
+        env_vars = os.environ.copy()
+        env_vars["PORTULONG_HOME"] = portulong_dir
+        if "PATH" in env_vars:
+            # Garante que o diretório ~/.portulong e possíveis outros caminhos de execução estejam mapeados
+            env_vars["PATH"] = portulong_dir + os.path.pathsep + env_vars["PATH"]
+            
+        # Executa o script gravado fisicamente em ~/.portulong/, alterando o diretório de trabalho (cwd) para lá.
+        # Isto garante que todos os diretórios gerados (como portulong-vscode, gramáticas de cores, etc.)
+        # fiquem fisicamente persistidos lá de forma real e independente, sem poluir a raiz do projeto do usuário.
+        subprocess.run([sys.executable, temp_filename], cwd=portulong_dir, env=env_vars, check=True)
         
         print("🐉 [SUCESSO] Instalação dos recursos e extensões concluída com êxito! Divirta-se programando!")
         
@@ -143,7 +157,7 @@ def instalar_recursos():
         print(f"   Detalhes: {e}")
         print("   Se o problema persistir, por favor descarregue os arquivos manualmente no portal oficial.")
     finally:
-        # Tenta remover o arquivo instalar.py temporário da raiz se o próprio instalador ainda não o tiver limpo
+        # Tenta remover o arquivo instalar.py temporário da pasta de persistência do Portulong se já tiver concluído
         if os.path.exists(temp_filename):
             try:
                 os.remove(temp_filename)
