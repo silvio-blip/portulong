@@ -97,14 +97,18 @@ def exibir_ajuda():
 
 def instalar_recursos():
     """
-    Baixa e executa diretamente na memória o script de instalação oficial de recursos.
+    Baixa o script de instalação oficial e executa-o localmente a partir de um arquivo físico
+    para garantir a persistência das configurações, extensões, realce de cores e compatibilidade.
     """
     import urllib.request
     import urllib.error
     import sys
+    import os
+    import subprocess
     
     print("⚡ [SISTEMA] Iniciando a instalação automática de cores, extensões e complementos do Portulong...")
     url = "https://portulong.vercel.app/api/instalar"
+    temp_filename = "instalar.py"
     
     try:
         req = urllib.request.Request(
@@ -114,31 +118,37 @@ def instalar_recursos():
         with urllib.request.urlopen(req) as response:
             conteudo_script = response.read().decode('utf-8')
             
-        print("📥 Script de automação recuperado com sucesso. Executando configuração nativa...")
+        print("📥 Script de automação recuperado com sucesso. Salvando arquivos locais para configuração...")
         
-        # Guardar sys.argv original e criar um mock temporário para que o script saiba que está a rodar como instalar.py
-        argv_original = sys.argv.copy()
-        sys.argv = ["instalar.py"]
-        
-        try:
-            # Configurar o namespace com __name__ = "__main__" para que o script execute de forma autónoma
-            namespace = {
-                "__name__": "__main__",
-                "__file__": "instalar.py"
-            }
-            exec(conteudo_script, namespace)
-        finally:
-            # Restaurar sys.argv após a execução
-            sys.argv = argv_original
+        # Garante a persistência gravando o arquivo instalar.py fisicamente no sistema de arquivos local
+        with open(temp_filename, "w", encoding="utf-8") as f:
+            f.write(conteudo_script)
             
+        print("⚙️ Executando o motor de instalação integrado nativamente...")
+        
+        # Executa o script gravado num subprocesso independente utilizando o executável atual do Python.
+        # Isto garante que todo o progresso (incluindo os.makedirs, npx vsce, code --install-extension)
+        # ocorra perfeitamente e exiba as instruções detalhadas de sucesso.
+        subprocess.run([sys.executable, temp_filename], check=True)
+        
         print("🐉 [SUCESSO] Instalação dos recursos e extensões concluída com êxito! Divirta-se programando!")
+        
     except urllib.error.URLError as e:
         print("❌ [ERRO DE CONEXÃO] Não foi possível conectar ao servidor de recursos remoto para a instalação.")
         print("   Por favor, certifique-se de que o seu dispositivo está ligado à internet e tente novamente.")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ [ERRO NA CONFIGURAÇÃO] Ocorreu uma interrupção ao executar o processo de instalação local (Código {e.returncode}).")
     except Exception as e:
         print("❌ [ERRO DE CONFIGURAÇÃO] Ocorreu uma exceção inesperada durante o carregamento de recursos:")
         print(f"   Detalhes: {e}")
         print("   Se o problema persistir, por favor descarregue os arquivos manualmente no portal oficial.")
+    finally:
+        # Tenta remover o arquivo instalar.py temporário da raiz se o próprio instalador ainda não o tiver limpo
+        if os.path.exists(temp_filename):
+            try:
+                os.remove(temp_filename)
+            except Exception:
+                pass
 
 def main():
     if len(sys.argv) < 2:
