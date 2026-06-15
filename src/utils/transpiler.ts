@@ -114,6 +114,7 @@ export const BUILTINS_MAP: Record<string, string> = {
 export const DISCORD_MAP: Record<string, string> = {
   // Discord classes & helpers
   "Robo": "Bot",
+  "Bot": "Bot",
   "prefixo": "command_prefix",
   "evento": "event",
   "comando": "command",
@@ -171,8 +172,8 @@ export function transpilePortulong(code: string): string {
   });
 
   // Pre-process decorators to python style
-  processed = processed.replace(/@(robo|cliente|bot|client)\.(evento|event)\b/g, "@bot.event");
-  processed = processed.replace(/@(robo|cliente|bot|client)\.(comando|command)\b/g, "@bot.command");
+  processed = processed.replace(/@(robo|cliente|bot|client)\.(evento|event)\b/g, (match, varName) => `@${varName}.event`);
+  processed = processed.replace(/@(robo|cliente|bot|client)\.(comando|command)\b/g, (match, varName) => `@${varName}.command`);
 
   // Intercept and map standard discord imports to wrapper in Portuguese
   processed = processed.replace(/\b(importar|import)\s+discord\b/g, "import portulong.discord_pt as discord");
@@ -359,7 +360,7 @@ export const REVERSE_DISCORD_MAP: Record<string, string> = {
   "system_channel": "canal_sistema",
 
   // Class Names & Types
-  "Bot": "Robo",
+  "Bot": "Bot",
   "Intents": "Intencoes",
   "Embed": "Embutido",
   "Color": "Cor",
@@ -468,8 +469,8 @@ export function translatePythonToPortulong(code: string): string {
   processed = processed.replace(/\bon_reaction_remove\b/g, "ao_reacao_removida");
 
   // 7. Decorator hooks like @bot.event and @bot.command()
-  processed = processed.replace(/@(bot|client|robo|cliente)\.(event|evento)\b/g, "@robo.evento");
-  processed = processed.replace(/@(bot|client|robo|cliente)\.(command|comando)\b/g, "@robo.comando");
+  processed = processed.replace(/@(bot|client|robo|cliente)\.(event|evento)\b/g, (match, varName) => `@${varName}.evento`);
+  processed = processed.replace(/@(bot|client|robo|cliente)\.(command|comando)\b/g, (match, varName) => `@${varName}.comando`);
 
   // Combine maps for reverse lookup
   const reverseMap: Record<string, string> = {

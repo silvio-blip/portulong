@@ -663,6 +663,14 @@ function atualizarDiagnosticos(document, collection) {
                 continue;
             }
             
+            const textoDepois = linha.substring(indiceInicio + palavra.length);
+            if (/^\\s*=(?!=)/.test(textoDepois)) {
+                continue;
+            }
+            if (/^\\s*['"]/.test(textoDepois)) {
+                continue;
+            }
+            
             if (!keywords.has(palavra) && !localDecls.has(palavra)) {
                 const range = new vscode.Range(
                     new vscode.Position(indiceLinha, indiceInicio),
@@ -734,7 +742,7 @@ function activate(context) {
             }
             
             terminal.show();
-            terminal.sendText(`portulong executar "\${filePath}"`);
+            terminal.sendText("portulong executar \"" + filePath + "\"");
         });
     });
 

@@ -53,86 +53,166 @@ const DICTIONARY: DictionaryItem[] = [
   { portulong: "senaose", python: "elif", category: "palavra-chave", description: "Condicional intermediária de fluxo.", example: "se x == 1:\n    escrever('Um')\nsenaose x == 2:\n    escrever('Dois')" },
   { portulong: "para", python: "for", category: "palavra-chave", description: "Loop de repetição controlado sobre um iterável.", example: "para i em intervalo(5):\n    escrever(i)" },
   { portulong: "enquanto", python: "while", category: "palavra-chave", description: "Loop de repetição enquanto a condição for verdadeira.", example: "enquanto repetindo:\n    escrever('Ativo')" },
-  { portulong: "definir / funcao", python: "def", category: "palavra-chave", description: "Define uma nova função ou assinatura de método.", example: "definir somar(a, b):\n    retornar a + b" },
-  { portulong: "classe", python: "class", category: "palavra-chave", description: "Cria um modelo de objeto (classe portável).", example: "classe Jogador:\n    def __init__(self):\n        self.pontos = 0" },
+  { portulong: "definir", python: "def", category: "palavra-chave", description: "Define uma nova função ou assinatura de método.", example: "definir somar(a, b):\n    retornar a + b" },
+  { portulong: "funcao", python: "def", category: "palavra-chave", description: "Sinônimo de definir; declara uma nova função.", example: "funcao calcular_dobro(x):\n    retornar x * 2" },
+  { portulong: "classe", python: "class", category: "palavra-chave", description: "Cria um modelo de objeto (classe).", example: "classe Jogador:\n    definir __init__(self):\n        self.pontos = 0" },
   { portulong: "importar", python: "import", category: "palavra-chave", description: "Importa módulos externos para o contexto.", example: "importar portulong.discord_pt como discord" },
+  { portulong: "de", python: "from", category: "palavra-chave", description: "Parte estrutural para importar partes de um módulo.", example: "de discord.ext importar commands" },
+  { portulong: "como", python: "as", category: "palavra-chave", description: "Define um alias/apelido para a biblioteca importada.", example: "importar portulong.discord_pt como discord" },
   { portulong: "retornar", python: "return", category: "palavra-chave", description: "Retorna um valor para quem chamou o método.", example: "definir dobro(n):\n    retornar n * 2" },
-  { portulong: "tentar", python: "try", category: "palavra-chave", description: "Tenta rodar um bloco seguro tratando eventuais erros.", example: "tentar:\n    escrever(1 / 0)\nexceto ZeroDivisionError:\n    escrever('Erro de divisão')" },
-  { portulong: "exceto", python: "except", category: "palavra-chave", description: "Captura erros ocorridos dentro do bloco de tentativa.", example: "tentar:\n    fazer()\nexceto Exception como e:\n    escrever(f'Deu erro: {e}')" },
+  { portulong: "tentar", python: "try", category: "palavra-chave", description: "Tenta rodar um bloco seguro tratando eventuais erros.", example: "tentar:\n    escrever(1 / 0)\nexceto ErroDivisaoPorZero:\n    escrever('Erro de divisão')" },
+  { portulong: "exceto", python: "except", category: "palavra-chave", description: "Captura erros ocorridos dentro do bloco de tentativa (try/except).", example: "tentar:\n    fazer()\nexceto Excessao como e:\n    escrever(f'Deu erro: {e}')" },
+  { portulong: "finalmente", python: "finally", category: "palavra-chave", description: "Bloco executado obrigatoriamente após tentar/exceto.", example: "tentar:\n    abrir_conexao()\nfinalmente:\n    fechar_conexao()" },
+  { portulong: "com", python: "with", category: "palavra-chave", description: "Simplifica o tratamento de recursos (gerenciador de contexto).", example: "com abrir('arquivo.txt') como f:\n    conteudo = f.ler()" },
+  { portulong: "lambda", python: "lambda", category: "palavra-chave", description: "Declara uma função anônima inline.", example: "dobro = lambda x: x * 2" },
+  { portulong: "passar", python: "pass", category: "palavra-chave", description: "Instrução nula usada como preenchedor de bloco vazio.", example: "se condicao:\n    passar" },
+  { portulong: "parar", python: "break", category: "palavra-chave", description: "Interrompe e sai imediatamente do loop atual.", example: "enquanto Verdadeiro:\n    se pronto:\n        parar" },
+  { portulong: "continuar", python: "continue", category: "palavra-chave", description: "Pula para a próxima iteração do loop atual.", example: "para i em intervalo(5):\n    se i == 2:\n        continuar\n    escrever(i)" },
   { portulong: "Verdadeiro", python: "True", category: "palavra-chave", description: "Valor lógico afirmativo (boolean).", example: "ativo = Verdadeiro" },
   { portulong: "Falso", python: "False", category: "palavra-chave", description: "Valor lógico negativo (boolean).", example: "bloqueado = Falso" },
   { portulong: "Nulo", python: "None", category: "palavra-chave", description: "Representa a ausência de valor.", example: "valor = Nulo" },
-  { portulong: "assincrono", python: "async", category: "palavra-chave", description: "Define que a função roda concorrentemente em loop asyncio.", example: "definir assincrono ao_iniciar():\n    escrever('Online')" },
-  { portulong: "aguardar", python: "await", category: "palavra-chave", description: "Aguarda a execução de uma corrotina assíncrona.", example: "aguardar contexto.enviar('Olá')" },
+  { portulong: "e", python: "and", category: "palavra-chave", description: "Operador lógico de conjunção (E). Ambos os termos devem ser verdadeiros.", example: "se ativo e nao bloqueado:\n    escrever('Permitido')" },
+  { portulong: "ou", python: "or", category: "palavra-chave", description: "Operador lógico de disjunção (OU). Pelo menos um termo deve ser verdadeiro.", example: "se admin ou moderador:\n    escrever('Acesso concedido')" },
+  { portulong: "nao", python: "not", category: "palavra-chave", description: "Operador lógico de negação (NÃO).", example: "se nao carregado:\n    escrever('Aguarde...')" },
+  { portulong: "em", python: "in", category: "palavra-chave", description: "Verifica se um item existe dentro de uma coleção.", example: "se 'oi' em mensagem.conteudo:\n    escrever('Cumprimento detectado')" },
+  { portulong: "eh", python: "is", category: "palavra-chave", description: "Compara a identidade de dois objetos (se são o mesmo objeto).", example: "se valor eh Nulo:\n    escrever('Sem valor')" },
+  { portulong: "nao_eh", python: "is not", category: "palavra-chave", description: "Verifica se dois objetos possuem identidades diferentes.", example: "se conexao nao_eh Nulo:\n    escrever('Online')" },
+  { portulong: "asseverar", python: "assert", category: "palavra-chave", description: "Afirma que algo é Verdadeiro; dispara exceção se for Falso.", example: "asseverar idade >= 18, 'Menor de idade'" },
+  { portulong: "global", python: "global", category: "palavra-chave", description: "Declara que uma variável dentro da função pertence ao escopo global.", example: "global total_mensagens\ntotal_mensagens += 1" },
+  { portulong: "naolocal", python: "nonlocal", category: "palavra-chave", description: "Declara que a variável pertence ao escopo externo de função aninhada.", example: "naolocal contador\ncontador += 1" },
+  { portulong: "levantar", python: "raise", category: "palavra-chave", description: "Lança/dispara ativamente um erro ou exceção.", example: "levantar ErroDeValor('Número fora do intervalo')" },
+  { portulong: "produzir", python: "yield", category: "palavra-chave", description: "Retorna um gerador em suspensão temporária.", example: "definir gerar_numeros():\n    produzir 1" },
+  { portulong: "assincrono", python: "async", category: "palavra-chave", description: "Define que a função roda de forma assíncrona (concorrente).", example: "definir assincrono ao_iniciar():\n    escrever('Robô Online')" },
+  { portulong: "aguardar", python: "await", category: "palavra-chave", description: "Aguarda a resolução de uma corrotina assíncrona.", example: "aguardar canal.enviar('Olá')" },
 
   // FUNÇÕES EMBUTIDAS (BUILT-INS)
   { portulong: "escrever", python: "print", category: "embutido", description: "Escreve informações de saída no console do terminal.", example: "escrever('LOG DE EXECUÇÃO')" },
+  { portulong: "mostrar", python: "print", category: "embutido", description: "Sinônimo de escrever; imprime dados na tela.", example: "mostrar(f'O autor é {autor}')" },
   { portulong: "ler", python: "input", category: "embutido", description: "Recebe uma entrada de texto digitada pelo terminal.", example: "nome = ler('Nome: ')" },
   { portulong: "tamanho", python: "len", category: "embutido", description: "Retorna a contagem de elementos de listas ou caracteres.", example: "tamanho('Português')" },
   { portulong: "inteiro", python: "int", category: "embutido", description: "Converte um valor decimal ou textual para número inteiro.", example: "idade = inteiro('18')" },
-  { portulong: "texto", python: "str", category: "embutido", description: "Converte valores para string semanal.", example: "txt = texto(2026)" },
-  { portulong: "real", python: "float", category: "embutido", description: "Converte valores para decimais/ponto flutuante.", example: "peso = real('72.5')" },
-  { portulong: "boleano", python: "bool", category: "embutido", description: "Converte valores para tipo de lógica booleana.", example: "b = boleano(1)" },
+  { portulong: "texto", python: "str", category: "embutido", description: "Converte qualquer valor para texto (string).", example: "txt = texto(2026)" },
+  { portulong: "real", python: "float", category: "embutido", description: "Converte valores para número decimal/ponto flutuante.", example: "peso = real('72.5')" },
+  { portulong: "decimal", python: "float", category: "embutido", description: "Sinônimo de real; converte valores para floats.", example: "valor = decimal(10)" },
+  { portulong: "boleano", python: "bool", category: "embutido", description: "Converte qualquer valor para tipo de lógica booleana.", example: "b = boleano(1)" },
   { portulong: "lista", python: "list", category: "embutido", description: "Cria um vetor mutável em português.", example: "itens = lista()" },
   { portulong: "dicionario", python: "dict", category: "embutido", description: "Cria um mapeamento de chave-valor (objeto json).", example: "dados = dicionario(canal=123)" },
+  { portulong: "conjunto", python: "set", category: "embutido", description: "Cria uma coleção de elementos únicos não ordenados.", example: "unicos = conjunto([1, 1, 2])" },
+  { portulong: "tupla", python: "tuple", category: "embutido", description: "Cria uma sequência imutável de elementos.", example: "par = tupla([1, 2])" },
   { portulong: "intervalo", python: "range", category: "embutido", description: "Imprime uma sequência de controle iterável.", example: "para x em intervalo(1, 11):\n    escrever(x)" },
-  { portulong: "somar", python: "sum", category: "embutido", description: "Soma elementos numéricos de um iterável.", example: "somar([10, 20, 30])" },
+  { portulong: "abrir", python: "open", category: "embutido", description: "Abre arquivos locais com gerenciador de contexto do sistema.", example: "com abrir('dados.txt', 'r') como f:\n    texto = f.ler()" },
+  { portulong: "tipo", python: "type", category: "embutido", description: "Retorna a classe ou tipo de dados de uma variável.", example: "tipo('texto') == texto" },
+  { portulong: "somar", python: "sum", category: "embutido", description: "Soma elements numéricos de um iterável.", example: "somar([10, 20, 30])" },
   { portulong: "absoluto", python: "abs", category: "embutido", description: "Retorna o valor absoluto de um número.", example: "absoluto(-5)" },
   { portulong: "maximo", python: "max", category: "embutido", description: "Retorna o maior valor de uma lista ou argumentos.", example: "maximo(2, 8, 4)" },
   { portulong: "minimo", python: "min", category: "embutido", description: "Retorna o menor valor de uma lista ou argumentos.", example: "minimo(2, 8, 4)" },
   { portulong: "arredondar", python: "round", category: "embutido", description: "Arredonda um número float para casas decimais.", example: "arredondar(3.1415, 2)" },
-  { portulong: "tipo", python: "type", category: "embutido", description: "Retorna a classe ou tipo de dados de uma variável.", example: "tipo('texto') == texto" },
+  { portulong: "mapear", python: "map", category: "embutido", description: "Aplica uma função sobre todos os itens de um iterável.", example: "mapear(inteiro, ['1', '2'])" },
+  { portulong: "filtrar", python: "filter", category: "embutido", description: "Filtra elementos de um iterável baseado em uma função booleana.", example: "filtrar(lambda x: x > 2, [1, 2, 3])" },
+  { portulong: "ordenado", python: "sorted", category: "embutido", description: "Retorna uma nova lista contendo itens ordenados de um vetor.", example: "ordenado([3, 1, 2])" },
+  { portulong: "super", python: "super", category: "embutido", description: "Chama dinamicamente a classe progenitora pai.", example: "super().__init__()" },
+  { portulong: "propriedade", python: "property", category: "embutido", description: "Decorador nativo para criar atributos getter/setter de classe.", example: "@propriedade\ndefinir nome_do_bot(self):\n    retornar self._nome" },
+  { portulong: "zipar", python: "zip", category: "embutido", description: "Combina múltiplos iteráveis elemento a elemento simultâneos.", example: "zipar(nomes, idades)" },
+  { portulong: "enumerar", python: "enumerate", category: "embutido", description: "Gera tuplas contendo índice e elemento de um iterável.", example: "para idx, item em enumerar(valores):\n    escrever(idx, item)" },
+  { portulong: "objeto", python: "object", category: "embutido", description: "Classe genérica pai de todas as outras estruturas.", example: "classe Customizada(objeto):\n    passar" },
+  { portulong: "qualquer", python: "any", category: "embutido", description: "Retorna Verdadeiro se ao menos um item de um iterável for verdadeiro.", example: "qualquer([Falso, Verdadeiro])" },
+  { portulong: "todos", python: "all", category: "embutido", description: "Retorna Verdadeiro apenas se TODOS os elementos de um vetor forem verdadeiros.", example: "todos([Verdadeiro, Verdadeiro])" },
+  { portulong: "ajuda", python: "help", category: "embutido", description: "Retorna o manual explicativo interno do objeto pelo terminal.", example: "ajuda(lista)" },
+  { portulong: "identidade", python: "id", category: "embutido", description: "Retorna o endereço físico identificador único do objeto.", example: "identidade(objeto)" },
+  { portulong: "reversivel", python: "reversed", category: "embutido", description: "Retorna o iterável lido de trás para frente.", example: "reversivel([1, 2, 3])" },
+  { portulong: "formatar", python: "format", category: "embutido", description: "Formata valores baseando em especificações em português.", example: "formatar(12.555, '.2f')" },
+  { portulong: "obter_atributo", python: "getattr", category: "embutido", description: "Recupera dinamicamente a propriedade de um objeto.", example: "obter_atributo(bot, 'usuario')" },
+  { portulong: "definir_atributo", python: "setattr", category: "embutido", description: "Altera ou insere propriedades dinâmicas sobre uma classe.", example: "definir_atributo(bot, 'ativo', Verdadeiro)" },
+  { portulong: "tem_atributo", python: "hasattr", category: "embutido", description: "Informa se o objeto contém a propriedade especificada.", example: "tem_atributo(mensagem, 'conteudo')" },
+  { portulong: "excluir_atributo", python: "delattr", category: "embutido", description: "Deleta uma propriedade ou método de forma dinâmica.", example: "excluir_atributo(autor, 'avatar')" },
+  { portulong: "representacao", python: "repr", category: "embutido", description: "Gera a representação textual técnica para depurar.", example: "representacao(bot)" },
+  { portulong: "proximo", python: "next", category: "embutido", description: "Obtém o elemento seguinte de um iterador.", example: "proximo(meu_iterador)" },
+  { portulong: "iterador", python: "iter", category: "embutido", description: "Prepara ou converte o iterável para rodar progressivamente.", example: "it = iterador([1, 2])" },
+  { portulong: "eh_instancia", python: "isinstance", category: "embutido", description: "Compara classes; verifica se herda ou pertence àquela estrutura.", example: "eh_instancia(membro, Membro)" },
+  { portulong: "eh_subclasse", python: "issubclass", category: "embutido", description: "Informa se uma classe descende diretamente de outra progenitora.", example: "eh_subclasse(CanalTexto, Canal)" },
+
+  // ERROS E EXCEÇÕES CORE (CLASSES DE EXCEÇÃO)
+  { portulong: "Excessao", python: "Exception", category: "embutido", description: "Classe genérica representativa de qualquer erro operacional básico.", example: "exceto Excessao como e:\n    escrever(e)" },
+  { portulong: "ErroDeValor", python: "ValueError", category: "embutido", description: "Exceção disparada quando o argumento possui tipo correto, mas valor inadequado.", example: "inteiro('texto')" },
+  { portulong: "ErroDeTipo", python: "TypeError", category: "embutido", description: "Exceção indicando operação sobre tipos incoerentes simultâneos.", example: "1 + '2'" },
+  { portulong: "ErroDeNome", python: "NameError", category: "embutido", description: "Disparado quando o programa aponta para identificador/variável não existente.", example: "escrever(variavel_fantasma)" },
+  { portulong: "ErroDeIndice", python: "IndexError", category: "embutido", description: "Erro alertador de estouro de tamanho de limite em vetores/lista.", example: "[1, 2][5]" },
+  { portulong: "ErroDeChave", python: "KeyError", category: "embutido", description: "Recuperação incorreta de chave inexistente sobre dicionários.", example: "{'id': 1}['nome']" },
+  { portulong: "ErroDeImportacao", python: "ImportError", category: "embutido", description: "Falha na exportação ou carregamento de recursos externos.", example: "importar pacote_inexistente" },
+  { portulong: "ErroDeAtributo", python: "AttributeError", category: "embutido", description: "Disparado quando tenta-se executar propriedade ausente num objeto.", example: "bot.deletar_mundo()" },
+  { portulong: "ErroDivisaoPorZero", python: "ZeroDivisionError", category: "embutido", description: "Operação matemática impossível detectada pelo Python.", example: "1 / 0" },
+  { portulong: "FaltaDeMemoria", python: "MemoryError", category: "embutido", description: "Indica escassez de recursos de memória física.", example: "levantar FaltaDeMemoria()" },
+  { portulong: "ParadaDeIteracao", python: "StopIteration", category: "embutido", description: "Avisador interno para forçar término de laço em iterador.", example: "levantar ParadaDeIteracao()" },
+  { portulong: "ErroDoSistema", python: "OSError", category: "embutido", description: "Problemas na interface com o sistema operacional hospedeiro.", example: "levantar ErroDoSistema()" },
+  { portulong: "ArquivoNaoEncontrado", python: "FileNotFoundError", category: "embutido", description: "Caminho de leitura incorreto ou ausente fisicamente.", example: "abrir('vazio.ptg')" },
+  { portulong: "InterrupcaoPeloTeclado", python: "KeyboardInterrupt", category: "embutido", description: "Disparado quando o usuário força o término do bot via terminal (Ctrl+C).", example: "exceto InterrupcaoPeloTeclado:\n    parar_bot()" },
+  { portulong: "ErroDeAsseveracao", python: "AssertionError", category: "embutido", description: "Sinalizador de colapso de teste ou regra predefinida.", example: "asseverar Falso" },
+  { portulong: "ErroDeExecucao", python: "RuntimeError", category: "embutido", description: "Erro de escopo operacional não definido de forma trivial.", example: "levantar ErroDeExecucao()" },
+  { portulong: "ErroNaoImplementado", python: "NotImplementedError", category: "embutido", description: "Classe virtual aguardando preenchimento real posterior de lógica.", example: "definir rodar(self):\n    levantar ErroNaoImplementado()" },
 
   // COMPONENTES CORE E WRAPPER DO DISCORD
   { portulong: "discord", python: "discord", category: "discord", description: "Módulo principal do wrapper para desenvolvimento do Discord.", example: "importar portulong.discord_pt como discord" },
-  { portulong: "discord.Robo(prefixo, intencoes)", python: "commands.Bot", category: "discord", description: "Instancia a conexão do seu robô com permissões.", example: "robo = discord.Robo(prefixo='!', intents=discord.Intencoes.tudo())" },
-  { portulong: "discord.Intencoes", python: "discord.Intents", category: "discord", description: "Gere opções de eventos e dados do servidor.", example: "intencoes = discord.Intencoes.tudo()" },
+  { portulong: "Bot", python: "Bot", category: "discord", description: "Inicia a classe representadora da conexão física do bot no Discord.", example: "bot = discord.Bot(prefixo='!', intents=discord.Intencoes.tudo())" },
+  { portulong: "discord.Intencoes", python: "discord.Intents", category: "discord", description: "Gere opções de eventos e dados de escopo nos servidores.", example: "intents = discord.Intencoes.tudo()" },
   { portulong: "discord.Cor", python: "discord.Color", category: "discord", description: "Paleta de cores em português (vermelho, azul, verde, roxo etc).", example: "cor = discord.Cor.verde()" },
   { portulong: "discord.Embutido", python: "discord.Embed", category: "discord", description: "Construtor de ricos cards de anúncio/mensagens.", example: "cartao = discord.Embutido('Título', 'Subtítulo', cor=discord.Cor.azul())" },
-  { portulong: "cartao.adicionar_campo", python: "Embed.add_field", category: "discord", description: "Adiciona seções de conteúdo a um cartão embutido.", example: "cartao.adicionar_campo(nome='Info', valor='Conteúdo', em_linha=Falso)" },
-  { portulong: "cartao.definir_autor", python: "Embed.set_author", category: "discord", description: "Insere o autor no cartão embutido com ícone.", example: "cartao.definir_autor(nome=contexto.autor.nome)" },
-  { portulong: "cartao.definir_rodape", python: "Embed.set_footer", category: "discord", description: "Ajusta textos finais para o rodapé do cartão.", example: "cartao.definir_rodape('Portulong Bot')" },
   { portulong: "discord.Arquivo", python: "discord.File", category: "discord", description: "Permite envio de arquivos locais ou virtuais para canais.", example: "foto = discord.Arquivo('logo.png')" },
+  { portulong: "discord.ui", python: "discord.ui", category: "discord", description: "Módulo para botões, caixas de diálogo, texto e reações.", example: "importar portulong.discord_pt como discord\nvazio = discord.ui.Visualizacao()" },
+  { portulong: "prefixo", python: "command_prefix", category: "discord", description: "Configuração do prefixo inicial dos comandos do bot.", example: "bot = Bot(prefixo='!')" },
+  { portulong: "evento", python: "event", category: "discord", description: "Decorador que registra escutas de gatilhos automáticos.", example: "@bot.evento\ndefinir assincrono ao_iniciar():\n    passar" },
+  { portulong: "comando", python: "command", category: "discord", description: "Decorador que registra comandos disparados por chats.", example: "@bot.comando(nome='oi')\ndefinir assincrono responder_oi(contexto):\n    passar" },
+  { portulong: "nome", python: "name", category: "discord", description: "Atributo de nome das entidades ou parâmetros das APIs do Discord.", example: "escrever(membro.nome)" },
+  { portulong: "ajuda", python: "help", category: "discord", description: "Mensagem ou helper acoplável de texto explicativo em comandos.", example: "@bot.comando(nome='ajuda_limp', ajuda='Limpar chat')" },
 
   // GATILHOS DE EVENTOS DO DISCORD
-  { portulong: "ao_iniciar", python: "on_ready", category: "discord", description: "Gatilho automático disparado ao completar login na API.", example: "@robo.evento\ndefinir assincrono ao_iniciar():\n    escrever('Estou online!')" },
-  { portulong: "ao_mensagem", python: "on_message", category: "discord", description: "Ativado ao enviar mensagem em canais visíveis.", example: "@robo.evento\ndefinir assincrono ao_mensagem(mensagem):\n    se 'oi' em mensagem.conteudo.lower():\n        aguardar mensagem.canal.enviar('Olá')" },
-  { portulong: "ao_entrar_membro", python: "on_member_join", category: "discord", description: "Reconhece o momento em que um usuário ingressa no servidor.", example: "@robo.evento\ndefinir assincrono ao_entrar_membro(membro):\n    escrever(f'{membro.nome} entrou!')" },
-  { portulong: "ao_sair_membro", python: "on_member_remove", category: "discord", description: "Gatilho para detecção de exclusão ou saída de membros.", example: "@robo.evento\ndefinir assincrono ao_sair_membro(membro):\n    escrever(f'{membro.nome} saiu do servidor.')" },
+  { portulong: "ao_iniciar", python: "on_ready", category: "discord", description: "Gatilho automático disparado ao completar login na API do Discord.", example: "@bot.evento\ndefinir assincrono ao_iniciar():\n    escrever('Estou online!')" },
+  { portulong: "ao_mensagem", python: "on_message", category: "discord", description: "Ativado ao enviar mensagem em canais visíveis.", example: "@bot.evento\ndefinir assincrono ao_mensagem(mensagem):\n    se 'oi' em mensagem.conteudo.lower():\n        aguardar mensagem.canal.enviar('Olá')" },
+  { portulong: "ao_entrar_membro", python: "on_member_join", category: "discord", description: "Reconhece o momento em que um usuário ingressa no servidor.", example: "@bot.evento\ndefinir assincrono ao_entrar_membro(membro):\n    escrever(f'{membro.nome} entrou!')" },
+  { portulong: "ao_sair_membro", python: "on_member_remove", category: "discord", description: "Gatilho para detecção de exclusão ou saída de membros.", example: "@bot.evento\ndefinir assincrono ao_sair_membro(membro):\n    escrever(f'{membro.nome} saiu do servidor.')" },
 
-  // MÉTODOS DE OBJETO DO CANAL / MENSAGEM
-  { portulong: "contexto.enviar(...)", python: "ctx.send()", category: "discord", description: "Envia mensagem textual, cartão embutido ou componente UI.", example: "aguardar contexto.enviar('Olá Mundo')" },
-  { portulong: "contexto.responder(...)", python: "ctx.reply()", category: "discord", description: "Menciona e responde diretamente à mensagem de origem.", example: "aguardar contexto.responder('Resposta direta')" },
-  { portulong: "mensagem.deletar()", python: "message.delete()", category: "discord", description: "Apaga permanentemente a mensagem.", example: "aguardar mensagem.deletar()" },
-  { portulong: "canal.limpar(limite)", python: "channel.purge()", category: "discord", description: "Remove em lote um determinado número de mensagens recentes.", example: "aguardar contexto.canal.limpar(limite=5)" },
-  
-  // MODERAÇÃO E GESTÃO DE USUÁRIOS
-  { portulong: "membro.banir(motivo)", python: "member.ban()", category: "discord", description: "Bane permanentemente o usuário do servidor.", example: "aguardar membro.banir(motivo='Regra desrespeitada')" },
-  { portulong: "membro.expulsar(motivo)", python: "member.kick()", category: "discord", description: "Remove o membro do servidor de forma simples.", example: "aguardar membro.expulsar(motivo='Spam no chat')" },
-  { portulong: "membro.castigar(duracao, motivo)", python: "member.timeout()", category: "discord", description: "Aplica castigo mudo temporário (timeout) de X segundos.", example: "aguardar membro.castigar(60, motivo='Chato no Geral')" },
-  { portulong: "membro.remover_castigo()", python: "member.remove_timeout()", category: "discord", description: "Revoga castigo ou pausa ativa de um usuário.", example: "aguardar membro.remover_castigo()" },
-  { portulong: "membro.adicionar_cargo(cargo)", python: "member.add_roles()", category: "discord", description: "Sincroniza um novo nível ou cargo para o usuário.", example: "cargo_novato = contexto.servidor.cargos[1]\naguardar contexto.autor.adicionar_cargo(cargo_novato)" },
-  { portulong: "membro.remover_cargo(cargo)", python: "member.remove_roles()", category: "discord", description: "Remove o cargo especificado do usuário.", example: "aguardar contexto.autor.remover_cargo(cargo_novato)" },
-  { portulong: "membro.editar(apelido)", python: "member.edit(nick)", category: "discord", description: "Muda apelidos, nomes ou configurações de canal de voz.", example: "aguardar membro.editar(apelido='Administrador')" },
+  // MÉTODOS DE CONTROLE / TRANSPILAÇÃO DO WRAPPER
+  { portulong: "enviar", python: "send", category: "discord", description: "Método para envio de mensagens, embutidos e componentes de visualização.", example: "aguardar contexto.enviar('Oi', embutido=meu_embed)" },
+  { portulong: "responder", python: "reply", category: "discord", description: "Método que responde com menção e thread contextual de origem.", example: "aguardar contexto.responder('Resposta direta')" },
+  { portulong: "deletar", python: "delete", category: "discord", description: "Elimina de forma permanente o recurso oponente (mensagem etc).", example: "aguardar mensagem.deletar()" },
+  { portulong: "limpar", python: "purge", category: "discord", description: "Remocação em lote de logs de chats por tamanho.", example: "aguardar canal.limpar(limite=10)" },
+  { portulong: "adicionar_reacao", python: "add_reaction", category: "discord", description: "Insere reações de emojis sobre mensagens.", example: "aguardar mensagem.adicionar_reacao('🟢')" },
+  { portulong: "remover_reacao", python: "remove_reaction", category: "discord", description: "Exclui uma reação selecionada do emoji na mensagem.", example: "aguardar mensagem.remover_reacao('🟢', usuario)" },
+  { portulong: "expulsar", python: "kick", category: "discord", description: "Expulsa um membro infrator do servidor atual.", example: "aguardar membro.expulsar(motivo='Regra violada')" },
+  { portulong: "banir", python: "ban", category: "discord", description: "Bane permanentemente o usuário do servidor.", example: "aguardar membro.banir(motivo='Spam')" },
+  { portulong: "castigar", python: "timeout", category: "discord", description: "Silencia o membro por uma duração de tempo de segundos.", example: "aguardar membro.castigar(300, motivo='Flood')" },
+  { portulong: "remover_castigo", python: "remove_timeout", category: "discord", description: "Revoga o silenciamento ativo sobre o membro.", example: "aguardar membro.remover_castigo()" },
+  { portulong: "adicionar_cargo", python: "add_roles", category: "discord", description: "Acopla cargos e permissões ao usuário selecionado.", example: "aguardar membro.adicionar_cargo(cargo_vip)" },
+  { portulong: "remover_cargo", python: "remove_roles", category: "discord", description: "Desliga e remove cargos predefinidos do membro.", example: "aguardar membro.remover_cargo(cargo_vip)" },
+  { portulong: "editar", python: "edit", category: "discord", description: "Muda o nome, posições e configurações das APIs.", example: "aguardar membro.editar(apelido='Administrador')" },
 
-  // PROPRIEDADES DE SINTAXE DO DISCORD
-  { portulong: "mensagem.conteudo", python: "message.content", category: "discord", description: "Recupera o string do texto enviado na mensagem.", example: "se mensagem.conteudo == 'ping':\n    aguardar mensagem.canal.enviar('pong')" },
-  { portulong: "mensagem.autor", python: "message.author", category: "discord", description: "Informa o Membro autor que despachou a transmissão.", example: "escrever(mensagem.autor.nome)" },
-  { portulong: "membro.mencao", python: "member.mention", category: "discord", description: "Retorna a sintaxe especial de marcação (menção) com @.", example: "aguardar contexto.enviar(f'{contexto.autor.mencao} oi!')" },
-  { portulong: "contexto.servidor.membros", python: "guild.members", category: "discord", description: "Retorna a listagem total de membros ativos.", example: "escrever(f'Temos {tamanho(contexto.servidor.membros)} membros!')" },
+  // ATRIBUTOS E PROPRIEDADES DE ENTIDADES
+  { portulong: "conteudo", python: "content", category: "discord", description: "Guarda o texto cru textual despachado em uma mensagem.", example: "escrever(mensagem.conteudo)" },
+  { portulong: "autor", python: "author", category: "discord", description: "Referência da classe Membro/Usuario que executou a ação.", example: "escrever(mensagem.autor.nome)" },
+  { portulong: "canal", python: "channel", category: "discord", description: "Referência do canal de texto ou voz de origem.", example: "aguardar mensagem.canal.enviar('Sucesso')" },
+  { portulong: "servidor", python: "guild", category: "discord", description: "Referência do servidor hospedeiro que abriga as atividades.", example: "escrever(contexto.servidor.nome)" },
+  { portulong: "mensagem", python: "message", category: "discord", description: "Entidade representadora da transmissão com ID e anexos.", example: "escrever(mensagem.id)" },
+  { portulong: "usuario", python: "user", category: "discord", description: "Entidade básica representante do bot ou da conta Discord.", example: "escrever(bot.usuario)" },
+  { portulong: "id", python: "id", category: "discord", description: "O identificador numérico exclusivo das entidades.", example: "escrever(canal.id)" },
+  { portulong: "membro", python: "member", category: "discord", description: "Referência de usuário dentro do contexto do servidor.", example: "escrever(membro.apelido)" },
+  { portulong: "apelido", python: "display_name", category: "discord", description: "Nome alternativo exibido pelo membro no servidor atual.", example: "escrever(autor.apelido)" },
+  { portulong: "mencao", python: "mention", category: "discord", description: "Gera a menção com @ em português.", example: "escrever(autor.mencao)" },
+  { portulong: "membros", python: "members", category: "discord", description: "Coleção completa dos membros que participam da guilda.", example: "escrever(tamanho(servidor.membros))" },
+  { portulong: "cargos", python: "roles", category: "discord", description: "Vetor que lista os níveis ou cargos existentes no servidor.", example: "escrever(tamanho(servidor.cargos))" },
+  { portulong: "canais", python: "channels", category: "discord", description: "Lista de todos os canais do servidor.", example: "para can em servidor.canais:\n    escrever(can.nome)" },
+  { portulong: "icone_url", python: "icon", category: "discord", description: "Retorna a imagem/logo representativa do servidor.", example: "imagem = servidor.icone_url" },
+  { portulong: "criado_em", python: "created_at", category: "discord", description: "Data de criação técnica original da entidade.", example: "escrever(membro.criado_em)" },
+  { portulong: "cargo_topo", python: "top_role", category: "discord", description: "Informa o cargo mais alto ocupado pelo membro.", example: "escrever(membro.cargo_topo.nome)" },
+  { portulong: "titulo", python: "title", category: "discord", description: "Informa ou altera o título dos cartões ou componentes.", example: "cartao = discord.Embutido(titulo='Anúncio')" },
+  { portulong: "descricao", python: "description", category: "discord", description: "Atributo de descrição contida em cartões embutidos.", example: "cartao.descricao = 'Algo'" },
 
-  // COMPONENTES VISUAIS E INTERATIVOS DA UI DO DISCORD.UI
-  { portulong: "discord.ui", python: "discord.ui", category: "discord", description: "Submódulo do Discord usado para criar componentes modernos e interativos.", example: "importar portulong.discord_pt como discord\npainel = discord.ui.Visualizacao()" },
-  { portulong: "discord.ui.Botao", python: "discord.ui.Button", category: "discord", description: "Gera um botão na barra de interação (estilos: principal, secundario, sucesso, perigo, link).", example: "click_btn = discord.ui.Botao('Confirmar', estilo='sucesso', id_personalizado='confirm_btn')" },
-  { portulong: "discord.ui.Selecao", python: "discord.ui.Select", category: "discord", description: "Componente drop-down de seleção única ou múltipla.", example: "menu = discord.ui.Selecao(marcador='Selecione cargo', opcoes=minhas_opcoes)" },
-  { portulong: "discord.ui.OpcaoSelecao", python: "discord.SelectOption", category: "discord", description: "Opção estruturada para adicionar na caixa de seleção.", example: "opcao = discord.ui.OpcaoSelecao('Admin', '1.0', 'Visualizar como administrador')" },
-  { portulong: "discord.ui.CaixaTexto", python: "discord.ui.TextInput", category: "discord", description: "Input de resposta (estilos: curto, longo) enviado dentro de Modal.", example: "input_nome = discord.ui.CaixaTexto('Seu Nome', 'name_input', estilo='curto')" },
-  { portulong: "discord.ui.Modal", python: "discord.ui.Modal", category: "discord", description: "Janela pop-up de diálogo ou formulário para feedback interativo.", example: "definir assincrono ao_submeter(interacao):\n    aguardar interacao.responder('Enviado!')\n\nformulario = discord.ui.Modal('Formulário Cadastro', id_personalizado='form')\nformulario.ao_submeter = ao_submeter" },
-  { portulong: "discord.ui.Visualizacao", python: "discord.ui.View", category: "discord", description: "Container visual para abrigar botões e seleções enviadas no chat.", example: "painel = discord.ui.Visualizacao(tempo_esgotado=120)\npainel.adicionar_item(click_btn)" },
-  { portulong: "visualizacao.adicionar_item(componente)", python: "View.add_item()", category: "discord", description: "Método de container visual para inserir botões (Botao) ou caixas de seleção (Selecao).", example: "painel.adicionar_item(meu_botao)" },
-  { portulong: "visualizacao.remover_item(componente)", python: "View.remove_item()", category: "discord", description: "Método de container visual para excluir um componente interativo.", example: "painel.remover_item(meu_botao)" },
-  { portulong: "modal.ao_submeter = funcao_callback", python: "Modal.on_submit", category: "discord", description: "Define qual função assíncrona gerenciará o envio dos dados do Modal.", example: "definir assincrono tratar_envio(interacao):\n    aguardar interacao.responder('Recebido!')\nformulario.ao_submeter = tratar_envio" },
-  { portulong: "interacao.responder(texto)", python: "Interaction.response.send_message()", category: "discord", description: "Ação que do lado do Discord responde imediatamente ao clique ou envio do usuário.", example: "aguardar interacao.responder('Ação Concluída!')" },
+  // COMPONENTES DE INTERFACES INTERATIVAS (DISCORD.UI)
+  { portulong: "discord.ui.Botao", python: "discord.ui.Button", category: "discord", description: "Gera botões interativos anexados à mensagem.", example: "meu_btn = discord.ui.Botao(rotulo='Votar', estilo='sucesso')" },
+  { portulong: "discord.ui.Selecao", python: "discord.ui.Select", category: "discord", description: "Componente drop-down de seleção única ou múltipla para formulários.", example: "menu = discord.ui.Selecao(marcador='Escolha o seu cargo')" },
+  { portulong: "discord.ui.OpcaoSelecao", python: "discord.SelectOption", category: "discord", description: "Gera uma opção anexável a uma lista suspensa de Seleção.", example: "opcao = discord.ui.OpcaoSelecao(rotulo='Premium', valor='1')" },
+  { portulong: "discord.ui.CaixaTexto", python: "discord.ui.TextInput", category: "discord", description: "Campo de preenchimento textual para entrada de dados em Modals.", example: "nome_input = discord.ui.CaixaTexto(rotulo='Primeiro Nome', estilo='curto')" },
+  { portulong: "discord.ui.CaixaTexto", python: "discord.ui.TextInput", category: "discord", description: "Campo de preenchimento textual para entrada de dados em Modals.", example: "nome_input = discord.ui.CaixaTexto(rotulo='Primeiro Nome', estilo='curto')" },
+  { portulong: "discord.ui.Modal", python: "discord.ui.Modal", category: "discord", description: "Popup/Janela de diálogo formulária que sobrepõe o chat.", example: "formulario = discord.ui.Modal(titulo='Inscrição')" },
+  { portulong: "discord.ui.Visualizacao", python: "discord.ui.View", category: "discord", description: "Container visual que agrupa e despacha botões e listas.", example: "painel = discord.ui.Visualizacao(tempo_esgotado=60)" },
 ];
 
 const TEMPLATES: CodeTemplate[] = [
@@ -147,25 +227,25 @@ const TEMPLATES: CodeTemplate[] = [
 
 importar portulong.discord_pt como discord
 
-# Instancia o robô com prefixo '!' e todas as intenções ativadas
-robo = discord.Robo(prefixo="!", intents=discord.Intencoes.tudo())
+# Instancia o bot com prefixo '!' e todas as intenções ativadas
+bot = discord.Bot(prefixo="!", intents=discord.Intencoes.tudo())
 
-# Evento: Disparado quando o robô faz login com sucesso na API
-@robo.evento
+# Evento: Disparado quando o bot faz login com sucesso na API
+@bot.evento
 definir assincrono ao_iniciar():
     escrever("==================================================")
-    escrever(f"⚡ [SISTEMA] O robô {robo.usuario} está online!")
+    escrever(f"⚡ [SISTEMA] O bot {bot.usuario} está online!")
     escrever("🚀 Programado 100% em Portulong (.ptg)")
     escrever("== Use '!' no Discord para testar os comandos ===")
     escrever("==================================================")
 
 # 1. COMANDO SIMPLES: Ajuda dinâmica do bot
-@robo.comando(nome="ajuda")
+@bot.comando(nome="ajuda")
 definir assincrono enviar_ajuda(contexto):
     # Cria um cartão de anúncio embutido (Embed) lindo
     cartao = discord.Embutido(
         titulo="🐉 Guia de Ajuda do Portulong Bot",
-        descricao="Bem-vindo ao robô oficial de testes construído na linguagem Portulong! Veja meus comandos abaixo:",
+        descricao="Bem-vindo ao bot oficial de testes construído na linguagem Portulong! Veja meus comandos abaixo:",
         cor=discord.Cor.azul()
     )
     
@@ -181,7 +261,7 @@ definir assincrono enviar_ajuda(contexto):
     aguardar contexto.enviar(embutido=cartao)
 
 # 2. COMANDO AVANÇADO COM COMPONENTES VISUAIS (BOTOES, SELECOES E MODAL)
-@robo.comando(nome="painel")
+@bot.comando(nome="painel")
 definir assincrono enviar_painel(contexto):
     # Cria uma view interativa
     painel = discord.ui.Visualizacao(tempo_esgotado=120)
@@ -242,7 +322,7 @@ definir assincrono enviar_painel(contexto):
     )
 
 # 3. COMANDO DIVERTIDO: Minijogo de Advinhação de Número
-@robo.comando(nome="advinha")
+@bot.comando(nome="advinha")
 definir assincrono iniciar_advinha(contexto):
     importar random
     numero_secreto = random.randint(1, 10)
@@ -257,7 +337,7 @@ definir assincrono iniciar_advinha(contexto):
     enquanto tentativas < 3:
         tentar:
             # Aguarda o jogador enviar uma resposta por chat
-            palpite_msg = aguardar robo.aguardar_resposta(filtro=verificar_resposta, tempo_esgotado=30.0)
+            palpite_msg = aguardar bot.aguardar_resposta(filtro=verificar_resposta, tempo_esgotado=30.0)
             valor_palpite = inteiro(palpite_msg.conteudo)
             
             se valor_palpite == numero_secreto:
@@ -278,7 +358,7 @@ definir assincrono iniciar_advinha(contexto):
     aguardar contexto.enviar(f"😢 Suas tentativas acabaram! O número secreto era **{numero_secreto}**. Mais sorte na próxima!")
 
 # 4. COMANDO CALCULADORA DINÂMICA (Ex: !calc 15 * 3)
-@robo.comando(nome="calc")
+@bot.comando(nome="calc")
 definir assincrono calcular_expressao(contexto, n1: real, operador, n2: real):
     se operador == "+":
         res = n1 + n2
@@ -298,12 +378,12 @@ definir assincrono calcular_expressao(contexto, n1: real, operador, n2: real):
     aguardar contexto.enviar(f"🧮 **Calculadora Portulong**\nExpressão: \`{n1} {operador} {n2}\`\nResultado: **{res}**")
 
 # ====================================================================
-# 🔑 SEÇÃO DE INICIALIZAÇÃO DO ROBÔ (TOKEN DO DISCORD)
+# 🔑 SEÇÃO DE INICIALIZAÇÃO DO BOT (TOKEN DO DISCORD)
 # Insira seu token confidencial do Discord abaixo.
 # Atenção: Você pode guardar seu token no arquivo '.env' do seu servidor
 # no formato TOKEN=seu_token_aqui ou passá-lo diretamente na inicialização:
 # ====================================================================
-robo.rodar("INSIRA_SEU_TOKEN_DE_DISCORD_AQUI")
+bot.rodar("INSIRA_SEU_TOKEN_DE_DISCORD_AQUI")
 `
   },
   {
@@ -317,15 +397,15 @@ robo.rodar("INSIRA_SEU_TOKEN_DE_DISCORD_AQUI")
 importar portulong.discord_pt como discord
 
 # Inicializa o bot com o prefixo '!'
-robo = discord.Robo(prefixo="!")
+bot = discord.Bot(prefixo="!")
 
-# Evento ativado quando o robô se conecta
-@robo.evento
+# Evento ativado quando o bot se conecta
+@bot.evento
 definir assincrono ao_iniciar():
-    escrever(f"Robô conectado com sucesso como {robo.usuario}!")
+    escrever(f"Bot conectado com sucesso como {bot.usuario}!")
 
 # Evento ativado quando um membro entra no servidor
-@robo.evento
+@bot.evento
 definir assincrono ao_entrar_membro(membro):
     # Procura o canal padrão do sistema do servidor
     canal = membro.servidor.canal_sistema
@@ -343,24 +423,24 @@ definir assincrono ao_entrar_membro(membro):
 
 importar portulong.discord_pt como discord
 
-robo = discord.Robo(prefixo="!")
+bot = discord.Bot(prefixo="!")
 
-@robo.evento
+@bot.evento
 definir assincrono ao_iniciar():
     escrever("Bot online e pronto para comandos em português!")
 
 # Comando simples !ping
-@robo.comando(nome="ping")
+@bot.comando(nome="ping")
 definir assincrono resposta_ping(contexto):
     aguardar contexto.enviar("🏓 Pong! O bot está rodando perfeitamente em Portulong.")
 
 # Comando !diga <texto> que ecoa a frase do usuário
-@robo.comando(nome="diga", ajuda="Faz o robô repetir o texto enviado")
+@bot.comando(nome="diga", ajuda="Faz o bot repetir o texto enviado")
 definir assincrono resposta_falar(contexto, texto):
     aguardar contexto.enviar(f"O usuário **{contexto.autor.nome}** mandou dizer: {texto}")
 
 # Comando !pergunta que simula respostas simples
-@robo.comando(nome="pergunta")
+@bot.comando(nome="pergunta")
 definir assincrono resposta_pergunta(contexto, pergunta):
     fala = f"Hum, você perguntou: '{pergunta}'. Minha resposta é: Sim, com certeza! 👍"
     aguardar contexto.enviar(fala)
@@ -376,14 +456,14 @@ definir assincrono resposta_pergunta(contexto, pergunta):
 
 importar portulong.discord_pt como discord
 
-robo = discord.Robo(prefixo="!")
+bot = discord.Bot(prefixo="!")
 
-@robo.evento
+@bot.evento
 definir assincrono ao_iniciar():
     escrever("Sistema avançado de segurança ativado nos canais.")
 
 # Comando !limpar <quantidade> para deletar mensagens anteriores
-@robo.comando(nome="limpar")
+@bot.comando(nome="limpar")
 definir assincrono limpar_chat(contexto, quantidade: inteiro = 10):
     # Verifica se o solicitante tem permissão de gerenciar mensagens
     se contexto.autor.permissoes.gerenciar_mensagens:
@@ -393,7 +473,7 @@ definir assincrono limpar_chat(contexto, quantidade: inteiro = 10):
         aguardar contexto.enviar("❌ Desculpe, você não tem a permissão de 'Gerenciar Mensagens' para usar isso.")
 
 # Comando !expulsar <membro>
-@robo.comando(nome="expulsar")
+@bot.comando(nome="expulsar")
 definir assincrono expulsar_membro(contexto, membro: discord.Membro):
     se contexto.autor.permissoes.expulsar_membros:
         aguardar membro.expulsar()
@@ -412,20 +492,20 @@ definir assincrono expulsar_membro(contexto, membro: discord.Membro):
 
 importar portulong.discord_pt como discord
 
-robo = discord.Robo(prefixo="!")
+bot = discord.Bot(prefixo="!")
 
-@robo.evento
+@bot.evento
 definir assincrono ao_iniciar():
     escrever("Módulo de cálculos matemáticos carregado.")
 
 # Comando !somar <numero1> <numero2>
-@robo.comando(nome="somar")
+@bot.comando(nome="somar")
 definir assincrono somar_numeros(contexto, n1: real, n2: real):
     soma = n1 + n2
     aguardar contexto.enviar(f"📊 **Calculadora Portulong**:\nO resultado da soma de {n1} + {n2} é igual a: **{soma}**")
 
 # Comando !multiplicar <numero1> <numero2>
-@robo.comando(nome="vezes")
+@bot.comando(nome="vezes")
 definir assincrono multiplicar_numeros(contexto, n1: real, n2: real):
     resultado = n1 * n2
     aguardar contexto.enviar(f"✖️ O resultado de {n1} multiplicado por {n2} é igual a: **{resultado}**")
@@ -1040,12 +1120,12 @@ async def greet(ctx):
       "member\\.ban": "membro.banir",
       "message\\.delete": "mensagem.deletar",
       "channel\\.purge": "canal.limpar",
-      "@bot\\.event": "@robo.evento",
-      "@client\\.event": "@robo.evento",
-      "@bot\\.command": "@robo.comando",
-      "@client\\.command": "@robo.comando",
-      "@bot\\.evento": "@robo.evento",
-      "@bot\\.comando": "@robo.comando"
+      "@bot\\.event": "@bot.evento",
+      "@client\\.event": "@bot.evento",
+      "@robo\\.event": "@robo.evento",
+      "@bot\\.command": "@bot.comando",
+      "@client\\.command": "@bot.comando",
+      "@robo\\.command": "@robo.comando"
     };
 
     for (let i = 0; i < lines.length; i++) {
@@ -1081,14 +1161,17 @@ async def greet(ctx):
             const argValue = match[2].trim();
             const stringParams = ["nome", "valor", "titulo", "descricao", "rotulo", "marcador", "id_personalizado", "motivo", "cor"];
             if (stringParams.includes(argName)) {
-              const isQuoted = (argValue.startsWith("'") && argValue.endsWith("'")) || (argValue.startsWith('"') && argValue.endsWith('"'));
+              const isQuoted = (argValue.startsWith("'") && argValue.endsWith("'")) || 
+                               (argValue.startsWith('"') && argValue.endsWith('"')) ||
+                               ((argValue.startsWith("f'") || argValue.startsWith("r'") || argValue.startsWith("b'")) && argValue.endsWith("'")) ||
+                               ((argValue.startsWith('f"') || argValue.startsWith('r"') || argValue.startsWith('b"')) && argValue.endsWith('"'));
               const isBooleanOrNull = ["Verdadeiro", "Falso", "Nulo"].includes(argValue);
-              const isNumeric = /^\d+(\.\d+)?$/.test(argValue);
+              const isNumeric = /^\d+(\.\d+)?$/.test(argValue) || /^0[xX][0-9a-fA-F]+$/.test(argValue);
               const isValidVariable = /^[a-zA-Z_][a-zA-Z0-9_\.\[\]\(\)]*$/.test(argValue);
 
               if (!isQuoted && !isBooleanOrNull && !isNumeric) {
                 if (argValue.includes(" ") || !isValidVariable) {
-                  errors.push(`Erro de Sintaxe (Linha ${lineNum}): O argumento '${argName}' em '${trimmed.match(discordMethodPattern)![1]}' parece ser um texto sem aspas: '${argValue}'. Por favor, use aspas.`);
+                  errors.push(`Erro de Sintaxe (Linha ${lineNum}): O argumento '${argName}' em '${trimmed.match(discordMethodPattern)![1]}' parece ser um text sem aspas: '${argValue}'. Por favor, use aspas.`);
                 }
               }
             }
@@ -1118,7 +1201,7 @@ async def greet(ctx):
         }
       }
 
-      if (trimmed.includes("@robo.comando")) {
+      if (trimmed.includes("@robo.comando") || trimmed.includes("@bot.comando")) {
         commandsCount++;
       }
     }
@@ -1126,8 +1209,8 @@ async def greet(ctx):
     if (!codeText.includes("importar portulong.discord_pt")) {
       warnings.push("Aviso de Dependência: Certifique-se de importar 'portulong.discord_pt' para registrar seu bot.");
     }
-    if (!codeText.includes("Robo(") && !codeText.includes("Robo (")) {
-      warnings.push("Aviso de Inicialização: Não foi encontrada a instância virtual 'Robo(prefixo=...)'.");
+    if (!codeText.includes("Robo(") && !codeText.includes("Robo (") && !codeText.includes("Bot(") && !codeText.includes("Bot (")) {
+      warnings.push("Aviso de Inicialização: Não foi encontrada a instância virtual 'Bot(prefixo=...)' ou 'Robo(prefixo=...)'.");
     }
 
     return {
@@ -3106,6 +3189,14 @@ function atualizarDiagnosticos(document, collection) {
                 continue;
             }
             
+            const textoDepois = linha.substring(indiceInicio + palavra.length);
+            if (/^\\\\s*=(?!=)/.test(textoDepois)) {
+                continue;
+            }
+            if (/^\\\\s*['"]/.test(textoDepois)) {
+                continue;
+            }
+            
             if (!keywords.has(palavra) && !localDecls.has(palavra)) {
                 const range = new vscode.Range(
                     new vscode.Position(indiceLinha, indiceInicio),
@@ -3708,7 +3799,7 @@ function activate(context) {
                 terminal = vscode.window.createTerminal('Portulong Executar');
             }
             terminal.show();
-            terminal.sendText(\`portulong executar "\${filePath}"\`);
+            terminal.sendText("portulong executar \"" + filePath + "\"");
         });
     });
 

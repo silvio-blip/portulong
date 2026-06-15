@@ -109,6 +109,7 @@ BUILTINS_MAP = {
 
 DISCORD_MAP = {
     "Robo": "Bot",
+    "Bot": "Bot",
     "prefixo": "command_prefix",
     "evento": "event",
     "comando": "command",
