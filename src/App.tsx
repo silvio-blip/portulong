@@ -351,7 +351,7 @@ definir assincrono iniciar_advinha(contexto):
             tentativas = tentativas + 1
         exceto ErroDeValor:
             aguardar contexto.enviar("⚠️ Por favor, digite um número inteiro válido!")
-        exceto Exception:
+        exceto Excessao:
             aguardar contexto.enviar(f"⏱️ O tempo acabou! O número secreto era **{numero_secreto}**.")
             retornar
             
@@ -546,7 +546,8 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
   ]);
 
   const DISCORD = new Set([
-    "Robo", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem", "discord",
+    "Robo", "Bot", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem", "discord",
+    "Cor", "Embutido", "Modal", "ModalPT", "CaixaTexto", "Botao", "Selecao", "Visualizacao", "OpcaoSelecao",
     "comando", "evento", "contexto", "membro", "canal", "servidor", "mensagem", 
     "usuario", "enviar", "responder", "deletar", "adicionar_reacao", 
     "remover_reacao", "expulsar", "banir", "limpar", "conteudo", "autor", 
@@ -601,8 +602,8 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
   const LOCAL_DECLS = new Set<string>();
 
   try {
-    // 1. Extração dinâmica de nomes de funções/definições locais
-    const fnRegex = /\b(?:funcao|definir)\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+    // 1. Extração dinâmica de nomes de funções/definições locais (suporta assincrono)
+    const fnRegex = /\b(?:funcao|definir)\s+(?:assincrono\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/g;
     let localMatch;
     while ((localMatch = fnRegex.exec(rawCode)) !== null) {
       LOCAL_DECLS.add(localMatch[1]);
@@ -628,12 +629,12 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
       vars.forEach(v => LOCAL_DECLS.add(v.trim()));
     }
 
-    // 5. Extração de parâmetros de função locais
-    const paramsRegex = /\b(?:funcao|definir)\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(([^)]*)\)/g;
+    // 5. Extração de parâmetros de função locais (suporta assincrono e parâmetros nomeados / valores padrão)
+    const paramsRegex = /\b(?:funcao|definir)\s+(?:assincrono\s+)?[a-zA-Z_][a-zA-Z0-9_]*\s*\(([^)]*)\)/g;
     while ((localMatch = paramsRegex.exec(rawCode)) !== null) {
       const paramsRaw = localMatch[1].split(",");
       paramsRaw.forEach(p => {
-        const pNome = p.trim().split(/\s*:/)[0].trim();
+        const pNome = p.trim().split(/\s*:/)[0].split(/\s*=/)[0].trim();
         if (pNome && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(pNome)) {
           LOCAL_DECLS.add(pNome);
         }
@@ -717,8 +718,16 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
           return idx >= 0 && rawCode[idx] === '@';
         })();
 
-        // Se for uma palavra maior que 1 letra, que não é atributo/objeto e não é declarada no escopo, aponta erro de sintaxe
-        const isInvalid = word.length > 1 && !isAttribute && !isDecorator && !CORE_ALLOWED.has(word) && !LOCAL_DECLS.has(word);
+        const isKeywordArgument = (() => {
+          let idx = match.index + word.length;
+          while (idx < rawCode.length && /\s/.test(rawCode[idx])) {
+            idx++;
+          }
+          return idx < rawCode.length && rawCode[idx] === '=' && (idx + 1 >= rawCode.length || rawCode[idx + 1] !== '=');
+        })();
+
+        // Se for uma palavra maior que 1 letra, que não é atributo/objeto, não é argumento e não é declarada no escopo, aponta erro de sintaxe
+        const isInvalid = word.length > 1 && !isAttribute && !isDecorator && !isKeywordArgument && !CORE_ALLOWED.has(word) && !LOCAL_DECLS.has(word);
 
         if (isInvalid) {
           elements.push(
@@ -1149,7 +1158,7 @@ async def greet(ctx):
       }
 
       // Detect common syntax errors in Discord / UI method arguments (missing quotes for strings)
-      const discordMethodPattern = /(adicionar_campo|enviar|responder|Embutido|Botao|Selecao|Modal|CaixaTexto|castigar)/;
+      const discordMethodPattern = /(adicionar_campo|enviar|responder|Embutido|Botao|Selecao|Modal|ModalPT|CaixaTexto|castigar)/;
       if (discordMethodPattern.test(trimmed)) {
         const firstParen = trimmed.indexOf("(");
         const lastParen = trimmed.lastIndexOf(")");
@@ -3099,7 +3108,8 @@ function atualizarDiagnosticos(document, collection) {
         "ErroDeImportacao", "ErroDeAtributo", "ErroDivisaoPorZero", "FaltaDeMemoria", "ParadaDeIteracao",
         "ErroDoSistema", "ArquivoNaoEncontrado", "InterrupcaoPeloTeclado", "ErroDeAsseveracao",
         "ErroDeExecucao", "ErroNaoImplementado",
-        "Robo", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
+        "Robo", "Bot", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
+        "Cor", "Embutido", "Modal", "ModalPT", "CaixaTexto", "Botao", "Selecao", "Visualizacao", "OpcaoSelecao",
         "prefixo", "evento", "comando", "nome", "ajuda", "enviar", "responder", "deletar",
         "adicionar_reacao", "remover_reacao", "expulsar", "banir", "limpar", "conteudo",
         "autor", "canal", "servidor", "mensagem", "usuario", "id", "canal_sistema", "permissoes",
@@ -3110,7 +3120,7 @@ function atualizarDiagnosticos(document, collection) {
     const localDecls = new Set();
     
     linhasLimpas.forEach(linha => {
-        const matchFuncao = linha.match(/\\\\b(?:funcao|definir)\\\\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+        const matchFuncao = linha.match(/\\\\b(?:funcao|definir)\\\\s+(?:assincrono\\\\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/);
         if (matchFuncao) {
             localDecls.add(matchFuncao[1]);
         }
@@ -3132,11 +3142,11 @@ function atualizarDiagnosticos(document, collection) {
             variaveis.forEach(v => localDecls.add(v.trim()));
         }
     
-        const matchParams = linha.match(/\\\\b(?:funcao|definir)\\\\s+[a-zA-Z_][a-zA-Z0-9_]*\\\\s*\\\\(([^)]*)\\\\)/);
+        const matchParams = linha.match(/\\\\b(?:funcao|definir)\\\\s+(?:assincrono\\\\s+)?[a-zA-Z_][a-zA-Z0-9_]*\\\\s*\\\\(([^)]*)\\\\)/);
         if (matchParams) {
             const paramsRaw = matchParams[1].split(",");
             paramsRaw.forEach(p => {
-                const pNome = p.trim().split(/\\\\s*:/)[0].trim();
+                const pNome = p.trim().split(/\\\\s*:/)[0].split(/\\\\s*=/)[0].trim();
                 if (pNome && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(pNome)) {
                     localDecls.add(pNome);
                 }

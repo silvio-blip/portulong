@@ -100,7 +100,8 @@ function atualizarDiagnosticos(document, collection) {
         "ErroDoSistema", "ArquivoNaoEncontrado", "InterrupcaoPeloTeclado", "ErroDeAsseveracao",
         "ErroDeExecucao", "ErroNaoImplementado",
         // Discord API Map
-        "Robo", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
+        "Robo", "Bot", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
+        "Cor", "Embutido", "Modal", "ModalPT", "CaixaTexto", "Botao", "Selecao", "Visualizacao", "OpcaoSelecao",
         "prefixo", "evento", "comando", "nome", "ajuda", "enviar", "responder", "deletar",
         "adicionar_reacao", "remover_reacao", "expulsar", "banir", "limpar", "conteudo",
         "autor", "canal", "servidor", "mensagem", "usuario", "id", "canal_sistema", "permissoes",
@@ -113,8 +114,8 @@ function atualizarDiagnosticos(document, collection) {
     
     // Primeiro passo: identificar registros e declarações locais do arquivo ativo
     linhasLimpas.forEach(linha => {
-        // 1. Funções/Definições: definir nome(param1, param2) ou funcao nome(...)
-        const matchFuncao = linha.match(/\b(?:funcao|definir)\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+        // 1. Funções/Definições: definir nome(param1, param2) ou funcao nome(...) ou definir assincrono nome(...)
+        const matchFuncao = linha.match(/\b(?:funcao|definir)\s+(?:assincrono\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/);
         if (matchFuncao) {
             localDecls.add(matchFuncao[1]);
         }
@@ -139,12 +140,12 @@ function atualizarDiagnosticos(document, collection) {
             variaveis.forEach(v => localDecls.add(v.trim()));
         }
     
-        // 5. Parâmetros de funções: "definir meu_comando(ctx, membro):"
-        const matchParams = linha.match(/\b(?:funcao|definir)\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(([^)]*)\)/);
+        // 5. Parâmetros de funções: "definir meu_comando(ctx, membro):" ou "definir assincrono meu_comando(ctx):"
+        const matchParams = linha.match(/\b(?:funcao|definir)\s+(?:assincrono\s+)?[a-zA-Z_][a-zA-Z0-9_]*\s*\(([^)]*)\)/);
         if (matchParams) {
             const paramsRaw = matchParams[1].split(",");
             paramsRaw.forEach(p => {
-                const pNome = p.trim().split(/\s*:/)[0].trim();
+                const pNome = p.trim().split(/\s*:/)[0].split(/\s*=/)[0].trim();
                 if (pNome && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(pNome)) {
                     localDecls.add(pNome);
                 }
@@ -202,6 +203,16 @@ function atualizarDiagnosticos(document, collection) {
             
             // Se for um número puro representado em string por algum motivo do regex, pula
             if (/^\d+$/.test(palavra)) {
+                continue;
+            }
+
+            // Ignora se for parâmetros nomeados / keyword arguments
+            // ex: tempo_esgotado=120 ou nome="Meu Bot"
+            const textoDepois = linha.substring(indiceInicio + palavra.length);
+            if (/^\s*=(?!=)/.test(textoDepois)) {
+                continue;
+            }
+            if (/^\s*['"]/.test(textoDepois)) {
                 continue;
             }
             

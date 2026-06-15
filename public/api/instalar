@@ -573,7 +573,8 @@ function atualizarDiagnosticos(document, collection) {
         "ErroDeImportacao", "ErroDeAtributo", "ErroDivisaoPorZero", "FaltaDeMemoria", "ParadaDeIteracao",
         "ErroDoSistema", "ArquivoNaoEncontrado", "InterrupcaoPeloTeclado", "ErroDeAsseveracao",
         "ErroDeExecucao", "ErroNaoImplementado",
-        "Robo", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
+        "Robo", "Bot", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
+        "Cor", "Embutido", "Modal", "ModalPT", "CaixaTexto", "Botao", "Selecao", "Visualizacao", "OpcaoSelecao",
         "prefixo", "evento", "comando", "nome", "ajuda", "enviar", "responder", "deletar",
         "adicionar_reacao", "remover_reacao", "expulsar", "banir", "limpar", "conteudo",
         "autor", "canal", "servidor", "mensagem", "usuario", "id", "canal_sistema", "permissoes",
@@ -584,7 +585,7 @@ function atualizarDiagnosticos(document, collection) {
     const localDecls = new Set();
     
     linhasLimpas.forEach(linha => {
-        const matchFuncao = linha.match(/\\b(?:funcao|definir)\\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+        const matchFuncao = linha.match(/\\b(?:funcao|definir)\\s+(?:assincrono\\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/);
         if (matchFuncao) {
             localDecls.add(matchFuncao[1]);
         }
@@ -600,17 +601,17 @@ function atualizarDiagnosticos(document, collection) {
             variaveis.forEach(v => localDecls.add(v.trim()));
         }
         
-        const matchPara = recursiveMatchPara = linha.match(/\\bpara\\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\\s*,\\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\\s+em\\b/);
+        const matchPara = linha.match(/\\bpara\\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\\s*,\\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\\s+em\\b/);
         if (matchPara) {
             const variaveis = matchPara[1].split(",");
             variaveis.forEach(v => localDecls.add(v.trim()));
         }
     
-        const matchParams = linha.match(/\\b(?:funcao|definir)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(([^)]*)\\)/);
+        const matchParams = linha.match(/\\b(?:funcao|definir)\\s+(?:assincrono\\s+)?[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(([^)]*)\\)/);
         if (matchParams) {
             const paramsRaw = matchParams[1].split(",");
             paramsRaw.forEach(p => {
-                const pNome = p.trim().split(/\\s*:/)[0].trim();
+                const pNome = p.trim().split(/\\s*:/)[0].split(/\\s*=/)[0].trim();
                 if (pNome && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(pNome)) {
                     localDecls.add(pNome);
                 }
