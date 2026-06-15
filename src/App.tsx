@@ -433,7 +433,7 @@ definir assincrono multiplicar_numeros(contexto, n1: real, n2: real):
   }
 ];
 
-// Função de realce de sintaxe robusta para Portulong (.ptg)
+// Função de realce de sintaxe robusta para Portulong (.ptg) com Linter e Validação integrada em tempo real
 function highlightPortulong(rawCode: string): React.ReactNode[] {
   const regex = /(\s+)|(#.*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')|(\b[a-zA-Z_0-9ñáéíóúçãõâêîôûüãõàèìòù_]+\b)|([()[\]{}!@#$%^&*+\-=|\\:;<>,.?/]+)/g;
   
@@ -509,6 +509,81 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
 
   const PYTHON_ERRORS = new Set(Object.keys(PYTHON_SUGGESTIONS));
 
+  // Lista estática de exclusão / fallback para evitar falsos positivos
+  const CORE_ALLOWED = new Set([
+    "self", "contexto", "ctx", "bot", "client", "args", "kwargs", "ptg", "canal_id", "token", "mensagem",
+    "os", "sys", "re", "json", "math", "random", "time", "datetime", "asyncio", "discord", "commands",
+    "__init__", "__name__", "__main__", "append", "remove", "pop", "split", "join", "strip", "lower", "upper",
+    "replace", "keys", "values", "items", "get", "update"
+  ]);
+
+  // Coleção dinâmica para guardar declarações locais do usuário
+  const LOCAL_DECLS = new Set<string>();
+
+  try {
+    // 1. Extração dinâmica de nomes de funções/definições locais
+    const fnRegex = /\b(?:funcao|definir)\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+    let localMatch;
+    while ((localMatch = fnRegex.exec(rawCode)) !== null) {
+      LOCAL_DECLS.add(localMatch[1]);
+    }
+
+    // 2. Extração de classes
+    const clRegex = /\bclasse\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+    while ((localMatch = clRegex.exec(rawCode)) !== null) {
+      LOCAL_DECLS.add(localMatch[1]);
+    }
+
+    // 3. Extração de variáveis atribuídas localmente (ex: token = "...")
+    const assignRegex = /^[ \t]*([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\s*=/gm;
+    while ((localMatch = assignRegex.exec(rawCode)) !== null) {
+      const vars = localMatch[1].split(",");
+      vars.forEach(v => LOCAL_DECLS.add(v.trim()));
+    }
+
+    // 4. Extração de variáveis de loops (para x em intervalo:)
+    const loopRegex = /\bpara\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\s+em\b/g;
+    while ((localMatch = loopRegex.exec(rawCode)) !== null) {
+      const vars = localMatch[1].split(",");
+      vars.forEach(v => LOCAL_DECLS.add(v.trim()));
+    }
+
+    // 5. Extração de parâmetros de função locais
+    const paramsRegex = /\b(?:funcao|definir)\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(([^)]*)\)/g;
+    while ((localMatch = paramsRegex.exec(rawCode)) !== null) {
+      const paramsRaw = localMatch[1].split(",");
+      paramsRaw.forEach(p => {
+        const pNome = p.trim().split(/\s*:/)[0].trim();
+        if (pNome && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(pNome)) {
+          LOCAL_DECLS.add(pNome);
+        }
+      });
+    }
+
+    // 6. Extração de imports e aliases locais (de xxx importar yyy)
+    const impFromRegex = /\bde\s+[a-zA-Z0-9_.]+\s+importar\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)/g;
+    while ((localMatch = impFromRegex.exec(rawCode)) !== null) {
+      const nomes = localMatch[1].split(",");
+      nomes.forEach(n => LOCAL_DECLS.add(n.trim()));
+    }
+
+    const impRegex = /\bimportar\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)/g;
+    while ((localMatch = impRegex.exec(rawCode)) !== null) {
+      const partes = localMatch[1].split(",");
+      partes.forEach(p => {
+        const pTrim = p.trim();
+        if (pTrim.includes(" como ")) {
+          const alias = pTrim.split(" como ")[1].trim();
+          LOCAL_DECLS.add(alias);
+        } else {
+          LOCAL_DECLS.add(pTrim);
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Erro no parser preliminar do linter:", err);
+  }
+
   while ((match = regex.exec(rawCode)) !== null) {
     if (match.index > lastIndex) {
       elements.push(<span key={key++}>{rawCode.slice(lastIndex, match.index)}</span>);
@@ -545,7 +620,39 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
       } else if (rawCode[match.index + word.length] === '(') {
         elements.push(<span key={key++} className="text-emerald-400 font-mono font-medium">{word}</span>);
       } else {
-        elements.push(<span key={key++} className="text-slate-200 font-mono">{word}</span>);
+        // Ramo else: Palavra identificadora genérica. Rodar linter para verificar se é válida
+        const isAttribute = (() => {
+          let idx = match.index - 1;
+          while (idx >= 0 && /\s/.test(rawCode[idx])) {
+            idx--;
+          }
+          return idx >= 0 && rawCode[idx] === '.';
+        })();
+
+        const isDecorator = (() => {
+          let idx = match.index - 1;
+          while (idx >= 0 && /\s/.test(rawCode[idx])) {
+            idx--;
+          }
+          return idx >= 0 && rawCode[idx] === '@';
+        })();
+
+        // Se for uma palavra maior que 1 letra, que não é atributo/objeto e não é declarada no escopo, aponta erro de sintaxe
+        const isInvalid = word.length > 1 && !isAttribute && !isDecorator && !CORE_ALLOWED.has(word) && !LOCAL_DECLS.has(word);
+
+        if (isInvalid) {
+          elements.push(
+            <span 
+              key={key++} 
+              title={`A palavra '${word}' não é uma palavra-chave integrada e não foi declarada localmente.`} 
+              className="text-red-400 border-b border-dashed border-red-500 bg-red-950/20 font-mono px-0.5 rounded cursor-help"
+            >
+              {word}
+            </span>
+          );
+        } else {
+          elements.push(<span key={key++} className="text-slate-200 font-mono">{word}</span>);
+        }
       }
     } else if (operator) {
       if (operator.includes('@')) {
@@ -2401,7 +2508,223 @@ tmlanguage_json = {
 
 extension_js = """const vscode = require('vscode');
 
+function obterTextoSemStringsEComentarios(documento) {
+    let texto = documento.getText();
+    texto = texto.replace(/\"\"\"[\\\\s\\\\S]*?\"\"\"|'\\'\\'[\\\\s\\\\S]*?'\\'\\'/g, match => {
+        return " ".repeat(match.length);
+    });
+    
+    const linhas = texto.split(/\\\\r?\\\\n/);
+    const linhasLimpas = linhas.map(linha => {
+        let terminalClean = "";
+        let insideString = false;
+        let charString = null;
+        let escorregou = false;
+        
+        for (let i = 0; i < linha.length; i++) {
+            const c = linha[i];
+            
+            if (escorregou) {
+                terminalClean += " ";
+                escorregou = false;
+                continue;
+            }
+            
+            if (c === '\\\\\\\\') {
+                terminalClean += " ";
+                escorregou = true;
+                continue;
+            }
+            
+            if (insideString) {
+                if (c === charString) {
+                    insideString = false;
+                }
+                terminalClean += " ";
+            } else {
+                if (c === '#' && !insideString) {
+                    terminalClean += " ".repeat(linha.length - i);
+                    break;
+                } else if (c === '"' || c === "'") {
+                    insideString = true;
+                    charString = c;
+                    terminalClean += " ";
+                } else {
+                    terminalClean += c;
+                }
+            }
+        }
+        return terminalClean;
+    });
+    
+    return linhasLimpas;
+}
+
+function atualizarDiagnosticos(document, collection) {
+    if (document.languageId !== 'portulong' && !document.fileName.endsWith('.ptg')) {
+        return;
+    }
+    
+    const diagnostics = [];
+    const linhasLimpas = obterTextoSemStringsEComentarios(document);
+    
+    const keywords = new Set([
+        "importar", "de", "como", "se", "senao", "senaose", "para", "enquanto",
+        "retornar", "parar", "continuar", "passar", "tentar", "exceto", "finalmente",
+        "levantar", "assincrono", "aguardar", "com", "lambda", "global", "naolocal",
+        "produzir", "asseverar", "funcao", "definir", "classe",
+        "e", "ou", "nao", "em", "eh", "nao_eh",
+        "self", "contexto", "ctx", "bot", "client", "args", "kwargs", "ptg", "canal_id", "token", "mensagem",
+        "verdadeiro", "falso", "nulo", "Verdadeiro", "Falso", "Nulo",
+        "escrever", "mostrar", "ler", "tamanho", "inteiro", "texto", "real", "decimal",
+        "boleano", "lista", "dicionario", "conjunto", "tupla", "intervalo", "abrir", "tipo",
+        "somar", "absoluto", "maximo", "minimo", "arredondar", "mapear", "filtrar", "ordenado",
+        "super", "propriedade", "zipar", "enumerar", "objeto", "qualquer", "todos", "ajuda",
+        "identidade", "reversivel", "formatar", "obter_atributo", "definir_atributo", "tem_atributo",
+        "excluir_atributo", "representacao", "proximo", "iterador", "eh_instancia", "eh_subclasse",
+        "Excessao", "ErroDeValor", "ErroDeTipo", "ErroDeNome", "ErroDeIndice", "ErroDeChave",
+        "ErroDeImportacao", "ErroDeAtributo", "ErroDivisaoPorZero", "FaltaDeMemoria", "ParadaDeIteracao",
+        "ErroDoSistema", "ArquivoNaoEncontrado", "InterrupcaoPeloTeclado", "ErroDeAsseveracao",
+        "ErroDeExecucao", "ErroNaoImplementado",
+        "Robo", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
+        "prefixo", "evento", "comando", "nome", "ajuda", "enviar", "responder", "deletar",
+        "adicionar_reacao", "remover_reacao", "expulsar", "banir", "limpar", "conteudo",
+        "autor", "canal", "servidor", "mensagem", "usuario", "id", "canal_sistema", "permissoes",
+        "expulsar_membros", "gerenciar_mensagens",
+        "os", "sys", "re", "json", "math", "random", "time", "datetime", "discord", "commands", "intents", "asyncio"
+    ]);
+    
+    const localDecls = new Set();
+    
+    linhasLimpas.forEach(linha => {
+        const matchFuncao = linha.match(/\\\\b(?:funcao|definir)\\\\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+        if (matchFuncao) {
+            localDecls.add(matchFuncao[1]);
+        }
+        
+        const matchClasse = linha.match(/\\\\bclasse\\\\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+        if (matchClasse) {
+            localDecls.add(matchClasse[1]);
+        }
+        
+        const matchAtribuicao = linha.match(/^[ \\\\t]*([a-zA-Z_][a-zA-Z0-9_]*(?:\\\\s*,\\\\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\\\\s*=/);
+        if (matchAtribuicao) {
+            const variaveis = matchAtribuicao[1].split(",");
+            variaveis.forEach(v => localDecls.add(v.trim()));
+        }
+        
+        const matchPara = linha.match(/\\\\bpara\\\\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\\\\s*,\\\\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\\\\s+em\\\\b/);
+        if (matchPara) {
+            const variaveis = matchPara[1].split(",");
+            variaveis.forEach(v => localDecls.add(v.trim()));
+        }
+    
+        const matchParams = linha.match(/\\\\b(?:funcao|definir)\\\\s+[a-zA-Z_][a-zA-Z0-9_]*\\\\s*\\\\(([^)]*)\\\\)/);
+        if (matchParams) {
+            const paramsRaw = matchParams[1].split(",");
+            paramsRaw.forEach(p => {
+                const pNome = p.trim().split(/\\\\s*:/)[0].trim();
+                if (pNome && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(pNome)) {
+                    localDecls.add(pNome);
+                }
+            });
+        }
+        
+        const matchDeImportar = linha.match(/\\\\bde\\\\s+[a-zA-Z0-9_.]+\\\\s+importar\\\\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\\\\s*,\\\\s*[a-zA-Z_][a-zA-Z0-9_]*)*)/);
+        if (matchDeImportar) {
+            const nomes = matchDeImportar[1].split(",");
+            nomes.forEach(n => localDecls.add(n.trim()));
+        }
+        
+        const matchImportar = linha.match(/\\\\bimportar\\\\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\\\\s*,\\\\s*[a-zA-Z_][a-zA-Z0-9_]*)*)/);
+        if (matchImportar) {
+            const partes = matchImportar[1].split(",");
+            partes.forEach(p => {
+                const pTrim = p.trim();
+                if (pTrim.includes(" como ")) {
+                    const alias = pTrim.split(" como ")[1].trim();
+                    localDecls.add(alias);
+                } else {
+                    localDecls.add(pTrim);
+                }
+            });
+        }
+    });
+    
+    linhasLimpas.forEach((linha, indiceLinha) => {
+        const wordRegex = /\\\\b[a-zA-Z_][a-zA-Z0-9_]*\\\\b/g;
+        let match;
+        
+        while ((match = wordRegex.exec(linha)) !== null) {
+            const palavra = match[0];
+            const indiceInicio = match.index;
+            
+            if (palavra.length <= 1) {
+                continue;
+            }
+            
+            const textoAntes = linha.substring(0, indiceInicio);
+            if (/\\\\.\\\\s*$/.test(textoAntes)) {
+                continue;
+            }
+            
+            if (/@\\\\s*$/.test(textoAntes)) {
+                continue;
+            }
+            
+            if (/^\\\\d+$/.test(palavra)) {
+                continue;
+            }
+            
+            if (!keywords.has(palavra) && !localDecls.has(palavra)) {
+                const range = new vscode.Range(
+                    new vscode.Position(indiceLinha, indiceInicio),
+                    new vscode.Position(indiceLinha, indiceInicio + palavra.length)
+                );
+                
+                const diagnostic = new vscode.Diagnostic(
+                    range,
+                    "Sintaxe inválida: A palavra '" + palavra + "' não é uma palavra-chave integrada e não está definida no escopo local do Portulong.",
+                    vscode.DiagnosticSeverity.Error
+                );
+                
+                diagnostic.code = 'invalid-word';
+                diagnostics.push(diagnostic);
+            }
+        }
+    });
+    
+    collection.set(document.uri, diagnostics);
+}
+
 function activate(context) {
+    const diagnosticsCollection = vscode.languages.createDiagnosticCollection('portulong');
+    context.subscriptions.push(diagnosticsCollection);
+
+    if (vscode.window.activeTextEditor) {
+        atualizarDiagnosticos(vscode.window.activeTextEditor.document, diagnosticsCollection);
+    }
+
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(editor => {
+            if (editor) {
+                atualizarDiagnosticos(editor.document, diagnosticsCollection);
+            }
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeTextDocument(event => {
+            atualizarDiagnosticos(event.document, diagnosticsCollection);
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidCloseTextDocument(doc => {
+            diagnosticsCollection.delete(doc.uri);
+        })
+    );
+
     let disposable = vscode.commands.registerCommand('portulong.executar', function () {
         const activeEditor = vscode.window.activeTextEditor;
         if (!activeEditor) {
@@ -2417,12 +2740,14 @@ function activate(context) {
 
         document.save().then(() => {
             const filePath = document.fileName;
+            
             let terminal = vscode.window.terminals.find(t => t.name === 'Portulong Executar');
             if (!terminal) {
                 terminal = vscode.window.createTerminal('Portulong Executar');
             }
+            
             terminal.show();
-            terminal.sendText(\`portulong executar "\${filePath}"\`);
+            terminal.sendText("portulong executar \\"" + filePath + "\\"");
         });
     });
 
