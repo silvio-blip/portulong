@@ -2,5 +2,5 @@
 Portulong - Uma linguagem de programação em português baseada em Python para criar bots do Discord.
 """
 
-__version__ = "1.0.6"
+__version__ = "1.0.70"
 __author__ = "Silvio"
