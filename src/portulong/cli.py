@@ -91,11 +91,140 @@ def exibir_ajuda():
     print("🐉 CLI oficial da linguagem Portulong para bots do Discord em português.\n")
     print("Uso:")
     print("   portulong iniciar              - Inicializa um novo projeto com o template de bot")
-    print("   portulong instalar             - Descarrega e instala de forma autónoma as extensões, cores e complementos de sistema")
-    print("   portulong desinstalar          - Remove completamente as extensões, arquivos de persistência e complementos instalados")
+    print("   portulong instalar             - Descarrega e instala de forma autónoma as extensões, cores e complementos de sistema com sincronização instantânea")
+    print("   portulong atualizar            - Força a atualização imediata da linguagem, extensões, configurações e sintaxes locais")
+    print("   portulong desinstalar          - Remove completamente as extensões, arquivos de persistência e perfis de shell")
     print("   portulong eliminar             - Atalho para desinstalar completamente todos os recursos locais")
     print("   portulong executar <arq.ptg>   - Transpila e executa o arquivo")
     print("   portulong <arq.ptg>            - Executa o arquivo diretamente")
+
+def ajustar_profiles_shell(instalar=True):
+    """
+    Gerencia as variáveis de ambiente nos perfis do shell de forma elegante,
+    adicionando ou removendo de forma 100% segura sem corromper outros elementos do usuário.
+    """
+    home = os.path.expanduser("~")
+    portulong_dir = os.path.join(home, ".portulong")
+    
+    profiles = [
+        os.path.join(home, ".bashrc"),
+        os.path.join(home, ".zshrc"),
+        os.path.join(home, ".bash_profile"),
+        os.path.join(home, ".profile")
+    ]
+    
+    marca_inicio = "# >>> portulong >>>"
+    marca_fim = "# <<< portulong <<<"
+    
+    bloco_conteudo = f"""{marca_inicio}
+export PORTULONG_HOME="{portulong_dir}"
+export PATH="$PORTULONG_HOME:$PATH"
+{marca_fim}"""
+
+    for prof in profiles:
+        if not instalar and not os.path.exists(prof):
+            continue
+            
+        conteudo = ""
+        if os.path.exists(prof):
+            try:
+                with open(prof, "r", encoding="utf-8") as f:
+                    conteudo = f.read()
+            except Exception:
+                continue
+                
+        # Limpar bloco existente anterior se houver
+        if marca_inicio in conteudo and marca_fim in conteudo:
+            linhas = conteudo.split("\n")
+            novas_linhas = []
+            pulando = False
+            for linha in linhas:
+                if linha.strip() == marca_inicio:
+                    pulando = True
+                    continue
+                if linha.strip() == marca_fim:
+                    pulando = False
+                    continue
+                if not pulando:
+                    novas_linhas.append(linha)
+            conteudo = "\n".join(novas_linhas).strip() + "\n"
+            
+        if instalar:
+            conteudo = conteudo.strip() + "\n\n" + bloco_conteudo + "\n"
+            
+        try:
+            with open(prof, "w", encoding="utf-8") as f:
+                f.write(conteudo)
+        except Exception:
+            pass
+
+def gerenciar_vscode_settings(registrar=True):
+    """
+    Configura ou limpa as configurações no settings.json local para forçar a sincronização
+    das extensões e associação de sintaxe imediatamente na janela ativa da IDE sem recarga.
+    """
+    import json
+    vscode_dir = ".vscode"
+    settings_path = os.path.join(vscode_dir, "settings.json")
+    
+    if registrar:
+        try:
+            os.makedirs(vscode_dir, exist_ok=True)
+            settings_data = {}
+            if os.path.exists(settings_path):
+                try:
+                    with open(settings_path, "r", encoding="utf-8") as sf:
+                        settings_data = json.load(sf)
+                except Exception:
+                    pass
+
+            if "files.associations" not in settings_data:
+                settings_data["files.associations"] = {}
+            settings_data["files.associations"]["*.ptg"] = "portulong"
+            
+            with open(settings_path, "w", encoding="utf-8") as sf:
+                json.dump(settings_data, sf, indent=4, ensure_ascii=False)
+        except Exception:
+            pass
+    else:
+        if os.path.exists(settings_path):
+            try:
+                with open(settings_path, "r", encoding="utf-8") as sf:
+                    settings_data = json.load(sf)
+                if "files.associations" in settings_data:
+                    if "*.ptg" in settings_data["files.associations"]:
+                        del settings_data["files.associations"]["*.ptg"]
+                        if not settings_data["files.associations"]:
+                            del settings_data["files.associations"]
+                if settings_data:
+                    with open(settings_path, "w", encoding="utf-8") as sf:
+                        json.dump(settings_data, sf, indent=4, ensure_ascii=False)
+                else:
+                    os.remove(settings_path)
+                    if not os.listdir(vscode_dir):
+                        os.rmdir(vscode_dir)
+            except Exception:
+                pass
+
+def recarregar_arquivos_vscode():
+    """
+    Se o comando 'code' CLI do VS Code estiver presente, reabre os arquivos .ptg
+    para forçar o editor e o VS Code Web/Codespaces ativo a carregar a nova gramática TextMate imediatamente.
+    """
+    import shutil
+    import subprocess
+    code_path = shutil.which("code")
+    if code_path:
+        for root, dirs, files in os.walk("."):
+            if any(ignored in root for ignored in [".git", "node_modules", "portulong-vscode", ".portulong"]):
+                continue
+            for pf in files:
+                if pf.endswith(".ptg"):
+                    caminho_completo = os.path.join(root, pf)
+                    try:
+                        subprocess.run([code_path, caminho_completo], check=False, shell=os.name == 'nt')
+                    except Exception:
+                        pass
 
 def eliminar_recursos():
     """
@@ -139,7 +268,7 @@ def eliminar_recursos():
                     shutil.rmtree(item)
                 else:
                     os.remove(item)
-                print(f"扫 Resíduo local '{item}' limpo com sucesso.")
+                print(f"🧹 Resíduo local '{item}' limpo com sucesso.")
             except Exception:
                 pass
                 
@@ -155,7 +284,15 @@ def eliminar_recursos():
     except Exception:
         pass
         
-    # 4. Oferecer desinstalação do próprio pacote do pip
+    # 4. Remover associações locais do VS Code e limpar profiles do shell
+    print("🧹 Restaurando os perfis do shell para o estado limpo...")
+    ajustar_profiles_shell(instalar=False)
+    gerenciar_vscode_settings(registrar=False)
+    
+    # Força o VS Code ativo a recarregar as gramáticas removendo o mapeamento de sintaxe
+    recarregar_arquivos_vscode()
+        
+    # 5. Oferecer desinstalação do próprio pacote do pip
     try:
         print("📦 Desinstalando a biblioteca python 'portulong.ptg' pelo pip...")
         subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "portulong.ptg"], check=False)
@@ -216,6 +353,16 @@ def instalar_recursos():
         # fiquem fisicamente persistidos lá de forma real e independente, sem poluir a raiz do projeto do usuário.
         subprocess.run([sys.executable, temp_filename], cwd=portulong_dir, env=env_vars, check=True)
         
+        # Garante sincronização imediata configurando perfis do shell e settings.json do workspace do VS Code
+        print("🔌 Configurando variáveis de ambiente locais persistentes...")
+        ajustar_profiles_shell(instalar=True)
+        
+        print("⚙️ Mapeando associações e realce de sintaxe em tempo real no VS Code...")
+        gerenciar_vscode_settings(registrar=True)
+        
+        # Reabre os arquivos .ptg locais forçando o VS Code a redesenhar a fiação de sintaxe na janela ativa
+        recarregar_arquivos_vscode()
+        
         print("🐉 [SUCESSO] Instalação dos recursos e extensões concluída com êxito! Divirta-se programando!")
         
     except urllib.error.URLError as e:
@@ -248,9 +395,12 @@ def main():
         
     if cmd == "iniciar":
         iniciar_projeto()
-    elif cmd == "instalar":
+    elif cmd in ("instalar", "instalacao"):
         instalar_recursos()
-    elif cmd in ("desinstalar", "eliminar"):
+    elif cmd in ("atualizar", "upgrade", "update", "atualizacao"):
+        print("⚡ [SISTEMA] Iniciando a atualização forçada e integral de recursos do Portulong...")
+        instalar_recursos()
+    elif cmd in ("desinstalar", "eliminar", "remover", "sair", "desativar"):
         eliminar_recursos()
     elif cmd == "executar":
         if len(sys.argv) < 3:
