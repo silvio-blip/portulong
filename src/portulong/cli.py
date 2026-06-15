@@ -101,6 +101,7 @@ def instalar_recursos():
     """
     import urllib.request
     import urllib.error
+    import sys
     
     print("⚡ [SISTEMA] Iniciando a instalação automática de cores, extensões e complementos do Portulong...")
     url = "https://portulong.vercel.app/api/instalar"
@@ -114,11 +115,21 @@ def instalar_recursos():
             conteudo_script = response.read().decode('utf-8')
             
         print("📥 Script de automação recuperado com sucesso. Executando configuração nativa...")
-        # Executa dinamicamente as tarefas de configuração do script
-        local_ns = {}
-        exec(conteudo_script, local_ns)
-        if "main" in local_ns:
-            local_ns["main"]()
+        
+        # Guardar sys.argv original e criar um mock temporário para que o script saiba que está a rodar como instalar.py
+        argv_original = sys.argv.copy()
+        sys.argv = ["instalar.py"]
+        
+        try:
+            # Configurar o namespace com __name__ = "__main__" para que o script execute de forma autónoma
+            namespace = {
+                "__name__": "__main__",
+                "__file__": "instalar.py"
+            }
+            exec(conteudo_script, namespace)
+        finally:
+            # Restaurar sys.argv após a execução
+            sys.argv = argv_original
             
         print("🐉 [SUCESSO] Instalação dos recursos e extensões concluída com êxito! Divirta-se programando!")
     except urllib.error.URLError as e:
@@ -126,6 +137,7 @@ def instalar_recursos():
         print("   Por favor, certifique-se de que o seu dispositivo está ligado à internet e tente novamente.")
     except Exception as e:
         print("❌ [ERRO DE CONFIGURAÇÃO] Ocorreu uma exceção inesperada durante o carregamento de recursos:")
+        print(f"   Detalhes: {e}")
         print("   Se o problema persistir, por favor descarregue os arquivos manualmente no portal oficial.")
 
 def main():

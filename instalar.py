@@ -734,8 +734,8 @@ def main():
         inside_instador = os.path.join(ext_dir, "instalar.py")
         if os.path.exists(inside_instador) and os.path.getsize(inside_instador) > 0:
             script_atual = os.path.abspath(sys.argv[0])
-            # Garante que não estamos tentando deletar o arquivo de dentro da pasta portulong-vscode!
-            if os.path.exists(script_atual) and "portulong-vscode" not in script_atual:
+            # Garante que não estamos tentando deletar o arquivo de dentro da pasta portulong-vscode e que é um ficheiro python de facto!
+            if os.path.exists(script_atual) and "portulong-vscode" not in script_atual and script_basename.endswith(".py") and "portulong" not in script_basename:
                 os.remove(script_atual)
                 success("Arquivo de instalação externo ('instalar.py' de fora) removido com sucesso para manter os seus diretórios perfeitamente limpos!")
                 
