@@ -38,6 +38,7 @@ class ObjetoProxy:
             'membro': 'member',
             'apelido': 'display_name',
             'mencao': 'mention',
+            'mencionar': 'mention',
             'membros': 'members',
             'cargos': 'roles',
             'canais': 'channels',
@@ -337,6 +338,18 @@ class Arquivo(discord.File):
         filename = nome or kwargs.pop('nome', None) or kwargs.pop('filename', None)
         super().__init__(fp=fp, filename=filename, *args, **kwargs)
 
+class ComandoPT(commands.Command):
+    async def invoke(self, ctx):
+        ctx_pt = ContextoPT(ctx)
+        if ctx.args:
+            args_lista = list(ctx.args)
+            args_lista[0] = ctx_pt
+            ctx.args = tuple([args_lista[0]] + [wrap_object(arg) for arg in args_lista[1:]])
+        if ctx.kwargs:
+            ctx.kwargs = {k: wrap_object(v) for k, v in ctx.kwargs.items()}
+        
+        await super().invoke(ctx)
+
 class Robo(commands.Bot):
     def __init__(self, prefixo=None, intents=None, *args, **kwargs):
         pref = prefixo or kwargs.pop('prefixo', None) or kwargs.pop('command_prefix', None)
@@ -348,14 +361,9 @@ class Robo(commands.Bot):
         if 'ajuda' in kwargs_cmd: kwargs_cmd['help'] = kwargs_cmd.pop('ajuda')
         
         def decorador(func):
-            sig = inspect.signature(func)
-            @functools.wraps(func)
-            async def wrapper(ctx, *args, **kwargs):
-                ctx_pt = ContextoPT(ctx)
-                return await func(ctx_pt, *args, **kwargs)
-            wrapper.__signature__ = sig
-            self.add_command(commands.Command(wrapper, name=kwargs_cmd.get('name', func.__name__), *args_cmd, **kwargs_cmd))
-            return wrapper
+            cmd = ComandoPT(func, name=kwargs_cmd.get('name', func.__name__), *args_cmd, **kwargs_cmd)
+            self.add_command(cmd)
+            return func
         return decorador
 
     command = comando
