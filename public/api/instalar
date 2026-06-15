@@ -18,7 +18,7 @@ package_json = {
     "url": "https://github.com/silvio-blip/portulong"
   },
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.60.0"
   },
   "categories": [
     "Programming Languages"
