@@ -2,7 +2,7 @@
   "name": "portulong-vscode",
   "displayName": "Portulong support",
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
-  "version": "1.0.66",
+  "version": "1.0.69",
   "publisher": "silvio-blip",
   "icon": "portulong.png",
   "homepage": "https://portulong.vercel.app/",
@@ -55,12 +55,12 @@
     "commands": [
       {
         "command": "portulong.executar",
-        "title": "Portulong: Executar Ficheiro",
+        "title": "Executar Portulong",
         "icon": "$(play)"
       }
     ],
     "menus": {
-      "editor/title": [
+      "editor/title/run": [
         {
           "when": "editorLangId == portulong || resourceExtname == .ptg",
           "command": "portulong.executar",

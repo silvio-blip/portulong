@@ -637,6 +637,7 @@ class UIWrapper:
         self.OpcaoSelecao = OpcaoSelecao
         self.CaixaTexto = CaixaTexto
         self.Modal = ModalPT
+        self.ModalPT = ModalPT
         self.Visualizacao = Visualizacao
         
         self.Button = Botao
@@ -710,4 +711,3 @@ def __getattr__(name):
     return getattr(discord, name)
 
 Bot = Robo
-

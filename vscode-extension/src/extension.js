@@ -295,9 +295,9 @@ function activate(context) {
             const filePath = document.fileName;
             
             // Procura por um terminal do portulong existente, ou cria um novo
-            let terminal = vscode.window.terminals.find(t => t.name === 'Portulong Executar');
+            let terminal = vscode.window.terminals.find(t => t.name === 'Portulong');
             if (!terminal) {
-                terminal = vscode.window.createTerminal('Portulong Executar');
+                terminal = vscode.window.createTerminal('Portulong');
             }
             
             terminal.show();

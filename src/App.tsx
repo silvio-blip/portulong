@@ -2799,6 +2799,7 @@ class UIWrapper:
         self.OpcaoSelecao = OpcaoSelecao
         self.CaixaTexto = CaixaTexto
         self.Modal = ModalPT
+        self.ModalPT = ModalPT
         self.Visualizacao = Visualizacao
         
         self.Button = Botao
@@ -2932,12 +2933,12 @@ package_json = {
     "commands": [
       {
         "command": "portulong.executar",
-        "title": "Portulong: Executar Ficheiro",
+        "title": "Executar Portulong",
         "icon": "\\$(play)"
       }
     ],
     "menus": {
-      "editor/title": [
+      "editor/title/run": [
         {
           "when": "editorLangId == portulong || resourceExtname == .ptg",
           "command": "portulong.executar",
@@ -3460,9 +3461,9 @@ function activate(context) {
         document.save().then(() => {
             const filePath = document.fileName;
             
-            let terminal = vscode.window.terminals.find(t => t.name === 'Portulong Executar');
+            let terminal = vscode.window.terminals.find(t => t.name === 'Portulong');
             if (!terminal) {
-                terminal = vscode.window.createTerminal('Portulong Executar');
+                terminal = vscode.window.createTerminal('Portulong');
             }
             
             terminal.show();
@@ -3852,11 +3853,11 @@ if __name__ == "__main__":
         }],
         commands: [{
           command: "portulong.executar",
-          title: "Portulong: Executar Ficheiro",
+          title: "Executar Portulong",
           icon: "$(play)"
         }],
         menus: {
-          "editor/title": [{
+          "editor/title/run": [{
             "when": "editorLangId == portulong || resourceExtname == .ptg",
             "command": "portulong.executar",
             "group": "navigation"
@@ -3992,9 +3993,9 @@ function activate(context) {
 
         document.save().then(() => {
             const filePath = document.fileName;
-            let terminal = vscode.window.terminals.find(t => t.name === 'Portulong Executar');
+            let terminal = vscode.window.terminals.find(t => t.name === 'Portulong');
             if (!terminal) {
-                terminal = vscode.window.createTerminal('Portulong Executar');
+                terminal = vscode.window.createTerminal('Portulong');
             }
             terminal.show();
             terminal.sendText("portulong executar \"" + filePath + "\"");
