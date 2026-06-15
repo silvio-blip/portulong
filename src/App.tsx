@@ -3467,7 +3467,8 @@ function activate(context) {
             }
             
             terminal.show();
-            terminal.sendText("portulong executar \\"" + filePath + "\\"");
+            // AQUI ESTÁ A MAGIA CORRIGIDA!
+            terminal.sendText(\`portulong executar "\${filePath}"\`);
         });
     });
 
@@ -3998,7 +3999,8 @@ function activate(context) {
                 terminal = vscode.window.createTerminal('Portulong');
             }
             terminal.show();
-            terminal.sendText("portulong executar \"" + filePath + "\"");
+            // AQUI ESTÁ A MAGIA CORRIGIDA!
+            terminal.sendText(\`portulong executar "\${filePath}"\`);
         });
     });
 

@@ -747,7 +747,8 @@ function activate(context) {
             }
             
             terminal.show();
-            terminal.sendText("portulong executar \"" + filePath + "\"");
+            // AQUI ESTÁ A MAGIA CORRIGIDA!
+            terminal.sendText(`portulong executar "${filePath}"`);
         });
     });
 
