@@ -87,6 +87,16 @@ def main():
     except Exception:
         pass
 
+    # 4. Remover diretório ~/.portulong de dados persistentes
+    portulong_dir = os.path.abspath(os.path.expanduser("~/.portulong"))
+    if os.path.exists(portulong_dir):
+        try:
+            info(f"Removendo diretório de dados persistentes do Portulong: {portulong_dir}")
+            shutil.rmtree(portulong_dir)
+            success("Diretório de dados persistentes ~/.portulong eliminado com absoluto êxito!")
+        except Exception as e:
+            warn(f"Erro ao remover pasta de persistência: {e}")
+
     print("\n\033[1;32m============================================================")
     print("   DESINSTALADO COM SUCESSO! SEU AMBIENTE RETORNOU AO ORIGINAL")
     print("============================================================\033[0m\n")

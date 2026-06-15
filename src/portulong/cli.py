@@ -92,8 +92,79 @@ def exibir_ajuda():
     print("Uso:")
     print("   portulong iniciar              - Inicializa um novo projeto com o template de bot")
     print("   portulong instalar             - Descarrega e instala de forma autónoma as extensões, cores e complementos de sistema")
+    print("   portulong desinstalar          - Remove completamente as extensões, arquivos de persistência e complementos instalados")
+    print("   portulong eliminar             - Atalho para desinstalar completamente todos os recursos locais")
     print("   portulong executar <arq.ptg>   - Transpila e executa o arquivo")
     print("   portulong <arq.ptg>            - Executa o arquivo diretamente")
+
+def eliminar_recursos():
+    """
+    Remove completamente a extensão do VS Code, o diretório de dados persistentes do Portulong (~/.portulong)
+    e tenta desinstalar o pacote do pip se aplicável de forma totalmente transparente e 100% limpa.
+    """
+    import shutil
+    import subprocess
+    import sys
+    
+    print("⚡ [SISTEMA] Iniciando a desinstalação completa de recursos, cores e extensões do Portulong...")
+    
+    # 1. Desinstalar Extensão do VS Code
+    code_path = shutil.which("code")
+    if code_path:
+        try:
+            print("🔌 Removendo a extensão diretamente do VS Code...")
+            subprocess.run([code_path, "--uninstall-extension", "silvio-blip.portulong-vscode"], check=False, shell=os.name == 'nt')
+            print("✅ Suporte à linguagem Portulong removido do VS Code com sucesso!")
+        except Exception as e:
+            print(f"⚠️ Erro ao tentar remover a extensão VS Code automaticamente: {e}")
+    else:
+        print("💡 Nota: Comando 'code' não detetado no PATH do sistema. Salteando remoção automatizada do VS Code.")
+        print("   Caso a extensão ainda conste no seu editor, desinstale manualmente no painel de Extensões.")
+
+    # 2. Remover diretório ~/.portulong de dados persistentes
+    portulong_dir = os.path.abspath(os.path.expanduser("~/.portulong"))
+    if os.path.exists(portulong_dir):
+        try:
+            print(f"🗑️ Excluindo o diretório de persistência permanente: {portulong_dir}")
+            shutil.rmtree(portulong_dir)
+            print("✅ Diretório de dados persistentes eliminado com sucesso!")
+        except Exception as e:
+            print(f"❌ Erro ao remover diretório de persistência '{portulong_dir}': {e}")
+            
+    # 3. Remover diretório local temporário 'portulong-vscode' ou vsix se existirem no espaço atual
+    for item in ["portulong-vscode", "instalar.py"]:
+        if os.path.exists(item):
+            try:
+                if os.path.isdir(item):
+                    shutil.rmtree(item)
+                else:
+                    os.remove(item)
+                print(f"扫 Resíduo local '{item}' limpo com sucesso.")
+            except Exception:
+                pass
+                
+    # Remover arquivos .vsix do diretório atual
+    try:
+        for fn in os.listdir("."):
+            if fn.endswith(".vsix") and "portulong" in fn:
+                try:
+                    os.remove(fn)
+                    print(f"🧹 Arquivo instalador residual '{fn}' removido.")
+                except Exception:
+                    pass
+    except Exception:
+        pass
+        
+    # 4. Oferecer desinstalação do próprio pacote do pip
+    try:
+        print("📦 Desinstalando a biblioteca python 'portulong.ptg' pelo pip...")
+        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "portulong.ptg"], check=False)
+        print("✅ Lib 'portulong.ptg' removida com êxito!")
+    except Exception as e:
+        print(f"⚠️ Erro ao tentar acionar o pip para desinstalar o pacote: {e}")
+        
+    print("\n🐉 [SUCESSO] Portulong foi completamente eliminado do seu dispositivo!")
+    print("   Seu sistema retornou ao estado limpo original. Esperamos ver você de volta em breve!")
 
 def instalar_recursos():
     """
@@ -179,6 +250,8 @@ def main():
         iniciar_projeto()
     elif cmd == "instalar":
         instalar_recursos()
+    elif cmd in ("desinstalar", "eliminar"):
+        eliminar_recursos()
     elif cmd == "executar":
         if len(sys.argv) < 3:
             print("❌ Erro: Forneça o arquivo .ptg para executar. Ex: portulong executar main.ptg")
