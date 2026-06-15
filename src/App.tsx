@@ -241,7 +241,7 @@ definir assincrono ao_iniciar():
 
 # 1. COMANDO SIMPLES: Ajuda dinâmica do bot
 @bot.comando(nome="ajuda")
-definir assincrono enviar_ajuda(contexto):
+definir assincrono enviar_ajuda(ctx):
     # Cria um cartão de anúncio embutido (Embed) lindo
     cartao = discord.Embutido(
         titulo="🐉 Guia de Ajuda do Portulong Bot",
@@ -258,11 +258,11 @@ definir assincrono enviar_ajuda(contexto):
     
     cartao.definir_rodape(texto="Compilado perfeitamente de Portulong para Python 🐍")
     
-    aguardar contexto.enviar(embutido=cartao)
+    aguardar ctx.enviar(embutido=cartao)
 
 # 2. COMANDO AVANÇADO COM COMPONENTES VISUAIS (BOTOES, SELECOES E MODAL)
 @bot.comando(nome="painel")
-definir assincrono enviar_painel(contexto):
+definir assincrono enviar_painel(ctx):
     # Cria uma view interativa
     painel = discord.ui.Visualizacao(tempo_esgotado=120)
     
@@ -316,22 +316,22 @@ definir assincrono enviar_painel(contexto):
     # Adiciona o botão do painel
     painel.adicionar_item(botao_registro)
     
-    aguardar contexto.enviar(
+    aguardar ctx.enviar(
         conteudo="Clique no botão abaixo para abrir o formulário interativo de cadastro:",
         visualizacao=painel
     )
 
 # 3. COMANDO DIVERTIDO: Minijogo de Advinhação de Número
 @bot.comando(nome="advinha")
-definir assincrono iniciar_advinha(contexto):
+definir assincrono iniciar_advinha(ctx):
     importar random
     numero_secreto = random.randint(1, 10)
     
-    aguardar contexto.enviar("🎲 Eu pensei em um número entre **1 e 10**. Você tem **3 tentativas** para adivinhar! Qual o seu palpite?")
+    aguardar ctx.enviar("🎲 Eu pensei em um número entre **1 e 10**. Você tem **3 tentativas** para adivinhar! Qual o seu palpite?")
     
     # Função auxiliar para validar se a resposta vem da mesma pessoa e canal
     definir verificar_resposta(mensagem):
-        retornar mensagem.autor == contexto.autor e mensagem.canal == contexto.canal
+        retornar mensagem.autor == ctx.autor e mensagem.canal == ctx.canal
         
     tentativas = 0
     enquanto tentativas < 3:
@@ -341,25 +341,25 @@ definir assincrono iniciar_advinha(contexto):
             valor_palpite = inteiro(palpite_msg.conteudo)
             
             se valor_palpite == numero_secreto:
-                aguardar contexto.enviar(f"🎉 PARABÉNS! {contexto.autor.mencao} acertou o número secreto (**{numero_secreto}**)! Você é um gênio!")
+                aguardar ctx.enviar(f"🎉 PARABÉNS! {ctx.autor.mencao} acertou o número secreto (**{numero_secreto}**)! Você é um gênio!")
                 retornar
             senaose valor_palpite < numero_secreto:
-                aguardar contexto.enviar("🔼 Dica: O número secreto é **maior** do que seu palpite! Tente novamente:")
+                aguardar ctx.enviar("🔼 Dica: O número secreto é **maior** do que seu palpite! Tente novamente:")
             senao:
-                aguardar contexto.enviar("🔽 Dica: O número secreto é **menor** do que seu palpite! Tente novamente:")
+                aguardar ctx.enviar("🔽 Dica: O número secreto é **menor** do que seu palpite! Tente novamente:")
                 
             tentativas = tentativas + 1
         exceto ErroDeValor:
-            aguardar contexto.enviar("⚠️ Por favor, digite um número inteiro válido!")
+            aguardar ctx.enviar("⚠️ Por favor, digite um número inteiro válido!")
         exceto Excessao:
-            aguardar contexto.enviar(f"⏱️ O tempo acabou! O número secreto era **{numero_secreto}**.")
+            aguardar ctx.enviar(f"⏱️ O tempo acabou! O número secreto era **{numero_secreto}**.")
             retornar
             
-    aguardar contexto.enviar(f"😢 Suas tentativas acabaram! O número secreto era **{numero_secreto}**. Mais sorte na próxima!")
+    aguardar ctx.enviar(f"😢 Suas tentativas acabaram! O número secreto era **{numero_secreto}**. Mais sorte na próxima!")
 
 # 4. COMANDO CALCULADORA DINÂMICA (Ex: !calc 15 * 3)
 @bot.comando(nome="calc")
-definir assincrono calcular_expressao(contexto, n1: real, operador, n2: real):
+definir assincrono calcular_expressao(ctx, n1: real, operador, n2: real):
     se operador == "+":
         res = n1 + n2
     senaose operador == "-":
@@ -368,14 +368,14 @@ definir assincrono calcular_expressao(contexto, n1: real, operador, n2: real):
         res = n1 * n2
     senaose operador == "/":
         se n2 == 0:
-            aguardar contexto.enviar("❌ Erro: Divisão por zero não é permitida matematicamente!")
+            aguardar ctx.enviar("❌ Erro: Divisão por zero não é permitida matematicamente!")
             retornar
         res = n1 / n2
     senao:
-        aguardar contexto.enviar("⚠️ Operador inválido. Use: +, -, * ou /")
+        aguardar ctx.enviar("⚠️ Operador inválido. Use: +, -, * ou /")
         retornar
         
-    aguardar contexto.enviar(f"🧮 **Calculadora Portulong**\nExpressão: \`{n1} {operador} {n2}\`\nResultado: **{res}**")
+    aguardar ctx.enviar(f"🧮 **Calculadora Portulong**\nExpressão: \`{n1} {operador} {n2}\`\nResultado: **{res}**")
 
 # ====================================================================
 # 🔑 SEÇÃO DE INICIALIZAÇÃO DO BOT (TOKEN DO DISCORD)
@@ -431,19 +431,19 @@ definir assincrono ao_iniciar():
 
 # Comando simples !ping
 @bot.comando(nome="ping")
-definir assincrono resposta_ping(contexto):
-    aguardar contexto.enviar("🏓 Pong! O bot está rodando perfeitamente em Portulong.")
+definir assincrono resposta_ping(ctx):
+    aguardar ctx.enviar("🏓 Pong! O bot está rodando perfeitamente em Portulong.")
 
 # Comando !diga <texto> que ecoa a frase do usuário
 @bot.comando(nome="diga", ajuda="Faz o bot repetir o texto enviado")
-definir assincrono resposta_falar(contexto, texto):
-    aguardar contexto.enviar(f"O usuário **{contexto.autor.nome}** mandou dizer: {texto}")
+definir assincrono resposta_falar(ctx, texto):
+    aguardar ctx.enviar(f"O usuário **{ctx.autor.nome}** mandou dizer: {texto}")
 
 # Comando !pergunta que simula respostas simples
 @bot.comando(nome="pergunta")
-definir assincrono resposta_pergunta(contexto, pergunta):
+definir assincrono resposta_pergunta(ctx, pergunta):
     fala = f"Hum, você perguntou: '{pergunta}'. Minha resposta é: Sim, com certeza! 👍"
-    aguardar contexto.enviar(fala)
+    aguardar ctx.enviar(fala)
 `
   },
   {
@@ -464,22 +464,22 @@ definir assincrono ao_iniciar():
 
 # Comando !limpar <quantidade> para deletar mensagens anteriores
 @bot.comando(nome="limpar")
-definir assincrono limpar_chat(contexto, quantidade: inteiro = 10):
+definir assincrono limpar_chat(ctx, quantidade: inteiro = 10):
     # Verifica se o solicitante tem permissão de gerenciar mensagens
-    se contexto.autor.permissoes.gerenciar_mensagens:
-        aguardar contexto.canal.limpar(limite=quantidade)
-        aguardar contexto.enviar(f"🧹 {quantidade} mensagens apagadas com sucesso por {contexto.autor.nome}!", excluir_depois=5)
+    se ctx.autor.permissoes.gerenciar_mensagens:
+        aguardar ctx.canal.limpar(limite=quantidade)
+        aguardar ctx.enviar(f"🧹 {quantidade} mensagens apagadas com sucesso por {ctx.autor.nome}!", excluir_depois=5)
     senao:
-        aguardar contexto.enviar("❌ Desculpe, você não tem a permissão de 'Gerenciar Mensagens' para usar isso.")
+        aguardar ctx.enviar("❌ Desculpe, você não tem a permissão de 'Gerenciar Mensagens' para usar isso.")
 
 # Comando !expulsar <membro>
 @bot.comando(nome="expulsar")
-definir assincrono expulsar_membro(contexto, membro: discord.Membro):
-    se contexto.autor.permissoes.expulsar_membros:
+definir assincrono expulsar_membro(ctx, membro: discord.Membro):
+    se ctx.autor.permissoes.expulsar_membros:
         aguardar membro.expulsar()
-        aguardar contexto.enviar(f"🚨 {membro.nome} foi banido/expulso por violar as regras do servidor!")
+        aguardar ctx.enviar(f"🚨 {membro.nome} foi banido/expulso por violar as regras do servidor!")
     senao:
-        aguardar contexto.enviar("❌ Acesso negado. Apenas moderadores autorizados podem usar esse comando.")
+        aguardar ctx.enviar("❌ Acesso negado. Apenas moderadores autorizados podem usar esse comando.")
 `
   },
   {
@@ -500,15 +500,15 @@ definir assincrono ao_iniciar():
 
 # Comando !somar <numero1> <numero2>
 @bot.comando(nome="somar")
-definir assincrono somar_numeros(contexto, n1: real, n2: real):
+definir assincrono somar_numeros(ctx, n1: real, n2: real):
     soma = n1 + n2
-    aguardar contexto.enviar(f"📊 **Calculadora Portulong**:\nO resultado da soma de {n1} + {n2} é igual a: **{soma}**")
+    aguardar ctx.enviar(f"📊 **Calculadora Portulong**:\nO resultado da soma de {n1} + {n2} é igual a: **{soma}**")
 
 # Comando !multiplicar <numero1> <numero2>
 @bot.comando(nome="vezes")
-definir assincrono multiplicar_numeros(contexto, n1: real, n2: real):
+definir assincrono multiplicar_numeros(ctx, n1: real, n2: real):
     resultado = n1 * n2
-    aguardar contexto.enviar(f"✖️ O resultado de {n1} multiplicado por {n2} é igual a: **{resultado}**")
+    aguardar ctx.enviar(f"✖️ O resultado de {n1} multiplicado por {n2} é igual a: **{resultado}**")
 `
   }
 ];
@@ -873,8 +873,8 @@ const PORTULONG_SNIPPETS = [
   {
     key: "definir",
     displayName: "definir assincrono comando",
-    snippet: "definir assincrono nome_funcao(contexto):\n    aguardar contexto.enviar(\"Texto\")\n",
-    description: "Define uma nova função assíncrona portuguesa"
+    snippet: "definir assincrono nome_funcao(ctx):\n    aguardar ctx.enviar(\"Texto\")\n",
+    description: "Define uma nova função assíncrona portuguesa (suporta ctx ou contexto)"
   },
   {
     key: "funcao",
@@ -891,8 +891,8 @@ const PORTULONG_SNIPPETS = [
   {
     key: "comando",
     displayName: "@robo.comando (Comando do Chat)",
-    snippet: "@robo.comando(nome=\"ping\", ajuda=\"Comando de resposta rápida\")\ndefinir assincrono resposta_ping(contexto):\n    aguardar contexto.enviar(\"🏓 Pong!\")\n",
-    description: "Cria um comando de texto interativo !ping para o bot"
+    snippet: "@robo.comando(nome=\"ping\", ajuda=\"Comando de resposta rápida\")\ndefinir assincrono resposta_ping(ctx):\n    aguardar ctx.enviar(\"🏓 Pong!\")\n",
+    description: "Cria um comando de texto interativo !ping para o bot (suporta ctx ou contexto)"
   },
   {
     key: "evento",
@@ -908,15 +908,15 @@ const PORTULONG_SNIPPETS = [
   },
   {
     key: "enviar",
-    displayName: "contexto.enviar(...)",
-    snippet: "aguardar contexto.enviar(\"Sua mensagem aqui!\")",
-    description: "Envia uma mensagem de text simples ao canal ativo"
+    displayName: "ctx.enviar(...)",
+    snippet: "aguardar ctx.enviar(\"Sua mensagem aqui!\")",
+    description: "Envia uma mensagem de texto simples ao canal ativo (suporta ctx ou contexto)"
   },
   {
     key: "responder",
-    displayName: "contexto.responder(...)",
-    snippet: "aguardar contexto.responder(\"Sua resposta!\")",
-    description: "Responde de forma encadeada diretamente à mensagem original"
+    displayName: "ctx.responder(...)",
+    snippet: "aguardar ctx.responder(\"Sua resposta!\")",
+    description: "Responde de forma encadeada diretamente à mensagem original (suporta ctx ou contexto)"
   },
   {
     key: "escrever",
@@ -937,6 +937,101 @@ const PORTULONG_SNIPPETS = [
     description: "Estrutura para tratamento e interceptação de erros"
   }
 ];
+
+// Propriedades e Métodos de Contexto (ctx / contexto)
+const CONTEXT_PROPERTIES = [
+  {
+    key: "enviar",
+    displayName: "enviar(conteudo)",
+    snippet: "enviar(\"mensagem\")",
+    description: "Envia uma mensagem de texto simples ao canal ativo"
+  },
+  {
+    key: "responder",
+    displayName: "responder(conteudo)",
+    snippet: "responder(\"resposta\")",
+    description: "Responde de forma direta e contextual com menção"
+  },
+  {
+    key: "autor",
+    displayName: "autor",
+    snippet: "autor",
+    description: "Membro autor que executou o comando ou enviou a mensagem"
+  },
+  {
+    key: "autor.nome",
+    displayName: "autor.nome",
+    snippet: "autor.nome",
+    description: "Retorna o nome completo atualizado do usuário autor"
+  },
+  {
+    key: "autor.mencao",
+    displayName: "autor.mencao",
+    snippet: "autor.mencao",
+    description: "Menção interativa com marcação do autor (@Usuário)"
+  },
+  {
+    key: "autor.apelido",
+    displayName: "autor.apelido",
+    snippet: "autor.apelido",
+    description: "Apelido localizado ou nome descritivo do autor no servidor"
+  },
+  {
+    key: "canal",
+    displayName: "canal",
+    snippet: "canal",
+    description: "Canal originário de texto ou voz do gatilho"
+  },
+  {
+    key: "canal.limpar",
+    displayName: "canal.limpar(limite)",
+    snippet: "canal.limpar(10)",
+    description: "Elimina um lote de mensagens anteriores do canal de chat"
+  },
+  {
+    key: "servidor",
+    displayName: "servidor",
+    snippet: "servidor",
+    description: "Servidor / Guilda Discord onde ocorreu o evento"
+  },
+  {
+    key: "servidor.nome",
+    displayName: "servidor.nome",
+    snippet: "servidor.nome",
+    description: "Nome de exibição oficial do servidor de hospedagem"
+  },
+  {
+    key: "servidor.membros",
+    displayName: "servidor.membros",
+    snippet: "servidor.membros",
+    description: "Lista de todos os membros que pertencem a este servidor"
+  },
+  {
+    key: "servidor.canais",
+    displayName: "servidor.canais",
+    snippet: "servidor.canais",
+    description: "Lista de canais disponíveis construídos no servidor"
+  },
+  {
+    key: "mensagem",
+    displayName: "mensagem",
+    snippet: "mensagem",
+    description: "O objeto mensagem completo de recepção"
+  },
+  {
+    key: "mensagem.conteudo",
+    displayName: "mensagem.conteudo",
+    snippet: "mensagem.conteudo",
+    description: "Texto bruto contido no pacote da mensagem original"
+  },
+  {
+    key: "mensagem.deletar",
+    displayName: "mensagem.deletar()",
+    snippet: "mensagem.deletar()",
+    description: "Deleta/Remove permanentemente esta mensagem da visualização"
+  }
+];
+
 
 export default function App() {
   const currentHost = typeof window !== "undefined" && !window.location.hostname.includes("ai.studio") && !window.location.hostname.includes("run.app") && !window.location.hostname.includes("localhost")
@@ -1349,8 +1444,25 @@ async def greet(ctx):
       const start = textarea.selectionStart;
       const textBeforeCaret = value.slice(0, start);
       const match = textBeforeCaret.match(/[\w_@]+$/);
+      const matchPonto = textBeforeCaret.match(/(?:ctx|contexto)\.([\w_]*)$/i);
 
-      if (match) {
+      if (matchPonto) {
+        const word = matchPonto[1].toLowerCase();
+        setActiveWord(word);
+
+        // Filtra propriedades do contexto (ctx / contexto)
+        const filtered = CONTEXT_PROPERTIES.filter(item =>
+          item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
+        );
+
+        if (filtered.length > 0) {
+          setSuggestions(filtered);
+          setShowSuggestions(true);
+          setSelectedIndex(0);
+        } else {
+          setShowSuggestions(false);
+        }
+      } else if (match) {
         const word = match[0].toLowerCase();
         setActiveWord(word);
 
@@ -1380,8 +1492,24 @@ async def greet(ctx):
     const value = textarea.value;
     const textBeforeCaret = value.slice(0, start);
     const match = textBeforeCaret.match(/[\w_@]+$/);
+    const matchPonto = textBeforeCaret.match(/(?:ctx|contexto)\.([\w_]*)$/i);
 
-    if (match) {
+    if (matchPonto) {
+      const word = matchPonto[1].toLowerCase();
+      setActiveWord(word);
+
+      // Filtra propriedades do contexto (ctx / contexto)
+      const filtered = CONTEXT_PROPERTIES.filter(item =>
+        item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
+      );
+
+      if (filtered.length > 0) {
+        setSuggestions(filtered);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
+    } else if (match) {
       const word = match[0].toLowerCase();
       setActiveWord(word);
       const filtered = PORTULONG_SNIPPETS.filter(item =>
