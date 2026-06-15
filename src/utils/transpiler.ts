@@ -130,6 +130,8 @@ export const DISCORD_MAP: Record<string, string> = {
   "expulsar": "kick",
   "banir": "ban",
   "limpar": "purge",
+  "executar": "run",
+  "rodar": "run",
 
   // Properties
   "conteudo": "content",
@@ -224,6 +226,7 @@ export function transpilePortulong(code: string): string {
 // ==========================================
 
 export const REVERSE_KEYWORDS_MAP: Record<string, string> = {
+  "class": "classe",
   "if": "se",
   "else": "senao",
   "elif": "senaose",
@@ -323,6 +326,7 @@ export const REVERSE_BUILTINS_MAP: Record<string, string> = {
 
 export const REVERSE_DISCORD_MAP: Record<string, string> = {
   // Methods
+  "run": "executar",
   "send": "enviar",
   "reply": "responder",
   "delete": "deletar",

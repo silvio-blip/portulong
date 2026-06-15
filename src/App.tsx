@@ -210,7 +210,6 @@ const DICTIONARY: DictionaryItem[] = [
   { portulong: "discord.ui.Selecao", python: "discord.ui.Select", category: "discord", description: "Componente drop-down de seleção única ou múltipla para formulários.", example: "menu = discord.ui.Selecao(marcador='Escolha o seu cargo')" },
   { portulong: "discord.ui.OpcaoSelecao", python: "discord.SelectOption", category: "discord", description: "Gera uma opção anexável a uma lista suspensa de Seleção.", example: "opcao = discord.ui.OpcaoSelecao(rotulo='Premium', valor='1')" },
   { portulong: "discord.ui.CaixaTexto", python: "discord.ui.TextInput", category: "discord", description: "Campo de preenchimento textual para entrada de dados em Modals.", example: "nome_input = discord.ui.CaixaTexto(rotulo='Primeiro Nome', estilo='curto')" },
-  { portulong: "discord.ui.CaixaTexto", python: "discord.ui.TextInput", category: "discord", description: "Campo de preenchimento textual para entrada de dados em Modals.", example: "nome_input = discord.ui.CaixaTexto(rotulo='Primeiro Nome', estilo='curto')" },
   { portulong: "discord.ui.Modal", python: "discord.ui.Modal", category: "discord", description: "Popup/Janela de diálogo formulária que sobrepõe o chat.", example: "formulario = discord.ui.Modal(titulo='Inscrição')" },
   { portulong: "discord.ui.Visualizacao", python: "discord.ui.View", category: "discord", description: "Container visual que agrupa e despacha botões e listas.", example: "painel = discord.ui.Visualizacao(tempo_esgotado=60)" },
 ];
@@ -1229,7 +1228,9 @@ async def greet(ctx):
       "@robo\\.event": "@robo.evento",
       "@bot\\.command": "@bot.comando",
       "@client\\.command": "@bot.comando",
-      "@robo\\.command": "@robo.comando"
+      "@robo\\.command": "@robo.comando",
+      "run": "executar",
+      "execute": "executar"
     };
 
     for (let i = 0; i < lines.length; i++) {
@@ -2072,6 +2073,8 @@ DISCORD_MAP = {
     "expulsar": "kick",
     "banir": "ban",
     "limpar": "purge",
+    "executar": "run",
+    "rodar": "run",
     "conteudo": "content",
     "autor": "author",
     "canal": "channel",
@@ -4199,7 +4202,7 @@ module.exports = {
                         <div className="max-h-48 overflow-y-auto scrollbar-thin">
                           {suggestions.map((item, index) => (
                             <button
-                              key={item.key}
+                              key={`${item.key}-${index}`}
                               onClick={() => applySnippet(item)}
                               onMouseMove={() => setSelectedIndex(index)}
                               className={`w-full text-left p-2.5 transition-all flex flex-col gap-0.5 focus:outline-none ${
@@ -4722,7 +4725,7 @@ module.exports = {
                 const matchesCategory = categoryFilter === "tudo" || item.category === categoryFilter;
                 return matchesSearch && matchesCategory;
               }).map((item) => (
-                <div key={item.portulong} className="bg-slate-950/60 hover:bg-slate-950 border border-slate-850 hover:border-emerald-500/20 rounded-xl p-4 flex flex-col justify-between group transition-all">
+                <div key={`${item.portulong}-${item.category}`} className="bg-slate-950/60 hover:bg-slate-950 border border-slate-850 hover:border-emerald-500/20 rounded-xl p-4 flex flex-col justify-between group transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className={`text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded-full ${
