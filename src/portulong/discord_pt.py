@@ -260,14 +260,67 @@ class ContextoPT(ObjetoProxy):
     async def responder(self, *args, **kwargs):
         return await super().responder(*args, **kwargs)
 
+class IntencoesPT(discord.Intents):
+    def __setattr__(self, name, value):
+        tradutor = {
+            'membros': 'members',
+            'membro': 'members',
+            'conteudo_mensagem': 'message_content',
+            'conteudo_mensagens': 'message_content',
+            'presencas': 'presences',
+            'mensagens': 'messages',
+            'reacoes': 'reactions',
+            'digitando': 'typing',
+            'servidores': 'guilds',
+            'integracoes': 'integrations',
+            'webhooks': 'webhooks',
+            'convites': 'invites',
+            'voz': 'voice_states',
+            'moderacao': 'moderation',
+            'banimentos': 'bans',
+            'emojis': 'emojis_and_stickers',
+        }
+        real_name = tradutor.get(name, name)
+        super().__setattr__(real_name, value)
+
+    def __getattr__(self, name):
+        tradutor = {
+            'membros': 'members',
+            'membro': 'members',
+            'conteudo_mensagem': 'message_content',
+            'conteudo_mensagens': 'message_content',
+            'presencas': 'presences',
+            'mensagens': 'messages',
+            'reacoes': 'reactions',
+            'digitando': 'typing',
+            'servidores': 'guilds',
+            'integracoes': 'integrations',
+            'webhooks': 'webhooks',
+            'convites': 'invites',
+            'voz': 'voice_states',
+            'moderacao': 'moderation',
+            'banimentos': 'bans',
+            'emojis': 'emojis_and_stickers',
+        }
+        real_name = tradutor.get(name, name)
+        return getattr(self, real_name)
+
 class Intencoes:
     @classmethod
     def default(cls):
-        return discord.Intents.default()
+        inst = discord.Intents.default()
+        new_inst = IntencoesPT()
+        for slot in discord.Intents.__slots__:
+            setattr(new_inst, slot, getattr(inst, slot))
+        return new_inst
 
     @classmethod
     def tudo(cls):
-        return discord.Intents.all()
+        inst = discord.Intents.all()
+        new_inst = IntencoesPT()
+        for slot in discord.Intents.__slots__:
+            setattr(new_inst, slot, getattr(inst, slot))
+        return new_inst
 
 class Cor(discord.Color):
     @classmethod
