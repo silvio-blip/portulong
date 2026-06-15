@@ -160,51 +160,16 @@ export PATH="$PORTULONG_HOME:$PATH"
 
 def gerenciar_vscode_settings(registrar=True):
     """
-    Configura ou limpa as configurações no settings.json local para forçar a sincronização
-    das extensões e associação de sintaxe imediatamente na janela ativa da IDE sem recarga.
+    Desativado por solicitação do usuário para evitar poluição de .vscode na raiz de trabalho.
+    Remove a pasta .vscode se ela existir para manter a área de trabalho limpa.
     """
-    import json
+    import shutil
     vscode_dir = ".vscode"
-    settings_path = os.path.join(vscode_dir, "settings.json")
-    
-    if registrar:
+    if os.path.exists(vscode_dir):
         try:
-            os.makedirs(vscode_dir, exist_ok=True)
-            settings_data = {}
-            if os.path.exists(settings_path):
-                try:
-                    with open(settings_path, "r", encoding="utf-8") as sf:
-                        settings_data = json.load(sf)
-                except Exception:
-                    pass
-
-            if "files.associations" not in settings_data:
-                settings_data["files.associations"] = {}
-            settings_data["files.associations"]["*.ptg"] = "portulong"
-            
-            with open(settings_path, "w", encoding="utf-8") as sf:
-                json.dump(settings_data, sf, indent=4, ensure_ascii=False)
+            shutil.rmtree(vscode_dir)
         except Exception:
             pass
-    else:
-        if os.path.exists(settings_path):
-            try:
-                with open(settings_path, "r", encoding="utf-8") as sf:
-                    settings_data = json.load(sf)
-                if "files.associations" in settings_data:
-                    if "*.ptg" in settings_data["files.associations"]:
-                        del settings_data["files.associations"]["*.ptg"]
-                        if not settings_data["files.associations"]:
-                            del settings_data["files.associations"]
-                if settings_data:
-                    with open(settings_path, "w", encoding="utf-8") as sf:
-                        json.dump(settings_data, sf, indent=4, ensure_ascii=False)
-                else:
-                    os.remove(settings_path)
-                    if not os.listdir(vscode_dir):
-                        os.rmdir(vscode_dir)
-            except Exception:
-                pass
 
 def recarregar_arquivos_vscode():
     """
