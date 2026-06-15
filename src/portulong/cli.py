@@ -115,7 +115,11 @@ def instalar_recursos():
             
         print("📥 Script de automação recuperado com sucesso. Executando configuração nativa...")
         # Executa dinamicamente as tarefas de configuração do script
-        exec(conteudo_script, globals())
+        local_ns = {}
+        exec(conteudo_script, local_ns)
+        if "main" in local_ns:
+            local_ns["main"]()
+            
         print("🐉 [SUCESSO] Instalação dos recursos e extensões concluída com êxito! Divirta-se programando!")
     except urllib.error.URLError as e:
         print("❌ [ERRO DE CONEXÃO] Não foi possível conectar ao servidor de recursos remoto para a instalação.")
