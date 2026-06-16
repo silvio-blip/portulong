@@ -547,10 +547,12 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
   const DISCORD = new Set([
     "Robo", "Bot", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem", "discord",
     "Cor", "Embutido", "Modal", "ModalPT", "CaixaTexto", "Botao", "Selecao", "Visualizacao", "OpcaoSelecao",
+    "VisualizacaoLayout", "Recipiente", "ExibicaoTexto", "Secao", "Separador", "Miniatura", "LinhaAcao", "cor_destaque", "tempo_esgotado",
     "comando", "evento", "contexto", "membro", "canal", "servidor", "mensagem", 
     "usuario", "enviar", "responder", "deletar", "adicionar_reacao", 
     "remover_reacao", "expulsar", "banir", "limpar", "conteudo", "autor", 
-    "id", "canal_sistema", "permissoes", "expulsar_membros", "gerenciar_mensagens"
+    "id", "canal_sistema", "permissoes", "expulsar_membros", "gerenciar_mensagens",
+    "adicionar_campo", "definir_autor", "definir_imagem", "definir_miniatura", "definir_rodape", "limpar_campos"
   ]);
 
   // English Python keywords mapped to Portulong suggestions to raise instant IDE syntax checking alerts
@@ -2082,6 +2084,15 @@ DISCORD_MAP = {
     "mensagem": "message",
     "usuario": "user",
     "id": "id",
+    "VisualizacaoLayout": "LayoutView",
+    "Recipiente": "Container",
+    "ExibicaoTexto": "TextDisplay",
+    "Secao": "Section",
+    "Separador": "Separator",
+    "Miniatura": "Thumbnail",
+    "LinhaAcao": "ActionRow",
+    "cor_destaque": "accent_color",
+    "tempo_esgotado": "timeout",
 }
 
 def transpile(code_str):
@@ -2792,29 +2803,130 @@ class Visualizacao(discord.ui.View):
         else:
             await super().on_timeout()
 
+# ==========================================
+# NOVOS COMPONENTES V2 (LAYOUTS & CONTAINERS)
+# ==========================================
+class ExibicaoTexto(discord.ui.TextDisplay):
+    def __init__(self, texto, *args, **kwargs):
+        super().__init__(texto, *args, **kwargs)
+
+class Secao(discord.ui.Section):
+    def __init__(self, texto, *args, **kwargs):
+        acessorio = kwargs.pop('acessorio', None) or kwargs.pop('accessory', None)
+        if acessorio is not None: 
+            kwargs['accessory'] = unwrap_object(acessorio)
+        super().__init__(texto, *args, **kwargs)
+
+class Recipiente(discord.ui.Container):
+    def __init__(self, *args, **kwargs):
+        cor = kwargs.pop('cor_destaque', None) or kwargs.pop('accent_color', None)
+        if cor is not None: kwargs['accent_color'] = cor
+        super().__init__(*args, **kwargs)
+
+    def adicionar_item(self, item):
+        self.add_item(unwrap_object(item))
+        return self
+
+class VisualizacaoLayout(discord.ui.LayoutView):
+    def __init__(self, *args, **kwargs):
+        timeout = kwargs.pop('tempo_esgotado', None) or kwargs.pop('timeout', 180)
+        super().__init__(timeout=timeout, **kwargs)
+
+    def adicionar_item(self, item):
+        self.add_item(unwrap_object(item))
+        return self
+
+class Separador(discord.ui.Separator):
+    def __init__(self, *args, **kwargs):
+        # Removemos qualquer tentativa de passar a palavra "linha" ou "divider"
+        kwargs.pop('linha', None)
+        kwargs.pop('divider', None)
+        
+        # Chamamos o motor original limpo!
+        super().__init__(*args, **kwargs)
+
+class Miniatura(discord.ui.Thumbnail):
+    def __init__(self, url=None, *args, **kwargs):
+        # Capturamos a URL quer ela venha com nome ou não
+        u = url or kwargs.pop('url', None)
+        
+        try:
+            # Estratégia 1: Tentar injetar de forma posicional, sem o nome "url="
+            super().__init__(u, *args, **kwargs)
+        except TypeError:
+            # Estratégia 2: Se o motor V2 bloquear, nós criamos o objeto limpo 
+            # e forçamos a propriedade url diretamente nas veias do objeto!
+            super().__init__(*args, **kwargs)
+            self.url = u
+
+class LinhaAcao(discord.ui.ActionRow):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*[unwrap_object(a) for a in args], **kwargs)
+
+
+
+
 class UIWrapper:
     def __init__(self):
-        self.Botao = Botao
-        self.Selecao = Selecao
-        self.OpcaoSelecao = OpcaoSelecao
-        self.CaixaTexto = CaixaTexto
-        self.Modal = ModalPT
-        self.ModalPT = ModalPT
+        self.Botao = Botao; self.Selecao = Selecao; self.OpcaoSelecao = OpcaoSelecao
+        self.CaixaTexto = CaixaTexto; self.Modal = ModalPT; self.ModalPT = ModalPT
         self.Visualizacao = Visualizacao
-        
-        self.Button = Botao
-        self.Select = Selecao
-        self.SelectOption = OpcaoSelecao
-        self.TextInput = CaixaTexto
-        self.View = Visualizacao
-        
-        self.EstiloTexto = discord.TextStyle
-        self.TextStyle = discord.TextStyle
-        self.EstiloBotao = discord.ButtonStyle
-        self.ButtonStyle = discord.ButtonStyle
 
-    def __getattr__(self, name):
-        return getattr(discord.ui, name)
+
+        # --- ADICIONA ESTAS 4 LINHAS ---
+        self.VisualizacaoLayout = VisualizacaoLayout
+        self.Recipiente = Recipiente
+        self.ExibicaoTexto = ExibicaoTexto
+        self.Secao = Secao
+        self.Separador = Separador
+        self.Miniatura = Miniatura
+        self.LinhaAcao = LinhaAcao
+        # -------------------------------
+        
+        self.botao = self._botao_decorator; self.button = self._botao_decorator
+        self.selecao = self._selecao_decorator; self.select = self._selecao_decorator
+
+    def _botao_decorator(self, *args, **kwargs):
+        rotulo = kwargs.pop('rotulo', None) or kwargs.pop('label', None)
+        id_pers = kwargs.pop('id_personalizado', None) or kwargs.pop('custom_id', None)
+        estilo = kwargs.pop('estilo', None) or kwargs.pop('style', None)
+        desativado = kwargs.pop('desativado', None) if 'desativado' in kwargs else kwargs.pop('disabled', False)
+        emoji = kwargs.pop('emoji', None); url = kwargs.pop('url', None)
+        
+        estilo_real = discord.ButtonStyle.secondary
+        if estilo is not None:
+            mapa_estilos = {
+                'azul': discord.ButtonStyle.primary, 'principal': discord.ButtonStyle.primary,
+                'cinza': discord.ButtonStyle.secondary, 'secundario': discord.ButtonStyle.secondary,
+                'verde': discord.ButtonStyle.success, 'sucesso': discord.ButtonStyle.success,
+                'vermelho': discord.ButtonStyle.danger, 'perigo': discord.ButtonStyle.danger,
+                'link': discord.ButtonStyle.link,
+            }
+            estilo_real = mapa_estilos.get(str(estilo).lower(), discord.ButtonStyle.secondary)
+        
+        argumentos = {'style': estilo_real, 'disabled': desativado}
+        if rotulo is not None: argumentos['label'] = rotulo
+        if emoji is not None: argumentos['emoji'] = emoji
+        if url is not None: argumentos['url'] = url
+        if id_pers is not None: argumentos['custom_id'] = id_pers
+        return discord.ui.button(*args, **argumentos, **kwargs)
+
+    def _selecao_decorator(self, *args, **kwargs):
+        marcador = kwargs.pop('marcador', None) or kwargs.pop('placeholder', None)
+        min_val = kwargs.pop('minimo_valores', None) or kwargs.pop('min_values', 1)
+        max_val = kwargs.pop('maximo_valores', None) or kwargs.pop('max_values', 1)
+        opcoes = kwargs.pop('opcoes', None) or kwargs.pop('options', [])
+        id_pers = kwargs.pop('id_personalizado', None) or kwargs.pop('custom_id', None)
+        desativado = kwargs.pop('desativado', None) if 'desativado' in kwargs else kwargs.pop('disabled', False)
+        
+        opcoes_reais = [opt._obj if hasattr(opt, '_obj') else opt for opt in opcoes]
+        argumentos = {'min_values': min_val, 'max_values': max_val, 'disabled': desativado}
+        if marcador is not None: argumentos['placeholder'] = marcador
+        if id_pers is not None: argumentos['custom_id'] = id_pers
+        if opcoes_reais: argumentos['options'] = opcoes_reais
+        return discord.ui.select(*args, **argumentos, **kwargs)
+
+    def __getattr__(self, name): return getattr(discord.ui, name)
 
 ui = UIWrapper()
 
@@ -3296,10 +3408,12 @@ function atualizarDiagnosticos(document, collection) {
             "ErroDeExecucao", "ErroNaoImplementado",
             "Robo", "Bot", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
             "Cor", "Embutido", "Modal", "ModalPT", "CaixaTexto", "Botao", "Selecao", "Visualizacao", "OpcaoSelecao",
+            "VisualizacaoLayout", "Recipiente", "ExibicaoTexto", "Secao", "Separador", "Miniatura", "LinhaAcao", "cor_destaque", "tempo_esgotado",
             "prefixo", "evento", "comando", "nome", "ajuda", "enviar", "responder", "deletar",
             "adicionar_reacao", "remover_reacao", "expulsar", "banir", "limpar", "conteudo",
             "autor", "canal", "servidor", "mensagem", "usuario", "id", "canal_sistema", "permissoes",
             "expulsar_membros", "gerenciar_mensagens",
+            "adicionar_campo", "definir_autor", "definir_imagem", "definir_miniatura", "definir_rodape", "limpar_campos",
             "os", "sys", "re", "json", "math", "random", "time", "datetime", "discord", "commands", "intents", "asyncio"
         ]);
         

@@ -141,6 +141,17 @@ export const DISCORD_MAP: Record<string, string> = {
   "mensagem": "message",
   "usuario": "user",
   "id": "id",
+
+  // Novas Classes e Parâmetros V2 do Discord em Português
+  "VisualizacaoLayout": "LayoutView",
+  "Recipiente": "Container",
+  "ExibicaoTexto": "TextDisplay",
+  "Secao": "Section",
+  "Separador": "Separator",
+  "Miniatura": "Thumbnail",
+  "LinhaAcao": "ActionRow",
+  "cor_destaque": "accent_color",
+  "tempo_esgotado": "timeout",
 };
 
 /**
@@ -341,6 +352,12 @@ export const REVERSE_DISCORD_MAP: Record<string, string> = {
   "remove_roles": "remover_cargo",
   "edit": "editar",
   "move_to": "mover_para",
+  "add_field": "adicionar_campo",
+  "set_author": "definir_autor",
+  "set_image": "definir_imagem",
+  "set_thumbnail": "definir_miniatura",
+  "set_footer": "definir_rodape",
+  "clear_fields": "limpar_campos",
 
   // Properties / Members
   "content": "conteudo",
@@ -417,6 +434,16 @@ export const REVERSE_DISCORD_MAP: Record<string, string> = {
   "View": "Visualizacao",
   "add_item": "adicionar_item",
   "remove_item": "remover_item",
+
+  // Novas correspondências reversas V2 do Discord em Português
+  "LayoutView": "VisualizacaoLayout",
+  "Container": "Recipiente",
+  "TextDisplay": "ExibicaoTexto",
+  "Section": "Secao",
+  "Separator": "Separador",
+  "Thumbnail": "Miniatura",
+  "ActionRow": "LinhaAcao",
+  "accent_color": "cor_destaque",
 };
 
 export function translatePythonToPortulong(code: string): string {
@@ -451,13 +478,13 @@ export function translatePythonToPortulong(code: string): string {
   });
 
   // 4. Specific imports translations BEFORE general word translation
-  // Handle discord.py wrapper custom imports
-  processed = processed.replace(/\bimport\s+discord\b/g, "importar portulong.discord_pt como discord");
-  processed = processed.replace(/\bfrom\s+discord\.ext\s+import\s+commands\b/g, "from portulong.discord_pt import commands");
-  processed = processed.replace(/\bfrom\s+discord\s+import\s+ui\b/g, "from portulong.discord_pt import ui");
-  processed = processed.replace(/\bimport\s+portulong\.discord_pt\s+as\s+discord\b/g, "importar portulong.discord_pt como discord");
-  processed = processed.replace(/\bfrom\s+portulong\.discord_pt\s+import\s+commands\b/g, "from portulong.discord_pt import commands");
-  processed = processed.replace(/\bfrom\s+portulong\.discord_pt\s+import\s+ui\b/g, "from portulong.discord_pt import ui");
+  // Handle discord.py wrapper custom imports - translate to clean Portulong imports
+  processed = processed.replace(/\bimport\s+discord\b/g, "importar discord");
+  processed = processed.replace(/\bfrom\s+discord\.ext\s+import\s+commands\b/g, "de discord.ext importar commands");
+  processed = processed.replace(/\bfrom\s+discord\s+import\s+ui\b/g, "de discord importar ui");
+  processed = processed.replace(/\bimport\s+portulong\.discord_pt\s+as\s+discord\b/g, "importar discord");
+  processed = processed.replace(/\bfrom\s+portulong\.discord_pt\s+import\s+commands\b/g, "de discord.ext importar commands");
+  processed = processed.replace(/\bfrom\s+portulong\.discord_pt\s+import\s+ui\b/g, "de discord importar ui");
 
   // 5. Structure mappings: async def -> definir assincrono, def -> definir
   processed = processed.replace(/\basync\s+def\b/g, "definir assincrono");

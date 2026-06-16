@@ -81,10 +81,12 @@ function atualizarDiagnosticos(document, collection) {
             "ErroDeExecucao", "ErroNaoImplementado",
             "Robo", "Bot", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem",
             "Cor", "Embutido", "Modal", "ModalPT", "CaixaTexto", "Botao", "Selecao", "Visualizacao", "OpcaoSelecao",
+            "VisualizacaoLayout", "Recipiente", "ExibicaoTexto", "Secao", "Separador", "Miniatura", "LinhaAcao", "cor_destaque", "tempo_esgotado",
             "prefixo", "evento", "comando", "nome", "ajuda", "enviar", "responder", "deletar",
             "adicionar_reacao", "remover_reacao", "expulsar", "banir", "limpar", "conteudo",
             "autor", "canal", "servidor", "mensagem", "usuario", "id", "canal_sistema", "permissoes",
             "expulsar_membros", "gerenciar_mensagens",
+            "adicionar_campo", "definir_autor", "definir_imagem", "definir_miniatura", "definir_rodape", "limpar_campos",
             "os", "sys", "re", "json", "math", "random", "time", "datetime", "discord", "commands", "intents", "asyncio"
         ]);
         
