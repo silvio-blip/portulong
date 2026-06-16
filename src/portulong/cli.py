@@ -57,8 +57,8 @@ definir assincrono ao_iniciar():
 
 # Comando simples !ping
 @robo.comando(nome="ping")
-definir assincrono resposta_ping(contexto):
-    aguardar contexto.enviar("🏓 Pong! O bot está rodando perfeitamente em Portulong.")
+definir assincrono resposta_ping(CTX):
+    aguardar CTX.enviar("🏓 Pong! O bot está rodando perfeitamente em Portulong.")
 
 # Substitua com o token real do seu bot
 token = "SEU_TOKEN_AQUI"

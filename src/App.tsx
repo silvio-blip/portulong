@@ -160,7 +160,7 @@ const DICTIONARY: DictionaryItem[] = [
   { portulong: "discord.ui", python: "discord.ui", category: "discord", description: "Módulo para botões, caixas de diálogo, texto e reações.", example: "importar portulong.discord_pt como discord\nvazio = discord.ui.Visualizacao()" },
   { portulong: "prefixo", python: "command_prefix", category: "discord", description: "Configuração do prefixo inicial dos comandos do bot.", example: "bot = Bot(prefixo='!')" },
   { portulong: "evento", python: "event", category: "discord", description: "Decorador que registra escutas de gatilhos automáticos.", example: "@bot.evento\ndefinir assincrono ao_iniciar():\n    passar" },
-  { portulong: "comando", python: "command", category: "discord", description: "Decorador que registra comandos disparados por chats.", example: "@bot.comando(nome='oi')\ndefinir assincrono responder_oi(contexto):\n    passar" },
+  { portulong: "comando", python: "command", category: "discord", description: "Decorador que registra comandos disparados por chats.", example: "@bot.comando(nome='oi')\ndefinir assincrono responder_oi(CTX):\n    passar" },
   { portulong: "nome", python: "name", category: "discord", description: "Atributo de nome das entidades ou parâmetros das APIs do Discord.", example: "escrever(membro.nome)" },
   { portulong: "ajuda", python: "help", category: "discord", description: "Mensagem ou helper acoplável de texto explicativo em comandos.", example: "@bot.comando(nome='ajuda_limp', ajuda='Limpar chat')" },
 
@@ -171,8 +171,8 @@ const DICTIONARY: DictionaryItem[] = [
   { portulong: "ao_sair_membro", python: "on_member_remove", category: "discord", description: "Gatilho para detecção de exclusão ou saída de membros.", example: "@bot.evento\ndefinir assincrono ao_sair_membro(membro):\n    escrever(f'{membro.nome} saiu do servidor.')" },
 
   // MÉTODOS DE CONTROLE / TRANSPILAÇÃO DO WRAPPER
-  { portulong: "enviar", python: "send", category: "discord", description: "Método para envio de mensagens, embutidos e componentes de visualização.", example: "aguardar contexto.enviar('Oi', embutido=meu_embed)" },
-  { portulong: "responder", python: "reply", category: "discord", description: "Método que responde com menção e thread contextual de origem.", example: "aguardar contexto.responder('Resposta direta')" },
+  { portulong: "enviar", python: "send", category: "discord", description: "Método para envio de mensagens, embutidos e componentes sobre o CTX do canal.", example: "aguardar CTX.enviar('Oi', embutido=meu_embed)" },
+  { portulong: "responder", python: "reply", category: "discord", description: "Método que responde com menção direta relacionado à origem do CTX.", example: "aguardar CTX.responder('Resposta direta')" },
   { portulong: "deletar", python: "delete", category: "discord", description: "Elimina de forma permanente o recurso oponente (mensagem etc).", example: "aguardar mensagem.deletar()" },
   { portulong: "limpar", python: "purge", category: "discord", description: "Remocação em lote de logs de chats por tamanho.", example: "aguardar canal.limpar(limite=10)" },
   { portulong: "adicionar_reacao", python: "add_reaction", category: "discord", description: "Insere reações de emojis sobre mensagens.", example: "aguardar mensagem.adicionar_reacao('🟢')" },
@@ -189,11 +189,11 @@ const DICTIONARY: DictionaryItem[] = [
   { portulong: "conteudo", python: "content", category: "discord", description: "Guarda o texto cru textual despachado em uma mensagem.", example: "escrever(mensagem.conteudo)" },
   { portulong: "autor", python: "author", category: "discord", description: "Referência da classe Membro/Usuario que executou a ação.", example: "escrever(mensagem.autor.nome)" },
   { portulong: "canal", python: "channel", category: "discord", description: "Referência do canal de texto ou voz de origem.", example: "aguardar mensagem.canal.enviar('Sucesso')" },
-  { portulong: "servidor", python: "guild", category: "discord", description: "Referência do servidor hospedeiro que abriga as atividades.", example: "escrever(contexto.servidor.nome)" },
+  { portulong: "servidor", python: "guild", category: "discord", description: "Referência do servidor hospedeiro que abriga as atividades.", example: "escrever(CTX.servidor.nome)" },
   { portulong: "mensagem", python: "message", category: "discord", description: "Entidade representadora da transmissão com ID e anexos.", example: "escrever(mensagem.id)" },
   { portulong: "usuario", python: "user", category: "discord", description: "Entidade básica representante do bot ou da conta Discord.", example: "escrever(bot.usuario)" },
   { portulong: "id", python: "id", category: "discord", description: "O identificador numérico exclusivo das entidades.", example: "escrever(canal.id)" },
-  { portulong: "membro", python: "member", category: "discord", description: "Referência de usuário dentro do contexto do servidor.", example: "escrever(membro.apelido)" },
+  { portulong: "membro", python: "member", category: "discord", description: "Referência de usuário dentro do CTX do servidor.", example: "escrever(membro.apelido)" },
   { portulong: "apelido", python: "display_name", category: "discord", description: "Nome alternativo exibido pelo membro no servidor atual.", example: "escrever(autor.apelido)" },
   { portulong: "mencao", python: "mention", category: "discord", description: "Gera a menção com @ em português.", example: "escrever(autor.mencao)" },
   { portulong: "membros", python: "members", category: "discord", description: "Coleção completa dos membros que participam da guilda.", example: "escrever(tamanho(servidor.membros))" },
@@ -548,7 +548,7 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
     "Robo", "Bot", "Intencoes", "Membro", "Canal", "Servidor", "Mensagem", "discord",
     "Cor", "Embutido", "Modal", "ModalPT", "CaixaTexto", "Botao", "Selecao", "Visualizacao", "OpcaoSelecao",
     "VisualizacaoLayout", "Recipiente", "ExibicaoTexto", "Secao", "Separador", "Miniatura", "LinhaAcao", "cor_destaque", "tempo_esgotado",
-    "comando", "evento", "contexto", "membro", "canal", "servidor", "mensagem", 
+    "comando", "evento", "CTX", "ctx", "membro", "canal", "servidor", "mensagem", 
     "usuario", "enviar", "responder", "deletar", "adicionar_reacao", 
     "remover_reacao", "expulsar", "banir", "limpar", "conteudo", "autor", 
     "id", "canal_sistema", "permissoes", "expulsar_membros", "gerenciar_mensagens",
@@ -593,7 +593,7 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
 
   // Lista estática de exclusão / fallback para evitar falsos positivos
   const CORE_ALLOWED = new Set([
-    "self", "contexto", "ctx", "bot", "client", "args", "kwargs", "ptg", "canal_id", "token", "mensagem",
+    "self", "CTX", "ctx", "contexto", "bot", "client", "args", "kwargs", "ptg", "canal_id", "token", "mensagem",
     "os", "sys", "re", "json", "math", "random", "time", "datetime", "asyncio", "discord", "commands",
     "__init__", "__name__", "__main__", "append", "remove", "pop", "split", "join", "strip", "lower", "upper",
     "replace", "keys", "values", "items", "get", "update", "exec", "len",
@@ -885,8 +885,8 @@ const PORTULONG_SNIPPETS = [
   {
     key: "definir",
     displayName: "definir assincrono comando",
-    snippet: "definir assincrono nome_funcao(ctx):\n    aguardar ctx.enviar(\"Texto\")\n",
-    description: "Define uma nova função assíncrona portuguesa (suporta ctx ou contexto)"
+    snippet: "definir assincrono nome_funcao(CTX):\n    aguardar CTX.enviar(\"Texto\")\n",
+    description: "Define uma nova função assíncrona recebendo o objeto principal de interações (CTX)"
   },
   {
     key: "funcao",
@@ -903,8 +903,8 @@ const PORTULONG_SNIPPETS = [
   {
     key: "comando",
     displayName: "@robo.comando (Comando do Chat)",
-    snippet: "@robo.comando(nome=\"ping\", ajuda=\"Comando de resposta rápida\")\ndefinir assincrono resposta_ping(ctx):\n    aguardar ctx.enviar(\"🏓 Pong!\")\n",
-    description: "Cria um comando de texto interativo !ping para o bot (suporta ctx ou contexto)"
+    snippet: "@robo.comando(nome=\"ping\", ajuda=\"Comando de resposta rápida\")\ndefinir assincrono resposta_ping(CTX):\n    aguardar CTX.enviar(\"🏓 Pong!\")\n",
+    description: "Cria um comando de texto interativo usando o objeto principal CTX (ex: CTX.enviar, CTX.responder)"
   },
   {
     key: "evento",
@@ -920,15 +920,15 @@ const PORTULONG_SNIPPETS = [
   },
   {
     key: "enviar",
-    displayName: "ctx.enviar(...)",
-    snippet: "aguardar ctx.enviar(\"Sua mensagem aqui!\")",
-    description: "Envia uma mensagem de texto simples ao canal ativo (suporta ctx ou contexto)"
+    displayName: "CTX.enviar(...)",
+    snippet: "aguardar CTX.enviar(\"Sua mensagem aqui!\")",
+    description: "Envia uma mensagem de texto simples ao canal ativo usando o objeto de contexto CTX (ex: CTX.enviar)"
   },
   {
     key: "responder",
-    displayName: "ctx.responder(...)",
-    snippet: "aguardar ctx.responder(\"Sua resposta!\")",
-    description: "Responde de forma encadeada diretamente à mensagem original (suporta ctx ou contexto)"
+    displayName: "CTX.responder(...)",
+    snippet: "aguardar CTX.responder(\"Sua resposta!\")",
+    description: "Responde de forma encadeada diretamente à mensagem original usando o objeto de contexto CTX (ex: CTX.responder)"
   },
   {
     key: "escrever",
@@ -950,7 +950,7 @@ const PORTULONG_SNIPPETS = [
   }
 ];
 
-// Propriedades e Métodos de Contexto (ctx / contexto)
+// Propriedades e Métodos do Objeto Principal (CTX)
 const CONTEXT_PROPERTIES = [
   {
     key: "enviar",
@@ -1226,8 +1226,8 @@ async def greet(ctx):
       "remove_roles": "remover_cargo",
       "edit": "editar",
       "move_to": "mover_para",
-      "ctx\\.send": "contexto.enviar",
-      "ctx\\.reply": "contexto.responder",
+      "ctx\\.send": "CTX.enviar",
+      "ctx\\.reply": "CTX.responder",
       "message\\.content": "mensagem.conteudo",
       "message\\.author": "mensagem.autor",
       "message\\.channel": "mensagem.canal",
@@ -1458,13 +1458,13 @@ async def greet(ctx):
       const start = textarea.selectionStart;
       const textBeforeCaret = value.slice(0, start);
       const match = textBeforeCaret.match(/[\w_@]+$/);
-      const matchPonto = textBeforeCaret.match(/(?:ctx|contexto)\.([\w_]*)$/i);
+      const matchPonto = textBeforeCaret.match(/(?:ctx|ctx|contexto)\.([\w_]*)$/i);
 
       if (matchPonto) {
         const word = matchPonto[1].toLowerCase();
         setActiveWord(word);
 
-        // Filtra propriedades do contexto (ctx / contexto)
+        // Filtra propriedades do contexto (CTX / ctx / contexto)
         const filtered = CONTEXT_PROPERTIES.filter(item =>
           item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
         );
@@ -1506,13 +1506,13 @@ async def greet(ctx):
     const value = textarea.value;
     const textBeforeCaret = value.slice(0, start);
     const match = textBeforeCaret.match(/[\w_@]+$/);
-    const matchPonto = textBeforeCaret.match(/(?:ctx|contexto)\.([\w_]*)$/i);
+    const matchPonto = textBeforeCaret.match(/(?:ctx|ctx|contexto)\.([\w_]*)$/i);
 
     if (matchPonto) {
       const word = matchPonto[1].toLowerCase();
       setActiveWord(word);
 
-      // Filtra propriedades do contexto (ctx / contexto)
+      // Filtra propriedades do contexto (CTX / ctx / contexto)
       const filtered = CONTEXT_PROPERTIES.filter(item =>
         item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
       );
@@ -1668,7 +1668,7 @@ async def greet(ctx):
         const snippetFromCommand = code.slice(matchIndex);
         
         // Find template responses
-        const sendRegex = /aguardar\s+contexto\s*\.\s*enviar\s*\(\s*(f?["'][\s\S]*?["']|[^)]*)\s*\)/;
+        const sendRegex = /aguardar\s+(?:contexto|ctx|CTX)\s*\.\s*(?:enviar|responder)\s*\(\s*(f?["'][\s\S]*?["']|[^)]*)\s*\)/;
         const sendMatch = snippetFromCommand.match(sendRegex);
 
         let botReply = "";
@@ -1678,7 +1678,7 @@ async def greet(ctx):
           let template = sendMatch[1];
           if (template.startsWith("f") && (template.includes('"') || template.includes("'"))) {
             const stripped = template.replace(/^f["']|["']$/g, '');
-            botReply = stripped.replace(/\{contexto\.autor\.nome\}/g, "Mestre_Do_Portulong");
+            botReply = stripped.replace(/\{(?:contexto|ctx|CTX)\.autor\.nome\}/g, "Mestre_Do_Portulong");
             
             if (commandArgs.length > 0 && commandArgs[0] !== "") {
               botReply = botReply.replace(/\{[^}]+\}/g, commandArgs.join(" "));
@@ -1984,8 +1984,8 @@ definir assincrono ao_iniciar():
     escrever(f"Opa! Robô online como {robo.usuario}")
 
 @robo.comando(nome="ola")
-definir assincrono responder_ola(contexto):
-    aguardar contexto.enviar(f"Olá {contexto.autor.nome}! Eu fui codificado em Portulong!")
+definir assincrono responder_ola(CTX):
+    aguardar CTX.enviar(f"Olá {CTX.autor.nome}! Eu fui codificado em Portulong!")
 \`\`\`
 
 Para executar o seu robô no computador, basta rodar o comando:
@@ -3269,7 +3269,7 @@ tmlanguage_json = {
         },
         {
           "name": "variable.language.special.self.portulong",
-          "match": r"\\b(self|contexto)\\b"
+          "match": r"\\b(self|CTX|ctx|contexto)\\b"
         }
       ]
     },
@@ -3405,7 +3405,7 @@ function atualizarDiagnosticos(document, collection) {
             "levantar", "assincrono", "aguardar", "com", "lambda", "global", "naolocal",
             "produzir", "asseverar", "funcao", "definir", "classe",
             "e", "ou", "nao", "em", "eh", "nao_eh",
-            "self", "contexto", "ctx", "bot", "client", "args", "kwargs", "ptg", "canal_id", "token", "mensagem",
+            "self", "CTX", "contexto", "ctx", "bot", "client", "args", "kwargs", "ptg", "canal_id", "token", "mensagem",
             "verdadeiro", "falso", "nulo", "Verdadeiro", "Falso", "Nulo",
             "escrever", "mostrar", "ler", "tamanho", "inteiro", "texto", "real", "decimal",
             "boleano", "lista", "dicionario", "conjunto", "tupla", "intervalo", "abrir", "tipo",
@@ -4183,40 +4183,27 @@ module.exports = {
           <button
             id="tab-ide-btn"
             onClick={() => setActiveTab("ide")}
-            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-md text-xs font-bold font-mono flex items-center gap-2 transition-all ${
               activeTab === "ide" 
                 ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700" 
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            <Code size={14} />
-            IDE & Simulador
+            <Terminal size={14} />
+            Início Rápido • Instalação
           </button>
           
           <button
-            id="tab-translator-btn"
-            onClick={() => setActiveTab("translator")}
-            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono flex items-center gap-2 transition-all ${
-              activeTab === "translator" 
-                ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700" 
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <Sparkles size={14} />
-            Tradutor Python
-          </button>
-
-          <button
             id="tab-docs-btn"
             onClick={() => setActiveTab("docs")}
-            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-md text-xs font-bold font-mono flex items-center gap-2 transition-all ${
               activeTab === "docs" 
                 ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700" 
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
             <BookOpen size={14} />
-            Dicionário / Guia
+            Dicionário Oficial • Sintaxe
           </button>
 
         </nav>
@@ -4250,10 +4237,10 @@ module.exports = {
 
         {/* 💻 TAB CONTENT: IDE & PORTULONG ENVIRONMENT GUIDE */}
         {activeTab === "ide" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full">
             
             {/* LEFT AREA: Editor & Selector */}
-            <div className={`${ideLayout === "detailed" ? "col-span-1 lg:col-span-12" : "col-span-1 lg:col-span-12 xl:col-span-7"} flex flex-col gap-4`}>
+            <div className="hidden">
               
               {/* Presets Toggle Header */}
               <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -4469,7 +4456,7 @@ module.exports = {
             </div>
 
             {/* RIGHT AREA: Guia de Instalação e Configuração de Ambiente Portulong 🐉 */}
-            <div className={`${ideLayout === "detailed" ? "col-span-1 lg:col-span-12 mt-6" : "col-span-1 lg:col-span-12 xl:col-span-12 xl:col-span-5"} flex flex-col gap-6`}>
+            <div className="flex flex-col gap-6 w-full">
               
               <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl flex flex-col">
                 {/* Header do Guia */}
@@ -4744,100 +4731,7 @@ module.exports = {
           </div>
         )}
 
-        {/* 💻 TAB CONTENT: PYTHON TRANSLATOR */}
-        {activeTab === "translator" && (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col gap-6">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-lg font-black font-mono tracking-tight text-white flex items-center gap-2">
-                <Sparkles size={18} className="text-emerald-400" />
-                Conversor de Inglês (Python) para Português (Portulong)
-              </h2>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Tem algum comando ou bot já pronto em Python que você achou na internet? Cole o código original do Discord.py aqui embaixo e clique em traduzir. Nosso motor de transpilação determinístico e matemático fará a tradução 100% precisa das palavras-chave para Portulong sem o uso de IA!
-              </p>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-              {/* Python Left Entry Column */}
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Code size={13} />
-                  Código em Python de Entrada (.py inglês)
-                </label>
-                <div className="relative flex-1 flex flex-col bg-slate-950 border border-slate-800 rounded-xl min-h-[340px] overflow-hidden">
-                  {/* Underlay Colorized Display */}
-                  <pre
-                    className="absolute inset-0 p-4 text-slate-350 font-mono text-xs leading-5 whitespace-pre pointer-events-none select-none overflow-hidden border-0 m-0 bg-transparent scrollbar-none"
-                  >
-                    {highlightPython(inputPython || "# Cole seu código Python aqui...")}
-                  </pre>
-                  {/* Overlay Interactive Textarea */}
-                  <textarea
-                    value={inputPython}
-                    onChange={(e) => setInputPython(e.target.value)}
-                    onScroll={(e) => {
-                      const pre = e.currentTarget.previousSibling as HTMLPreElement;
-                      if (pre) {
-                        pre.scrollTop = e.currentTarget.scrollTop;
-                        pre.scrollLeft = e.currentTarget.scrollLeft;
-                      }
-                    }}
-                    className="absolute inset-0 bg-transparent p-4 text-transparent caret-white font-mono text-xs leading-5 focus:outline-none resize-none w-full h-full whitespace-pre overflow-auto font-medium border-0 m-0 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent"
-                    placeholder="Cole seu código Python de entrada aqui..."
-                    spellCheck="false"
-                  />
-                </div>
-              </div>
-
-              {/* Portulong Right Target Column */}
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Sparkles size={13} className="text-emerald-400" />
-                  Código Processado em Portulong (.ptg português)
-                </label>
-                <div className="relative flex-1 flex flex-col bg-slate-950 border border-slate-800 rounded-xl min-h-[340px] overflow-hidden">
-                  <pre className="flex-1 p-4 font-mono text-xs leading-5 whitespace-pre overflow-auto select-text text-slate-300 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent pb-16">
-                    {highlightPortulong(translatedPortulong || "# Clique em Traduzir para processar as palavras-chave...")}
-                  </pre>
-                  {translatedPortulong && (
-                    <button
-                      id="copy-translated-btn"
-                      onClick={() => {
-                        navigator.clipboard.writeText(translatedPortulong);
-                        alert("Código Portulong copiado!");
-                      }}
-                      className="absolute bottom-4 right-4 p-2 bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all"
-                    >
-                      <Copy size={13} />
-                      Copiar Código
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-center border-t border-slate-800 pt-6">
-              <button
-                id="translate-python-now-btn"
-                onClick={translatePythonToPortulong}
-                disabled={isTranslating}
-                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 text-sm font-black font-mono tracking-wide rounded-xl transition-all flex items-center justify-center gap-2 transform active:scale-95 shadow-lg"
-              >
-                {isTranslating ? (
-                  <>
-                    <Plus size={16} className="animate-spin text-slate-950" />
-                    Traduzindo Deterministicamente via Tokens...
-                  </>
-                ) : (
-                  <>
-                    Traduzir Agora para Portulong
-                    <ArrowRight size={16} />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* 💻 TAB CONTENT: REFERENCE DICTIONARY */}
         {activeTab === "docs" && (
