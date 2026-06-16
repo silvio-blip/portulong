@@ -23,7 +23,7 @@ A programar, muitas vezes somos forçados a aprender inglês ao mesmo tempo que 
 
 A linguagem oferece uma sintaxe limpa, estruturada e de tipagem amigável com base em termos luso-brasileiros tradicionais. O motor por trás do Portulong realiza uma **análise léxica símbolo a símbolo (Tokenization)** de altíssima fidelidade. Isso significa que ele lê o seu arquivo `.ptg` caractere por caractere, garantindo que textos dentro de strings ou comentários nunca sejam afetados e gerando código Python perfeitamente otimizado pronto para execução.
 
-### Como instalar no terminal? 💻 (Novo Fluxo Simplificado v1.0.6 🌟)
+### Como instalar no terminal? 💻 (Novo Fluxo Simplificado v1.0.71 🌟)
 
 Agora, obter a experiência completa da linguagem e as suas integrações mágicas ficou ainda mais simples e elegante! Eliminamos comandos complexos externos do tipo `curl` e incorporamos um fluxo de automação integrado direto do próprio terminal com a nossa CLI nativa.
 
@@ -148,6 +148,33 @@ enquanto tentativas <= 3:
     tentativas = tentativas + 1
 ```
 
+### Tratamento de Exceções e Erros: `tentar`, `exceto` e `como`
+
+Para lidar com possíveis erros ou comportamentos inesperados sem interromper a execução do seu programa, você pode usar os blocos de captura de erros.
+
+No Portulong, você pode capturar as exceções nativas de Python usando tanto as nomenclaturas tradicionais de Python como as equivalentes traduzidas em português! 
+
+```python
+tentar:
+    resultado = 10 / 0
+exceto ZeroDivisionError como erro_div:
+    escrever(f"Erro capturado com sucesso: {erro_div}")
+exceto Excessao como erro_geral:
+    escrever(f"Um erro inesperado aconteceu: {erro_geral}")
+```
+
+#### Mapeamento de Erros e Exceções Comuns:
+* **`Exception`** ou **`Excessao`** (Erros em geral)
+* **`ValueError`** ou **`ErroDeValor`**
+* **`TypeError`** ou **`ErroDeTipo`**
+* **`NameError`** ou **`ErroDeNome`**
+* **`IndexError`** ou **`ErroDeIndice`**
+* **`KeyError`** ou **`ErroDeChave`**
+* **`ZeroDivisionError`** (Divisão por zero)
+* **`FileNotFoundError`** ou **`ErroArquivoNaoEncontrado`**
+
+Você pode combinar essas palavras-chave livremente com `como` ou `as` para declarar a variável local que receberá o erro capturado. O linter inteligente integrado reconhece essas variáveis dinamicamente para evitar alertas falsos!
+
 ---
 
 ## 3. Funções (Criar os Próprios Comandos)
@@ -260,6 +287,35 @@ meu_botao = discord.ui.Botao(rotulo="Iniciar Cadastro", estilo="sucesso", id_per
 
 # Adiciona ao painel
 painel.adicionar_item(meu_botao)
+```
+
+### 🎨 4.1.2 Cartões de Anúncio Embutidos (`discord.Embutido`)
+
+Para enviar mensagens extremamente elegantes, ricas em design e bem estruturadas, o Portulong possui suporte completo a **Embeds** por meio de `discord.Embutido`. Todas as principais propriedades visuais do Discord foram traduzidas para termos legíveis e intuitivos:
+
+*   **`adicionar_campo(nome, valor, em_linha)`**: Adiciona uma nova seção de texto ao cartão (o parâmetro `em_linha` pode ser `Verdadeiro` ou `Falso`).
+*   **`definir_autor(nome, icone_url, url)`**: Configura um autor/título pequeno no cabeçalho do cartão.
+*   **`definir_imagem(url)`**: Modifica e exibe uma imagem grande e centralizada na área interna do cartão.
+*   **`definir_miniatura(url)`**: Define uma imagem menor que aparece posicionada no canto superior direito do cartão.
+*   **`definir_rodape(texto, icone_url)`**: Define um rodapé com texto e favicon/foto pequena na parte inferior.
+*   **`limpar_campos()`**: Remove todos os campos extras configurados, resetando o design interno.
+
+Veja um exemplo de uso dinâmico para dar as boas-vindas sofisticadas a um membro:
+
+```python
+cartao_boas_vindas = discord.Embutido(
+    titulo="👋 Bem-vindo ao Servidor!",
+    descricao="Estamos extremamente felizes com a sua chegada!",
+    cor=discord.Cor.verde()
+)
+
+# Configurações visuais adicionais
+cartao_boas_vindas.definir_miniatura(url=novo_membro.foto_url)
+cartao_boas_vindas.adicionar_campo(nome="Nome da Conta", valor=novo_membro.nome, em_linha=Verdadeiro)
+cartao_boas_vindas.adicionar_campo(nome="Regras do Grupo", valor="Leia #regras", em_linha=Falso)
+cartao_boas_vindas.definir_rodape(texto="Diverte-te e boas conversas")
+
+aguardar canal.enviar(embutido=cartao_boas_vindas)
 ```
 
 ---

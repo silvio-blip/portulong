@@ -9,7 +9,7 @@ package_json = {
   "name": "portulong-vscode",
   "displayName": "Portulong support",
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
-  "version": "1.0.70",
+  "version": "1.0.71",
   "publisher": "silvio-blip",
   "icon": "portulong.png",
   "homepage": "https://portulong.vercel.app/",
@@ -582,7 +582,17 @@ function atualizarDiagnosticos(document, collection) {
             "autor", "canal", "servidor", "mensagem", "usuario", "id", "canal_sistema", "permissoes",
             "expulsar_membros", "gerenciar_mensagens",
             "adicionar_campo", "definir_autor", "definir_imagem", "definir_miniatura", "definir_rodape", "limpar_campos",
-            "os", "sys", "re", "json", "math", "random", "time", "datetime", "discord", "commands", "intents", "asyncio"
+            "os", "sys", "re", "json", "math", "random", "time", "datetime", "discord", "commands", "intents", "asyncio",
+            "if", "else", "elif", "for", "while", "def", "class", "import", "from", "as", "return", "try", "except", 
+            "finally", "with", "lambda", "pass", "break", "continue", "True", "False", "None", "and", "or", "not", 
+            "in", "is", "assert", "global", "nonlocal", "raise", "yield", "async", "await",
+            "print", "input", "len", "int", "str", "float", "bool", "list", "dict", "set", "tuple", "range", "open", 
+            "type", "sum", "abs", "max", "min", "round", "map", "filter", "sorted", "super", "property", "zip", 
+            "enumerate", "object", "any", "all", "help", "exec", "id", "reversed", "format", "getattr", "setattr", 
+            "hasattr", "delattr", "repr", "next", "iter", "isinstance", "issubclass",
+            "Exception", "ValueError", "TypeError", "NameError", "IndexError", "KeyError", "ImportError", "AttributeError", 
+            "ZeroDivisionError", "MemoryError", "StopIteration", "OSError", "FileNotFoundError", "KeyboardInterrupt", 
+            "AssertionError", "RuntimeError", "NotImplementedError"
         ]);
         
         const localDecls = new Set();
@@ -639,6 +649,11 @@ function atualizarDiagnosticos(document, collection) {
                         localDecls.add(pTrim);
                     }
                 });
+            }
+
+            const matchExceto = linha.match(/\\b(?:exceto|except)\\s+[a-zA-Z0-9_\\.]+(?:\\s+(?:como|as)\\s+([a-zA-Z_][a-zA-Z0-9_]*))?/);
+            if (matchExceto && matchExceto[1]) {
+                localDecls.add(matchExceto[1].trim());
             }
         });
         
