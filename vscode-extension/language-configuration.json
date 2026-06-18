@@ -8,11 +8,11 @@
     ["(", ")"]
   ],
   "autoClosingPairs": [
-    { "open": "{", "close": "}" },
-    { "open": "[", "close": "]" },
-    { "open": "(", "close": ")" },
-    { "open": "\"", "close": "\"" },
-    { "open": "'", "close": "'" }
+    {"open": "{", "close": "}"},
+    {"open": "[", "close": "]"},
+    {"open": "(", "close": ")"},
+    {"open": "\"", "close": "\"", "notIn": ["string", "comment"]},
+    {"open": "'", "close": "'", "notIn": ["string", "comment"]}
   ],
   "surroundingPairs": [
     ["{", "}"],
@@ -21,15 +21,15 @@
     ["\"", "\""],
     ["'", "'"]
   ],
-  "indentationRules": {
-    "increaseIndentPattern": "^.*:\\s*(?:#.*)?$"
-  },
-  "onEnterRules": [
-    {
-      "beforeText": "^.*:\\s*(?:#.*)?$",
-      "action": {
-        "indent": "indent"
-      }
+  "folding": {
+    "offSide": true,
+    "markers": {
+      "start": "^\\s*#\\s*region\\b",
+      "end": "^\\s*#\\s*endregion\\b"
     }
-  ]
+  },
+  "indentationRules": {
+    "increaseIndentPattern": "^\\s*(definir|funcao|classe|para|enquanto|se|senaose|senao|tentar|exceto|com|assincrono)\\b.*:\\s*$",
+    "decreaseIndentPattern": "^\\s*(senaose|senao|exceto|finalmente)\\b.*:\\s*$"
+  }
 }

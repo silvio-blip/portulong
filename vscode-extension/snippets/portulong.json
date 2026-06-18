@@ -1,22 +1,73 @@
 {
-  "Novo Robô Discord": {
-    "prefix": "robo_novo",
+  "Novo bot Discord": {
+    "prefix": "novo_bot",
     "body": [
       "importar portulong.discord_pt como discord",
       "",
-      "robo = discord.Robo(prefixo=\"!\")",
+      "bot = discord.Bot(prefixo=\"!\")",
       "",
-      "@robo.evento",
+      "@bot.evento",
       "definir assincrono ao_iniciar():",
-      "    escrever(f\"Robô {robo.usuario} ligado com sucesso!\")",
+      "    escrever(f\"🚀 O bot {bot.usuario} está ligado com sucesso!\")",
       "",
-      "@robo.comando(nome=\"ping\")",
-      "definir assincrono cmd_ping(contexto):",
-      "    aguardar contexto.enviar(\"Pong! 🏓\")",
-      "",
-      "robo.run(\"${1:SEU_TOKEN_AQUI}\")"
+      "bot.run(\"${1:SEU_TOKEN_AQUI}\")"
     ],
-    "description": "Cria a estrutura de um novo Bot de Discord com evento de início e comando de teste."
+    "description": "Cria a estrutura base de um Bot de Discord com evento de início."
+  },
+  "Comando do Bot (Prefixo)": {
+    "prefix": "bot_comando",
+    "body": [
+      "@bot.comando(nome=\"${1:nome_do_comando}\")",
+      "definir assincrono cmd_${1:nome_do_comando}(ctx):",
+      "    aguardar ctx.enviar(\"${2:Resposta do comando}\")"
+    ],
+    "description": "Cria um novo comando tradicional com prefixo."
+  },
+  "Comando de Barra (Slash Command)": {
+    "prefix": "bot_barra",
+    "body": [
+      "@bot.comando_barra(nome=\"${1:nome}\", descricao=\"${2:Descrição do comando}\")",
+      "definir assincrono barra_${1:nome}(interacao):",
+      "    aguardar interacao.resposta.enviar_mensagem(\"${3:Resposta do comando}\")"
+    ],
+    "description": "Cria um comando de barra (Slash Command) moderno."
+  },
+  "Evento do bot": {
+    "prefix": "bot_evento",
+    "body": [
+      "@bot.evento",
+      "definir assincrono ao_${1:iniciar}():",
+      "    ${2:passar}"
+    ],
+    "description": "Regista uma escuta de evento (ex: ao_mensagem, ao_iniciar)."
+  },
+  "Criar Embutido (Embed)": {
+    "prefix": "embutido",
+    "body": [
+      "${1:meu_embed} = discord.Embutido(",
+      "    titulo=\"${2:Título Aqui}\",",
+      "    descricao=\"${3:Descrição do teu embutido}\",",
+      "    cor=discord.Cor.${4:azul}()",
+      ")",
+      "${1:meu_embed}.adicionar_campo(nome=\"${5:Campo 1}\", valor=\"${6:Valor 1}\", em_linha=Verdadeiro)",
+      "${1:meu_embed}.definir_rodape(\"${7:Texto do rodapé}\")",
+      "",
+      "aguardar ${8:ctx}.enviar(embutido=${1:meu_embed})"
+    ],
+    "description": "Cria e envia um Embed (Embutido) completo e estilizado."
+  },
+  "Criar Botões (View)": {
+    "prefix": "botoes",
+    "body": [
+      "classe ${1:MeusBotoes}(ui.Visualizacao):",
+      "    definir __inicializar__(self):",
+      "        super().__inicializar__(tempo_esgotado=Nulo)",
+      "",
+      "    @ui.botao(rotulo=\"${2:Clica Aqui}\", estilo=\"${3:verde}\", emoji=\"${4:✅}\")",
+      "    definir assincrono ao_clicar(self, interacao, botao):",
+      "        aguardar interacao.resposta.enviar_mensagem(\"${5:Botão clicado!}\", efemero=Verdadeiro)"
+    ],
+    "description": "Cria uma caixa de botões interativos para as mensagens."
   },
   "Definir Função": {
     "prefix": "funcao",
@@ -24,23 +75,23 @@
       "funcao ${1:nome_da_funcao}(${2:argumentos}):",
       "    ${3:passar}"
     ],
-    "description": "Definir uma função/procedimento padrão"
+    "description": "Definir uma função/procedimento padrão."
   },
-  "Definir": {
+  "Definir Método": {
     "prefix": "definir",
     "body": [
       "definir ${1:nome_da_funcao}(${2:argumentos}):",
       "    ${3:passar}"
     ],
-    "description": "Definir uma função ou método alternativo"
+    "description": "Definir uma função ou método alternativo."
   },
   "Definir Assíncrono": {
-    "prefix": "definir assincrono",
+    "prefix": "assincrono",
     "body": [
       "definir assincrono ${1:nome_da_funcao}(${2:argumentos}):",
       "    ${3:passar}"
     ],
-    "description": "Definir uma função assíncrona"
+    "description": "Definir uma função assíncrona (corrotina)."
   },
   "Estrutura Condicional Se": {
     "prefix": "se",
@@ -48,7 +99,7 @@
       "se ${1:condicao}:",
       "    ${2:passar}"
     ],
-    "description": "Estrutura de decisão condicional 'se'"
+    "description": "Estrutura de decisão condicional 'se'."
   },
   "Estrutura Condicional Senão Se": {
     "prefix": "senaose",
@@ -56,7 +107,7 @@
       "senaose ${1:condicao}:",
       "    ${2:passar}"
     ],
-    "description": "Condicional encadeada 'senaose'"
+    "description": "Condicional encadeada 'senaose'."
   },
   "Estrutura Condicional Senão": {
     "prefix": "senao",
@@ -64,57 +115,39 @@
       "senao:",
       "    ${1:passar}"
     ],
-    "description": "Condicional alternativa 'senao'"
+    "description": "Condicional alternativa 'senao'."
   },
-  "Laço Para": {
+  "Laço Para (For)": {
     "prefix": "para",
     "body": [
       "para ${1:item} em ${2:iteravel}:",
       "    ${3:passar}"
     ],
-    "description": "Laço de repetição determinado 'para'"
+    "description": "Laço de repetição determinado 'para'."
   },
-  "Laço Enquanto": {
+  "Laço Enquanto (While)": {
     "prefix": "enquanto",
     "body": [
       "enquanto ${1:condicao}:",
       "    ${2:passar}"
     ],
-    "description": "Laço de repetição indeterminado 'enquanto'"
+    "description": "Laço de repetição indeterminado 'enquanto'."
   },
-  "Comando do Robô": {
-    "prefix": "robo_comando",
-    "body": [
-      "@robo.comando(nome=\"${1:nome_do_comando}\")",
-      "definir assincrono cmd_${1:nome_do_comando}(contexto${2:, membro: discord.Membro}):",
-      "    aguardar contexto.enviar(\"${3:Resposta do comando}\")"
-    ],
-    "description": "Cria um novo comando assíncrono para o Robô do Discord."
-  },
-  "Evento do Robô": {
-    "prefix": "robo_evento",
-    "body": [
-      "@robo.evento",
-      "definir assincrono ao_${1:evento}():",
-      "    ${2:passar}"
-    ],
-    "description": "Regista uma escuta de evento assíncrono para o Robô (ex: ao_mensagem, ao_iniciar)."
-  },
-  "Mostrar ou Escrever": {
+  "Escrever (Print)": {
     "prefix": "escrever",
     "body": [
       "escrever(${1:dados})"
     ],
-    "description": "Escreve informações no ecrã/terminal"
+    "description": "Escreve informações no ecrã/terminal."
   },
   "Retornar": {
     "prefix": "retornar",
     "body": [
       "retornar ${1:valor}"
     ],
-    "description": "Retorna um valor de uma função"
+    "description": "Retorna um valor de uma função."
   },
-  "Tentar / Exceto": {
+  "Tentar / Exceto (Try/Catch)": {
     "prefix": "tentar",
     "body": [
       "tentar:",
@@ -122,14 +155,21 @@
       "exceto ${2:Excessao} como ${3:erro}:",
       "    escrever(f\"Ocorreu um erro: {${3:erro}}\")"
     ],
-    "description": "Controlo de exceções e erros"
+    "description": "Controlo de exceções e erros."
   },
-  "Importar": {
+  "Importar Módulo": {
     "prefix": "importar",
     "body": [
       "importar ${1:modulo}"
     ],
-    "description": "Importa um módulo ou pacote"
+    "description": "Importa um módulo ou pacote."
+  },
+  "Importar Específico (De ... Importar)": {
+    "prefix": "de",
+    "body": [
+      "de ${1:modulo} importar ${2:item}"
+    ],
+    "description": "Importa algo específico de um módulo."
   },
   "Definir Classe": {
     "prefix": "classe",
@@ -138,13 +178,13 @@
       "    definir __inicializar__(self${2:, argumentos}):",
       "        ${3:passar}"
     ],
-    "description": "Definir uma classe orientada a objetos"
+    "description": "Definir uma classe orientada a objetos."
   },
-  "Aguardar": {
+  "Aguardar (Await)": {
     "prefix": "aguardar",
     "body": [
       "aguardar ${1:expressao_assincrona}"
     ],
-    "description": "Aguardar execução de corrotina assíncrona"
+    "description": "Aguardar execução de corrotina assíncrona."
   }
 }

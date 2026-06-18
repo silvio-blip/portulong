@@ -1,91 +1,84 @@
 {
-  "name": "portulong-vscode",
-  "displayName": "Portulong support",
-  "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
-  "version": "1.0.72",
-  "publisher": "silvio-blip",
-  "icon": "portulong.png",
-  "homepage": "https://portulong.vercel.app/",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/silvio-blip/portulong"
-  },
-  "engines": {
-    "vscode": "^1.60.0"
-  },
-  "categories": [
-    "Programming Languages"
-  ],
-  "activationEvents": [
-    "onLanguage:portulong",
-    "onCommand:portulong.executar"
-  ],
-  "main": "./src/extension.js",
-  "contributes": {
-    "configurationDefaults": {
-      "[portulong]": {
-        "editor.quickSuggestions": {
-          "other": "on",
-          "comments": "off",
-          "strings": "off"
+    "name": "portulong-vscode",
+    "displayName": "Portulong support",
+    "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
+    "version": "1.0.72",
+    "publisher": "silvio-blip",
+    "icon": "portulong.png",
+    "homepage": "https://portulong.vercel.app/",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/silvio-blip/portulong"
+    },
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "*"
+    ],
+    "main": "./src/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "portulong",
+                "aliases": [
+                    "Portulong",
+                    "portulong"
+                ],
+                "extensions": [
+                    ".ptg"
+                ],
+                "configuration": "./language-configuration.json",
+                "icon": {
+                    "light": "./portulong.png",
+                    "dark": "./portulong.png"
+                }
+            }
+        ],
+        "grammars": [
+            {
+                "language": "portulong",
+                "scopeName": "source.portulong",
+                "path": "./syntaxes/portulong.tmLanguage.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "portulong",
+                "path": "./snippets/portulong.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "portulong.executar",
+                "title": "Executar Portulong",
+                "icon": "$(play)"
+            }
+        ],
+        "menus": {
+            "editor/title/run": [
+                {
+                    "when": "editorLangId == portulong || resourceExtname == .ptg",
+                    "command": "portulong.executar",
+                    "group": "navigation"
+                }
+            ]
         },
-        "editor.wordBasedSuggestions": "off",
-        "editor.snippetSuggestions": "top"
-      }
+        "keybindings": [
+            {
+                "command": "portulong.executar",
+                "key": "ctrl+f5",
+                "mac": "cmd+f5",
+                "when": "editorTextFocus && editorLangId == portulong"
+            }
+        ]
     },
-    "languages": [
-      {
-        "id": "portulong",
-        "aliases": [
-          "Portulong",
-          "portulong"
-        ],
-        "extensions": [
-          ".ptg"
-        ],
-        "configuration": "./language-configuration.json",
-        "icon": {
-          "light": "./portulong.png",
-          "dark": "./portulong.png"
-        }
-      }
-    ],
-    "grammars": [
-      {
-        "language": "portulong",
-        "scopeName": "source.portulong",
-        "path": "./syntaxes/portulong.tmLanguage.json"
-      }
-    ],
-    "snippets": [
-      {
-        "language": "portulong",
-        "path": "./snippets/portulong.json"
-      }
-    ],
-    "commands": [
-      {
-        "command": "portulong.executar",
-        "title": "Executar Portulong",
-        "icon": "$(play)"
-      }
-    ],
-    "menus": {
-      "editor/title/run": [
-        {
-          "when": "editorLangId == portulong || resourceExtname == .ptg",
-          "command": "portulong.executar",
-          "group": "navigation"
-        }
-      ]
-    },
-    "keybindings": [
-      {
-        "command": "portulong.executar",
-        "key": "ctrl+f5",
-        "mac": "cmd+f5",
-        "when": "editorTextFocus && editorLangId == portulong"
-      }
-    ]
-  }
+    "__metadata": {
+        "installedTimestamp": 1781775914987,
+        "targetPlatform": "undefined",
+        "size": 233036
+    }
 }
