@@ -23,7 +23,7 @@ A programar, muitas vezes somos forçados a aprender inglês ao mesmo tempo que 
 
 A linguagem oferece uma sintaxe limpa, estruturada e de tipagem amigável com base em termos luso-brasileiros tradicionais. O motor por trás do Portulong realiza uma **análise léxica símbolo a símbolo (Tokenization)** de altíssima fidelidade. Isso significa que ele lê o seu arquivo `.ptg` caractere por caractere, garantindo que textos dentro de strings ou comentários nunca sejam afetados e gerando código Python perfeitamente otimizado pronto para execução.
 
-### Como instalar no terminal? 💻 (Novo Fluxo Simplificado v1.0.71 🌟)
+### Como instalar no terminal? 💻 (Novo Fluxo Simplificado v1.0.72 🌟)
 
 Agora, obter a experiência completa da linguagem e as suas integrações mágicas ficou ainda mais simples e elegante! Eliminamos comandos complexos externos do tipo `curl` e incorporamos um fluxo de automação integrado direto do próprio terminal com a nossa CLI nativa.
 

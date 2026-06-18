@@ -9,7 +9,7 @@ package_json = {
   "name": "portulong-vscode",
   "displayName": "Portulong support",
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
-  "version": "1.0.71",
+  "version": "1.0.72",
   "publisher": "silvio-blip",
   "icon": "portulong.png",
   "homepage": "https://portulong.vercel.app/",

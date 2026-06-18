@@ -56,6 +56,134 @@ function inlineChar(linha, i) {
     return linha[i];
 }
 
+function getEditDistance(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix = Array.from({ length: b.length + 1 }, () => Array(a.length + 1).fill(0));
+    for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+    for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+    for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+            if (b[j - 1] === a[i - 1]) {
+                matrix[j][i] = matrix[j - 1][i - 1];
+            } else {
+                matrix[j][i] = Math.min(matrix[j - 1][i - 1] + 1, matrix[j][i - 1] + 1, matrix[j - 1][i] + 1);
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+}
+
+function findTypo(word, keywordsSet) {
+    if (keywordsSet.has(word)) return null;
+    for (const kw of keywordsSet) {
+        if (kw.toLowerCase() === word.toLowerCase()) {
+            return { correct: kw, errorType: "casing" };
+        }
+    }
+    for (const kw of keywordsSet) {
+        if (getEditDistance(kw.toLowerCase(), word.toLowerCase()) <= 1) {
+            return { correct: kw, errorType: "misspecified" };
+        }
+    }
+    return null;
+}
+
+function parseScopes(document) {
+    const scopes = [];
+    const activeScopesStack = [];
+    const lineCount = document.lineCount;
+
+    for (let i = 0; i < lineCount; i++) {
+        const line = document.lineAt(i);
+        const trimmed = line.text.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+
+        const indent = line.text.search(/\S/);
+
+        while (activeScopesStack.length > 0 && activeScopesStack[activeScopesStack.length - 1].indent >= indent && indent !== -1) {
+            const popped = activeScopesStack.pop();
+            if (popped) {
+                popped.lineEnd = i;
+            }
+        }
+
+        const classMatch = trimmed.match(/^classe\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+        if (classMatch) {
+            const className = classMatch[1];
+            const newScope = {
+                type: "classe",
+                name: className,
+                lineStart: i,
+                lineEnd: lineCount,
+                indent,
+                selfVariables: new Set(),
+                parameters: new Set(),
+                localVars: new Set()
+            };
+            scopes.push(newScope);
+            activeScopesStack.push(newScope);
+            continue;
+        }
+
+        const fnMatch = trimmed.match(/^(?:definir|funcao)\s+(?:assincrono\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)/);
+        if (fnMatch) {
+            const fnName = fnMatch[1];
+            const paramsRaw = fnMatch[2].split(",");
+            const paramsSet = new Set();
+            paramsRaw.forEach(p => {
+                const pNome = p.trim().split(/\s*:/)[0].split(/\s*=/)[0].trim();
+                if (pNome && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(pNome)) {
+                    paramsSet.add(pNome);
+                }
+            });
+
+            const parent = activeScopesStack.find(s => s.type === "classe");
+
+            const newScope = {
+                type: parent ? "metodo" : "funcao",
+                name: fnName,
+                lineStart: i,
+                lineEnd: lineCount,
+                indent,
+                parentScopeName: parent ? parent.name : null,
+                selfVariables: parent ? parent.selfVariables : new Set(),
+                parameters: paramsSet,
+                localVars: new Set()
+            };
+            scopes.push(newScope);
+            activeScopesStack.push(newScope);
+            continue;
+        }
+
+        const currentScope = activeScopesStack[activeScopesStack.length - 1];
+        if (currentScope) {
+            const selfAssignMatch = trimmed.match(/(?:self|eu)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
+            if (selfAssignMatch) {
+                currentScope.selfVariables.add(selfAssignMatch[1].trim());
+            }
+
+            const assignMatch = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\s*=/);
+            if (assignMatch) {
+                const vars = assignMatch[1].split(",");
+                vars.forEach(v => {
+                    const vTrim = v.trim();
+                    if (vTrim !== "self" && vTrim !== "eu") {
+                        currentScope.localVars.add(vTrim);
+                    }
+                });
+            }
+        }
+    }
+
+    while (activeScopesStack.length > 0) {
+        const popped = activeScopesStack.pop();
+        if (popped) popped.lineEnd = lineCount;
+    }
+
+    return scopes;
+}
+
 function atualizarDiagnosticos(document, collection) {
     try {
         if (document.languageId !== 'portulong' && !document.fileName.endsWith('.ptg')) {
@@ -94,6 +222,7 @@ function atualizarDiagnosticos(document, collection) {
             "os", "sys", "re", "json", "math", "random", "time", "datetime", "discord", "commands", "intents", "asyncio"
         ]);
         
+        const parsedScopes = parseScopes(document);
         const localDecls = new Set();
         
         linhasLimpas.forEach(linha => {
@@ -142,9 +271,44 @@ function atualizarDiagnosticos(document, collection) {
             }
         });
         
+        let activeCursor = null;
+        const activeEditor = vscode.window.activeTextEditor;
+        if (activeEditor && activeEditor.document === document) {
+            activeCursor = activeEditor.selection.active;
+        }
+
         linhasLimpas.forEach((linha, indiceLinha) => {
             const wordRegex = /\b[a-zA-Z_][a-zA-Z0-9_]*\b/g;
             let match;
+            
+            const blockKeywords = ["se", "senaose", "senao", "para", "enquanto", "definir", "funcao", "classe", "tentar", "exceto"];
+            const trimmedLine = linha.trim();
+            if (trimmedLine.length > 0) {
+                const firstWordMatch = trimmedLine.match(/^([a-zA-Z0-9_]+)/);
+                if (firstWordMatch) {
+                    const firstWord = firstWordMatch[1];
+                    if (blockKeywords.includes(firstWord) && !trimmedLine.endsWith(":")) {
+                        const range = new vscode.Range(
+                            new vscode.Position(indiceLinha, 0),
+                            new vscode.Position(indiceLinha, linha.length)
+                        );
+                        diagnostics.push(new vscode.Diagnostic(
+                            range,
+                            `Erro de Sintaxe: Falta do caractere dois-pontos ':' ao final da instrução '${firstWord}'.`,
+                            vscode.DiagnosticSeverity.Error
+                        ));
+                    }
+                }
+            }
+
+            let activeScope = null;
+            for (const s of parsedScopes) {
+                if (indiceLinha >= s.lineStart && indiceLinha <= s.lineEnd) {
+                    if (!activeScope || s.indent > activeScope.indent) {
+                        activeScope = s;
+                    }
+                }
+            }
             
             while ((match = wordRegex.exec(linha)) !== null) {
                 const palavra = match[0];
@@ -161,7 +325,62 @@ function atualizarDiagnosticos(document, collection) {
                 if (/^\s*=(?!=)/.test(textoDepois)) continue;
                 if (/^\s*['"]/.test(textoDepois)) continue;
                 
-                if (!keywords.has(palavra) && !localDecls.has(palavra)) {
+                if (activeCursor && indiceLinha === activeCursor.line) {
+                    if (activeCursor.character >= indiceInicio && activeCursor.character <= indiceInicio + palavra.length) {
+                        continue;
+                    }
+                }
+
+                const typoMatch = findTypo(palavra, keywords);
+                if (typoMatch) {
+                    const range = new vscode.Range(
+                        new vscode.Position(indiceLinha, indiceInicio),
+                        new vscode.Position(indiceLinha, indiceInicio + palavra.length)
+                    );
+                    const diagnostic = new vscode.Diagnostic(
+                        range,
+                        typoMatch.errorType === "casing"
+                            ? `Erro de Capitalização: Escreva '${typoMatch.correct}' (letras corretas) em vez de '${palavra}'.`
+                            : `Erro de Digitação: Você quis dizer '${typoMatch.correct}' em vez de '${palavra}'?`,
+                        vscode.DiagnosticSeverity.Error
+                    );
+                    diagnostic.code = 'capitalization-error';
+                    diagnostics.push(diagnostic);
+                    continue;
+                }
+
+                if (palavra === "self" || palavra === "eu") {
+                    if (!activeScope || (activeScope.type !== "metodo" && activeScope.type !== "classe")) {
+                        const range = new vscode.Range(new vscode.Position(indiceLinha, indiceInicio), new vscode.Position(indiceLinha, indiceInicio + palavra.length));
+                        diagnostics.push(new vscode.Diagnostic(range, `O objeto '${palavra}' só é válido dentro dos métodos de uma classe.`, vscode.DiagnosticSeverity.Error));
+                        continue;
+                    }
+                    if (!activeScope.parameters.has(palavra)) {
+                        const range = new vscode.Range(new vscode.Position(indiceLinha, indiceInicio), new vscode.Position(indiceLinha, indiceInicio + palavra.length));
+                        diagnostics.push(new vscode.Diagnostic(range, `O parâmetro de instância '${palavra}' deve ser declarado na assinatura do método.`, vscode.DiagnosticSeverity.Error));
+                        continue;
+                    }
+                }
+
+                if (palavra === "ctx" || palavra === "CTX" || palavra === "contexto") {
+                    if (!activeScope) {
+                        if (!localDecls.has(palavra)) {
+                            const range = new vscode.Range(new vscode.Position(indiceLinha, indiceInicio), new vscode.Position(indiceLinha, indiceInicio + palavra.length));
+                            diagnostics.push(new vscode.Diagnostic(range, `O objeto de contexto '${palavra}' não está definido.`, vscode.DiagnosticSeverity.Error));
+                        }
+                        continue;
+                    }
+                    if (!activeScope.parameters.has(palavra) && !activeScope.localVars.has(palavra) && !localDecls.has(palavra)) {
+                        const range = new vscode.Range(new vscode.Position(indiceLinha, indiceInicio), new vscode.Position(indiceLinha, indiceInicio + palavra.length));
+                        diagnostics.push(new vscode.Diagnostic(range, `O contexto '${palavra}' precisa ser declarado como parâmetro desta função.`, vscode.DiagnosticSeverity.Error));
+                        continue;
+                    }
+                }
+
+                const isLocalValid = localDecls.has(palavra) || 
+                                     (activeScope && (activeScope.parameters.has(palavra) || activeScope.localVars.has(palavra)));
+
+                if (!keywords.has(palavra) && !isLocalValid) {
                     const range = new vscode.Range(
                         new vscode.Position(indiceLinha, indiceInicio),
                         new vscode.Position(indiceLinha, indiceInicio + palavra.length)
@@ -169,7 +388,7 @@ function atualizarDiagnosticos(document, collection) {
                     
                     const diagnostic = new vscode.Diagnostic(
                         range,
-                        `Sintaxe inválida: '${palavra}' não é reconhecida no Portulong.`,
+                        `Sintaxe inválida: '${palavra}' não é reconhecida no Portulong e não foi declarada localmente.`,
                         vscode.DiagnosticSeverity.Error
                     );
                     
@@ -201,24 +420,34 @@ function activate(context) {
         if (editor) atualizarDiagnosticos(editor.document, diagnosticsCollection);
     }));
 
+    // Debounce de 300ms nos diagnósticos ao digitar, para não travar o editor
+    let dTimeout;
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
-        atualizarDiagnosticos(event.document, diagnosticsCollection);
+        if (dTimeout) clearTimeout(dTimeout);
+        dTimeout = setTimeout(() => {
+            atualizarDiagnosticos(event.document, diagnosticsCollection);
+        }, 300);
+    }));
+
+    context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(doc => {
+        diagnosticsCollection.delete(doc.uri);
     }));
 
     // =====================================================================
     // 1. AUTO-COMPLETAR GERAL (Assim que digitas qualquer letra)
     // =====================================================================
     const providerAbreviacoes = vscode.languages.registerCompletionItemProvider(
-        { pattern: '**/*.ptg' },
+        'portulong',
         {
             provideCompletionItems(document, position) {
                 const completions = [];
 
-                // Função auxiliar para injetar dicas bonitas
+                // Função auxiliar para injetar dicas bonitas com alta prioridade de exibição
                 const criarSnippet = (label, texto, detalhe, tipo = vscode.CompletionItemKind.Snippet) => {
                     const item = new vscode.CompletionItem(label, tipo);
                     item.insertText = new vscode.SnippetString(texto);
                     item.detail = detalhe;
+                    item.sortText = `00_${label}`;
                     return item;
                 };
 
@@ -257,9 +486,23 @@ function activate(context) {
                     "Recipiente", "ExibicaoTexto", "Secao", "Separador", "Miniatura", "LinhaAcao"
                 ];
 
-                palavrasChave.forEach(p => completions.push(new vscode.CompletionItem(p, vscode.CompletionItemKind.Keyword)));
-                metodosBase.forEach(p => completions.push(new vscode.CompletionItem(p, vscode.CompletionItemKind.Function)));
-                palavrasDiscord.forEach(p => completions.push(new vscode.CompletionItem(p, vscode.CompletionItemKind.Class)));
+                palavrasChave.forEach(p => {
+                    const item = new vscode.CompletionItem(p, vscode.CompletionItemKind.Keyword);
+                    item.sortText = `00_${p}`;
+                    completions.push(item);
+                });
+                
+                metodosBase.forEach(p => {
+                    const item = new vscode.CompletionItem(p, vscode.CompletionItemKind.Function);
+                    item.sortText = `00_${p}`;
+                    completions.push(item);
+                });
+                
+                palavrasDiscord.forEach(p => {
+                    const item = new vscode.CompletionItem(p, vscode.CompletionItemKind.Class);
+                    item.sortText = `00_${p}`;
+                    completions.push(item);
+                });
 
                 return completions;
             }
@@ -271,7 +514,7 @@ function activate(context) {
     // 2. O MENU MÁGICO DOS PONTOS "." (Para ctx, interacao, bot, embed)
     // =====================================================================
     const providerMetodos = vscode.languages.registerCompletionItemProvider(
-        { pattern: '**/*.ptg' },
+        'portulong',
         {
             provideCompletionItems(document, position) {
                 const prefixoLinha = document.lineAt(position).text.substr(0, position.character);
@@ -353,6 +596,78 @@ function activate(context) {
         '.' // O gatilho! O auto-completar inteligente só aciona quando se digita o ponto.
     );
     context.subscriptions.push(providerMetodos);
+
+    // =====================================================================
+    // 3. DETECTOR DE SÍMBOLOS (Classes e Funções para Outline & Breadcrumbs)
+    // =====================================================================
+    const providerSimbolos = vscode.languages.registerDocumentSymbolProvider(
+        'portulong',
+        {
+            provideDocumentSymbols(document) {
+                const symbols = [];
+                const regexFuncao = /^\s*(?:definir\s+(?:assincrono\s+)?|funcao\s+)([a-zA-Z_][a-zA-Z0-9_]*)/;
+                const regexClasse = /^\s*classe\s+([a-zA-Z_][a-zA-Z0-9_]*)/;
+                
+                let currentClassSymbol = null;
+                let classIndent = -1;
+
+                for (let i = 0; i < document.lineCount; i++) {
+                    const line = document.lineAt(i);
+                    if (line.isEmptyOrWhitespace) continue;
+
+                    const text = line.text;
+                    const indent = line.firstNonWhitespaceCharacterIndex;
+
+                    const matchClasse = text.match(regexClasse);
+                    if (matchClasse) {
+                        const name = matchClasse[1];
+                        const range = new vscode.Range(i, 0, i, text.length);
+                        const selectionRange = new vscode.Range(i, text.indexOf(name), i, text.indexOf(name) + name.length);
+                        
+                        const classSymbol = new vscode.DocumentSymbol(
+                            name,
+                            'Classe',
+                            vscode.SymbolKind.Class,
+                            range,
+                            selectionRange
+                        );
+                        
+                        symbols.push(classSymbol);
+                        currentClassSymbol = classSymbol;
+                        classIndent = indent;
+                        continue;
+                    }
+
+                    const matchFuncao = text.match(regexFuncao);
+                    if (matchFuncao) {
+                        const name = matchFuncao[1];
+                        const range = new vscode.Range(i, 0, i, text.length);
+                        const selectionRange = new vscode.Range(i, text.indexOf(name), i, text.indexOf(name) + name.length);
+                        
+                        const funcSymbol = new vscode.DocumentSymbol(
+                            name,
+                            'Função',
+                            vscode.SymbolKind.Function,
+                            range,
+                            selectionRange
+                        );
+
+                        if (currentClassSymbol && indent > classIndent) {
+                            currentClassSymbol.children.push(funcSymbol);
+                        } else {
+                            symbols.push(funcSymbol);
+                            if (indent <= classIndent) {
+                                currentClassSymbol = null;
+                                classIndent = -1;
+                            }
+                        }
+                    }
+                }
+                return symbols;
+            }
+        }
+    );
+    context.subscriptions.push(providerSimbolos);
 
     // =====================================================================
     // O COMANDO PARA LIGAR O BOT NO TERMINAL

@@ -20,5 +20,16 @@
     ["(", ")"],
     ["\"", "\""],
     ["'", "'"]
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "^.*:\\s*(?:#.*)?$"
+  },
+  "onEnterRules": [
+    {
+      "beforeText": "^.*:\\s*(?:#.*)?$",
+      "action": {
+        "indent": "indent"
+      }
+    }
   ]
 }

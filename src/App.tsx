@@ -512,6 +512,180 @@ definir assincrono multiplicar_numeros(ctx, n1: real, n2: real):
   }
 ];
 
+// Helpers de Detecção de Erros e LSP Client-Side
+export interface ScopeInfo {
+  type: "classe" | "metodo" | "funcao";
+  name: string;
+  lineStart: number;
+  lineEnd: number;
+  indent: number;
+  selfVariables: Set<string>;
+  parameters: Set<string>;
+  localVars: Set<string>;
+}
+
+export function getEditDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const matrix: number[][] = Array.from({ length: b.length + 1 }, () => Array(a.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      if (b[j - 1] === a[i - 1]) {
+        matrix[j][i] = matrix[j - 1][i - 1];
+      } else {
+        matrix[j][i] = Math.min(matrix[j - 1][i - 1] + 1, matrix[j][i - 1] + 1, matrix[j - 1][i] + 1);
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+export const ALL_PORTULONG_WORDS = new Set([
+  // Palavras-chave do fluxo e declarações
+  "se", "senao", "senaose", "para", "enquanto", "definir", "funcao", "classe", "importar",
+  "de", "como", "retornar", "tentar", "exceto", "finalmente", "com", "lambda", "passar",
+  "parar", "continuar", "Verdadeiro", "Falso", "Nulo", "e", "ou", "nao", "em", "eh", "nao_eh",
+  "asseverar", "global", "naolocal", "levantar", "produzir", "assincrono", "aguardar",
+  
+  // Funções Embutidas (Built-ins)
+  "escrever", "mostrar", "ler", "tamanho", "inteiro", "texto", "real", "decimal", "boleano",
+  "lista", "dicionario", "conjunto", "tupla", "intervalo", "abrir", "tipo", "somar", "absoluto",
+  "maximo", "minimo", "arredondar", "mapear", "filtrar", "ordenado", "super", "propriedade",
+  "zipar", "enumerar", "objeto", "qualquer", "todos", "ajuda", "identidade", "reversivel",
+  "formatar", "obter_atributo", "definir_atributo", "tem_atributo", "excluir_atributo",
+  "representacao", "proximo", "iterador", "eh_instancia", "eh_subclasse",
+
+  // Erros comuns (Exceptions)
+  "Excessao", "ErroDeValor", "ErroDeTipo", "ErroDeNome", "ErroDeIndice", "ErroDeChave",
+  "ErroDeImportacao", "ErroDeAtributo", "ErroDivisaoPorZero", "FaltaDeMemoria", "ParadaDeIteracao",
+  "ErroDoSistema", "ArquivoNaoEncontrado", "InterrupcaoPeloTeclado", "ErroDeAsseveracao",
+  "ErroDeExecucao", "ErroNaoImplementado",
+
+  // Componentes e Classes do Discord Wrapper
+  "Robo", "Bot", "Embutido", "Botao", "Selecao", "Modal", "ModalPT", "CaixaTexto", "Ficheiro", "Arquivo", "Cor", "ctx", "contexto",
+
+  // Eventos do Discord Wrapper
+  "ao_iniciar", "ao_mensagem", "ao_entrar_membro", "ao_sair_membro", "ao_reacao_adicionada", "ao_reacao_removida",
+
+  // Métodos e Funcionalidades comuns do Discord Wrapper
+  "adicionar_reacao", "remover_reacao", "remover_todas_as_reacoes", "enviar", "responder", "deletar",
+  "limpar", "banir", "expulsar", "castigar", "adicionar_cargo", "remover_cargo", "editar", "mover_para", "executar"
+]);
+
+export function findTypo(word: string, keywordsSet: Set<string>): null | { correct: string; errorType: "casing" | "misspecified" } {
+  if (keywordsSet.has(word)) return null;
+  
+  // Test spelling variations with case insensitivity
+  for (const kw of keywordsSet) {
+    if (kw.toLowerCase() === word.toLowerCase()) {
+      return { correct: kw, errorType: "casing" };
+    }
+  }
+  
+  // Test edit distance only if both word and keyword are >= 4 chars to avoid false positives with variables (e.g. id, me, um, ok)
+  if (word.length >= 4) {
+    for (const kw of keywordsSet) {
+      if (kw.length >= 4 && getEditDistance(kw.toLowerCase(), word.toLowerCase()) <= 1) {
+        return { correct: kw, errorType: "misspecified" };
+      }
+    }
+  }
+  
+  return null;
+}
+
+export function getScopes(code: string): ScopeInfo[] {
+  const scopes: ScopeInfo[] = [];
+  const stack: ScopeInfo[] = [];
+  const lines = code.split("\n");
+
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return;
+    const indent = line.search(/\S/);
+
+    while (stack.length > 0 && stack[stack.length - 1].indent >= indent && indent !== -1) {
+      const popped = stack.pop();
+      if (popped) popped.lineEnd = i;
+    }
+
+    const classMatch = trimmed.match(/^classe\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+    if (classMatch) {
+      const className = classMatch[1];
+      const newScope: ScopeInfo = {
+        type: "classe",
+        name: className,
+        lineStart: i,
+        lineEnd: lines.length,
+        indent,
+        selfVariables: new Set<string>(),
+        parameters: new Set<string>(),
+        localVars: new Set<string>()
+      };
+      scopes.push(newScope);
+      stack.push(newScope);
+      return;
+    }
+
+    const fnMatch = trimmed.match(/^(?:definir|funcao)\s+(?:assincrono\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)/);
+    if (fnMatch) {
+      const fnName = fnMatch[1];
+      const paramsRaw = fnMatch[2].split(",");
+      const paramsSet = new Set<string>();
+      paramsRaw.forEach(p => {
+        const pNome = p.trim().split(/\s*:/)[0].split(/\s*=/)[0].trim();
+        if (pNome && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(pNome)) {
+          paramsSet.add(pNome);
+        }
+      });
+
+      const parent = stack.find(s => s.type === "classe");
+
+      const newScope: ScopeInfo = {
+        type: parent ? "metodo" : "funcao",
+        name: fnName,
+        lineStart: i,
+        lineEnd: lines.length,
+        indent,
+        selfVariables: parent ? parent.selfVariables : new Set<string>(),
+        parameters: paramsSet,
+        localVars: new Set<string>()
+      };
+      scopes.push(newScope);
+      stack.push(newScope);
+      return;
+    }
+
+    const currentScope = stack[stack.length - 1];
+    if (currentScope) {
+      const selfAssignMatch = trimmed.match(/(?:self|eu)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*=/);
+      if (selfAssignMatch) {
+        currentScope.selfVariables.add(selfAssignMatch[1].trim());
+      }
+
+      const assignMatch = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\s*=/);
+      if (assignMatch) {
+        const vars = assignMatch[1].split(",");
+        vars.forEach(v => {
+          const vTrim = v.trim();
+          if (vTrim !== "self" && vTrim !== "eu") {
+            currentScope.localVars.add(vTrim);
+          }
+        });
+      }
+    }
+  });
+
+  while (stack.length > 0) {
+    const popped = stack.pop();
+    if (popped) popped.lineEnd = lines.length;
+  }
+
+  return scopes;
+}
+
 // Função de realce de sintaxe robusta para Portulong (.ptg) com Linter e Validação integrada em tempo real
 function highlightPortulong(rawCode: string): React.ReactNode[] {
   const regex = /(\s+)|(#.*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')|(\b[a-zA-Z_0-9ñáéíóúçãõâêîôûüãõàèìòù_]+\b)|([()[\]{}!@#$%^&*+\-=|\\:;<>,.?/]+)/g;
@@ -593,7 +767,7 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
 
   // Lista estática de exclusão / fallback para evitar falsos positivos
   const CORE_ALLOWED = new Set([
-    "self", "CTX", "ctx", "contexto", "bot", "client", "args", "kwargs", "ptg", "canal_id", "token", "mensagem",
+    "self", "eu", "CTX", "ctx", "contexto", "bot", "client", "args", "kwargs", "ptg", "canal_id", "token", "mensagem",
     "os", "sys", "re", "json", "math", "random", "time", "datetime", "asyncio", "discord", "commands",
     "__init__", "__name__", "__main__", "append", "remove", "pop", "split", "join", "strip", "lower", "upper",
     "replace", "keys", "values", "items", "get", "update", "exec", "len",
@@ -604,6 +778,7 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
 
   // Coleção dinâmica para guardar declarações locais do usuário
   const LOCAL_DECLS = new Set<string>();
+  const parsedScopes = getScopes(rawCode);
 
   try {
     // 1. Extração dinâmica de nomes de funções/definições locais (suporta assincrono)
@@ -691,6 +866,8 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
     } else if (str) {
       elements.push(<span key={key++} className="text-amber-300 font-mono">{str}</span>);
     } else if (word) {
+      const currentLineIndex = rawCode.substring(0, match.index).split("\n").length - 1;
+
       if (KEYWORDS.has(word)) {
         elements.push(<span key={key++} className="text-pink-400 font-bold font-mono">{word}</span>);
       } else if (PYTHON_ERRORS.has(word)) {
@@ -713,7 +890,16 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
       } else if (rawCode[match.index + word.length] === '(') {
         elements.push(<span key={key++} className="text-emerald-400 font-mono font-medium">{word}</span>);
       } else {
-        // Ramo else: Palavra identificadora genérica. Rodar linter para verificar se é válida
+        // Detect exact active block scope for context awareness
+        let activeScope: ScopeInfo | null = null;
+        for (const s of parsedScopes) {
+          if (currentLineIndex >= s.lineStart && currentLineIndex <= s.lineEnd) {
+            if (!activeScope || s.indent > activeScope.indent) {
+              activeScope = s;
+            }
+          }
+        }
+
         const isAttribute = (() => {
           let idx = match.index - 1;
           while (idx >= 0 && /\s/.test(rawCode[idx])) {
@@ -738,10 +924,39 @@ function highlightPortulong(rawCode: string): React.ReactNode[] {
           return idx < rawCode.length && rawCode[idx] === '=' && (idx + 1 >= rawCode.length || rawCode[idx + 1] !== '=');
         })();
 
-        // Se for uma palavra maior que 1 letra, que não é atributo/objeto, não é argumento e não é declarada no escopo, aponta erro de sintaxe
-        const isInvalid = word.length > 1 && !isAttribute && !isDecorator && !isKeywordArgument && !CORE_ALLOWED.has(word) && !LOCAL_DECLS.has(word);
+        // Check if there is an approximate typo for capitalization or wrong spelling in a keyword
+        const typoMatch = findTypo(word, ALL_PORTULONG_WORDS);
 
-        if (isInvalid) {
+        // Validity rules in general space or defined block scope
+        const isLocalValid = LOCAL_DECLS.has(word) || 
+                             (activeScope && (activeScope.parameters.has(word) || activeScope.localVars.has(word) || activeScope.selfVariables.has(word)));
+        
+        const isSelfOrCtxKeyword = word === "self" || word === "eu" || word === "ctx" || word === "contexto";
+
+        if (typoMatch) {
+          elements.push(
+            <span 
+              key={key++} 
+              title={typoMatch.errorType === "casing"
+                ? `Erro de Capitalização: Escreva '${typoMatch.correct}' (letras corretas) em vez de '${word}'.`
+                : `Erro de Digitação: Você quis dizer '${typoMatch.correct}' em vez de '${word}'?`} 
+              className="text-yellow-400 border-b-2 border-yellow-500 bg-yellow-950/20 font-bold font-mono px-0.5 rounded cursor-help"
+            >
+              {word}
+            </span>
+          );
+        } else if (isSelfOrCtxKeyword && (!activeScope || (activeScope.type !== "metodo" && word === "self"))) {
+          // If self/eu is accessed outside a method, point out as illegal
+          elements.push(
+            <span 
+              key={key++} 
+              title={`O termo '${word}' só de ser declarado e utilizado no escopo interno dos blocos.`} 
+              className="text-red-400 border-b-2 border-red-500 bg-red-950/30 font-bold font-mono px-0.5 rounded cursor-help"
+            >
+              {word}
+            </span>
+          );
+        } else if (word.length > 1 && !isAttribute && !isDecorator && !isKeywordArgument && !CORE_ALLOWED.has(word) && !isLocalValid) {
           elements.push(
             <span 
               key={key++} 
@@ -1062,6 +1277,8 @@ export default function App() {
   const [installTab, setInstallTab] = useState<"auto" | "vscode" | "pip" | "files">("auto");
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const [copiedKeyword, setCopiedKeyword] = useState<string | null>(null);
+  const [showCheckmate, setShowCheckmate] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<"cli" | "simulation" | "tutor">("simulation");
 
   // Estados de Abreviatura e Auto-completar inteligente
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -1257,6 +1474,19 @@ async def greet(ctx):
       cleanLine = cleanLine.replace(/'([^'\\]|\\.)*'/g, "");
       cleanLine = cleanLine.replace(/#.*/, "");
 
+      // Validação de Erros Ortográficos e Capitalização em Palavras-chave, Classes e Funções
+      const lineWords = cleanLine.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) || [];
+      lineWords.forEach(w => {
+        const typo = findTypo(w, ALL_PORTULONG_WORDS);
+        if (typo) {
+          if (typo.errorType === "casing") {
+            errors.push(`Erro de Capitalização (Linha ${lineNum}): Utilize '${typo.correct}' em vez de '${w}'.`);
+          } else {
+            errors.push(`Erro Ortográfico / Typo (Linha ${lineNum}): A palavra '${w}' foi identificada incorreta. Quis dizer '${typo.correct}'?`);
+          }
+        }
+      });
+
       const blockKeywords = ["se", "senaose", "senao", "para", "enquanto", "definir", "funcao", "classe", "tentar", "exceto"];
       const firstWordMatch = cleanLine.trim().match(/^([a-zA-Z0-9_\/à-ú]+)/);
       if (firstWordMatch) {
@@ -1446,6 +1676,89 @@ async def greet(ctx):
     }, 50);
   };
 
+  // Dynamic resolver of autocomplete list
+  const getAutocompleteList = (value: string) => {
+    const localDecls = new Set<string>();
+    
+    // Functions
+    const fnRegex = /\b(?:funcao|definir)\s+(?:assincrono\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/g;
+    let localMatch;
+    while ((localMatch = fnRegex.exec(value)) !== null) {
+      localDecls.add(localMatch[1]);
+    }
+    // Classes
+    const clRegex = /\bclasse\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+    while ((localMatch = clRegex.exec(value)) !== null) {
+      localDecls.add(localMatch[1]);
+    }
+    // Assignments
+    const assignRegex = /^[ \t]*([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\s*=/gm;
+    while ((localMatch = assignRegex.exec(value)) !== null) {
+      localMatch[1].split(",").forEach(v => {
+        const tr = v.trim();
+        if (tr && tr !== "self" && tr !== "eu") {
+          localDecls.add(tr);
+        }
+      });
+    }
+
+    const localItems = Array.from(localDecls).map(d => ({
+      key: d,
+      displayName: d,
+      snippet: d,
+      description: "Entidade ou variável declarada localmente"
+    }));
+
+    return {
+      locals: localItems,
+      snippets: PORTULONG_SNIPPETS,
+      properties: CONTEXT_PROPERTIES
+    };
+  };
+
+  const filterAutocomplete = (value: string, caretPos: number) => {
+    const textBeforeCaret = value.slice(0, caretPos);
+    
+    // Auto-dot or context-property mapping (ctx. , interacao. , etc)
+    const matchPonto = textBeforeCaret.match(/(?:ctx|ctx|contexto|interacao|bot|cliente|embed)\.([\w_]*)$/i);
+    const matchGeneral = textBeforeCaret.match(/[\w_@]+$/);
+
+    const lists = getAutocompleteList(value);
+
+    if (matchPonto) {
+      const typedWord = matchPonto[1].toLowerCase();
+      const filtered = lists.properties.filter(item =>
+        item.key.toLowerCase().startsWith(typedWord) || item.displayName.toLowerCase().includes(typedWord)
+      );
+      return {
+        activeWord: typedWord,
+        suggestions: filtered,
+        show: filtered.length > 0
+      };
+    } else if (matchGeneral) {
+      const typedWord = matchGeneral[0].toLowerCase();
+      const matchedSnippets = lists.snippets.filter(item => 
+        item.key.toLowerCase().startsWith(typedWord) || item.displayName.toLowerCase().includes(typedWord)
+      );
+      const matchedLocals = lists.locals.filter(item => 
+        item.key.toLowerCase().startsWith(typedWord) || item.displayName.toLowerCase().includes(typedWord)
+      );
+      const allSuggestions = [...matchedSnippets, ...matchedLocals];
+
+      return {
+        activeWord: typedWord,
+        suggestions: allSuggestions,
+        show: allSuggestions.length > 0 && typedWord.length >= 1
+      };
+    }
+
+    return {
+      activeWord: "",
+      suggestions: [],
+      show: false
+    };
+  };
+
   // Monitora alterações de texto para habilitar/filtrar sugestões
   const handleEditorChange = (value: string) => {
     setCode(value);
@@ -1456,46 +1769,11 @@ async def greet(ctx):
     // Aguarda um ciclo de render para obter a posição real do selectionStart
     setTimeout(() => {
       const start = textarea.selectionStart;
-      const textBeforeCaret = value.slice(0, start);
-      const match = textBeforeCaret.match(/[\w_@]+$/);
-      const matchPonto = textBeforeCaret.match(/(?:ctx|ctx|contexto)\.([\w_]*)$/i);
-
-      if (matchPonto) {
-        const word = matchPonto[1].toLowerCase();
-        setActiveWord(word);
-
-        // Filtra propriedades do contexto (CTX / ctx / contexto)
-        const filtered = CONTEXT_PROPERTIES.filter(item =>
-          item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
-        );
-
-        if (filtered.length > 0) {
-          setSuggestions(filtered);
-          setShowSuggestions(true);
-          setSelectedIndex(0);
-        } else {
-          setShowSuggestions(false);
-        }
-      } else if (match) {
-        const word = match[0].toLowerCase();
-        setActiveWord(word);
-
-        // Filtra os templates que começam com a abreviação digitada
-        const filtered = PORTULONG_SNIPPETS.filter(item =>
-          item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
-        );
-
-        if (filtered.length > 0 && word.length >= 1) {
-          setSuggestions(filtered);
-          setShowSuggestions(true);
-          setSelectedIndex(0);
-        } else {
-          setShowSuggestions(false);
-        }
-      } else {
-        setShowSuggestions(false);
-        setActiveWord("");
-      }
+      const res = filterAutocomplete(value, start);
+      setActiveWord(res.activeWord);
+      setSuggestions(res.suggestions);
+      setShowSuggestions(res.show);
+      setSelectedIndex(0);
     }, 0);
   };
 
@@ -1504,42 +1782,11 @@ async def greet(ctx):
     const textarea = e.currentTarget;
     const start = textarea.selectionStart;
     const value = textarea.value;
-    const textBeforeCaret = value.slice(0, start);
-    const match = textBeforeCaret.match(/[\w_@]+$/);
-    const matchPonto = textBeforeCaret.match(/(?:ctx|ctx|contexto)\.([\w_]*)$/i);
+    const res = filterAutocomplete(value, start);
 
-    if (matchPonto) {
-      const word = matchPonto[1].toLowerCase();
-      setActiveWord(word);
-
-      // Filtra propriedades do contexto (CTX / ctx / contexto)
-      const filtered = CONTEXT_PROPERTIES.filter(item =>
-        item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
-      );
-
-      if (filtered.length > 0) {
-        setSuggestions(filtered);
-        setShowSuggestions(true);
-      } else {
-        setShowSuggestions(false);
-      }
-    } else if (match) {
-      const word = match[0].toLowerCase();
-      setActiveWord(word);
-      const filtered = PORTULONG_SNIPPETS.filter(item =>
-        item.key.startsWith(word) || item.displayName.toLowerCase().includes(word)
-      );
-
-      if (filtered.length > 0 && word.length >= 1) {
-        setSuggestions(filtered);
-        setShowSuggestions(true);
-      } else {
-        setShowSuggestions(false);
-      }
-    } else {
-      setShowSuggestions(false);
-      setActiveWord("");
-    }
+    setActiveWord(res.activeWord);
+    setSuggestions(res.suggestions);
+    setShowSuggestions(res.show);
   };
 
   // Tratamento de teclas especiais (Escape, ArrowUp, ArrowDown, Tab e Enter)
@@ -1825,6 +2072,15 @@ async def greet(ctx):
     const textMsg = chatMessageInput.trim();
     setChatMessageInput("");
 
+    const isCheckmateString = (str: string) => {
+      const lower = str.toLowerCase();
+      return lower.includes("checkmate") || lower.includes("mate") || lower.includes("xeque") || lower.includes("vitoria") || lower.includes("vitória") || lower.includes("check-mate") || lower.includes("xeque-mate");
+    };
+
+    if (isCheckmateString(textMsg)) {
+      setShowCheckmate(true);
+    }
+
     const userMessage: ChatMessage = {
       id: Math.random().toString(),
       sender: "user",
@@ -1844,10 +2100,15 @@ async def greet(ctx):
       });
       const data = await res.json();
       
+      const replyText = data.reply || "Desculpe, tive um problema ao responder.";
+      if (isCheckmateString(replyText)) {
+        setShowCheckmate(true);
+      }
+
       const aiReply: ChatMessage = {
         id: Math.random().toString(),
         sender: "ai",
-        content: data.reply || "Desculpe, tive um problema ao responder.",
+        content: replyText,
         timestamp: new Date().toLocaleTimeString().slice(0, 5)
       };
       setChatHistory(prev => [...prev, aiReply]);
@@ -1891,7 +2152,7 @@ async def greet(ctx):
 
 setup(
     name="portulong.ptg",
-    version="1.0.1",
+    version="1.0.72",
     author="Silvio & Portulong Community",
     author_email="silviok5000@gmail.com",
     description="Uma linguagem de programacao em portugues para criar facil bots do Discord baseada em Python.",
@@ -1921,7 +2182,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "portulong.ptg"
-version = "1.0.1"
+version = "1.0.72"
 description = "Linguagem de programacao em portugues baseada em Python para bots do Discord."
 readme = "README.md"
 authors = [{ name = "Silvio", email = "silviok5000@gmail.com" }]
@@ -1959,7 +2220,7 @@ portulong instalar
 ---
 
 #### 🔹 Atualizar o Compilador (Upgrade)
-Caso já tenhas a linguagem e queiras atualizar para a versão mais recente (v1.0.71):
+Caso já tenhas a linguagem e queiras atualizar para a versão mais recente (v1.0.72):
 \`\`\`bash
 pip install --upgrade portulong.ptg
 \`\`\`
@@ -3009,7 +3270,7 @@ package_json = {
   "name": "portulong-vscode",
   "displayName": "Portulong support",
   "description": "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
-  "version": "1.0.71",
+  "version": "1.0.72",
   "publisher": "silvio-blip",
   "icon": "portulong.png",
   "homepage": "${currentOrigin}/",
@@ -3944,7 +4205,7 @@ if __name__ == "__main__":
       name: "portulong-vscode",
       displayName: "Portulong support",
       description: "Suporte de sintaxe e execução no terminal para a linguagem Portulong (.ptg)",
-      version: "1.0.71",
+      version: "1.0.72",
       publisher: "silvio-blip",
       icon: "portulong.png",
       homepage: currentOrigin + "/",
@@ -4165,7 +4426,7 @@ module.exports = {
                 PORTU<span className="text-emerald-500 font-mono">LONG</span>
               </h1>
               <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-mono">
-                v1.0.71
+                v1.0.72
               </span>
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -4220,7 +4481,7 @@ module.exports = {
             </span>
             <div>
               <h2 className="text-sm font-bold text-slate-100">Crie bots profissionais do Discord escrevendo código em português!</h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 mt-1 font-sans">
                 Utilize estruturas normais adaptadas do Python como <code className="text-emerald-400 bg-slate-800/60 px-1 py-0.5 rounded font-mono font-medium">se</code>, <code className="text-emerald-400 bg-slate-800/60 px-1 py-0.5 rounded font-mono font-medium">definir assincrono</code> e <code className="text-emerald-400 bg-slate-800/60 px-1 py-0.5 rounded font-mono font-medium">escrever()</code>.
               </p>
             </div>
@@ -4228,7 +4489,7 @@ module.exports = {
           <button 
             id="download-master-btn"
             onClick={handleDownloadDistribution}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-slate-950 text-xs font-black font-mono rounded-lg transition-all flex items-center justify-center gap-2"
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-slate-950 text-xs font-black font-mono rounded-lg transition-all flex items-center justify-center gap-2 select-none cursor-pointer"
           >
             <Download size={14} />
             BAIXAR .ZIP DO COMPILADOR
@@ -4237,25 +4498,25 @@ module.exports = {
 
         {/* 💻 TAB CONTENT: IDE & PORTULONG ENVIRONMENT GUIDE */}
         {activeTab === "ide" && (
-          <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full max-w-7xl mx-auto">
             
-            {/* LEFT AREA: Editor & Selector */}
-            <div className="hidden">
+            {/* LEFT AREA: Editor & Selector (lg:col-span-12 on small, 7 on desktop) */}
+            <div className="lg:col-span-7 flex flex-col gap-6">
               
               {/* Presets Toggle Header */}
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
                 <div className="text-slate-200">
                   <h3 className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest">Modelos Disponíveis</h3>
-                  <p className="text-[11px] text-slate-500">Escolha um ponto de partida rápido em Portulong</p>
+                  <p className="text-[11px] text-slate-500 font-sans">Escolha um ponto de partida rápido em Portulong</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {TEMPLATES.map((tmpl) => (
                     <button
                       key={tmpl.id}
                       onClick={() => selectPreset(tmpl.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-sans transition-all cursor-pointer ${
                         activePreset === tmpl.id
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold"
                           : "bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800"
                       }`}
                     >
@@ -4267,9 +4528,9 @@ module.exports = {
 
               {/* Code Editor Frame */}
               <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-xl">
-                <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+                <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between flex-wrap gap-2 select-none">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                     <div className="flex items-center gap-1.5 ml-2">
@@ -4294,18 +4555,26 @@ module.exports = {
                       {ideLayout === "compact" ? <Maximize2 size={11} /> : <Minimize2 size={11} />}
                       {ideLayout === "compact" ? "Expandir IDE" : "Compactar IDE"}
                     </button>
+                    
+                    <button
+                      id="run-test-main-btn"
+                      onClick={handleCompileAndTest}
+                      className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-slate-950 text-xs font-black font-mono rounded flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Play size={11} fill="currentColor" />
+                      Testar Transpilação
+                    </button>
 
                     <button
-                      id="reset-code-btn"
+                      id="reload-template-btn"
                       onClick={() => {
                         const original = TEMPLATES.find(t => t.id === activePreset);
                         if (original) setCode(original.code);
                       }}
-                      title="Resetar arquivo ao padrão"
-                      className="p-1 px-2.5 text-[11px] text-slate-400 hover:text-rose-400 hover:bg-rose-500/5 hover:border-rose-500/20 border border-slate-800 rounded flex items-center gap-1 transition-all cursor-pointer font-mono"
+                      className="p-1.5 hover:bg-slate-800 hover:text-slate-200 text-slate-500 rounded transition-all cursor-pointer"
+                      title="Reiniciar Template"
                     >
                       <RotateCcw size={11} />
-                      Carregar Padrão
                     </button>
                   </div>
                 </div>
@@ -4315,7 +4584,7 @@ module.exports = {
                   {/* Fake Row line counters gutter */}
                   <div
                     ref={gutterRef}
-                    className="bg-slate-950/60 p-4 text-right select-none text-slate-600 font-mono text-xs w-12 border-r border-slate-800/50 overflow-hidden flex flex-col py-4"
+                    className="bg-slate-950/60 p-4 text-right select-none text-slate-600 font-mono text-[11px] w-12 border-r border-slate-800/50 overflow-hidden flex flex-col py-4"
                     style={{ height: "100%", maxHeight: "500px" }}
                   >
                     <div className="flex flex-col gap-[3px]">
@@ -4326,7 +4595,7 @@ module.exports = {
                   </div>
 
                   {/* Real-time colorized interactive code canvas */}
-                  <div className="flex-1 relative min-h-[380px] overflow-hidden">
+                  <div className="flex-1 relative min-h-[420px] overflow-hidden">
                     {/* Rendered Colored Text (Underlay) */}
                     <pre
                       ref={preRef}
@@ -4362,11 +4631,11 @@ module.exports = {
                       <div className="absolute bottom-4 right-4 z-50 max-w-sm w-80 bg-slate-950/95 border border-emerald-500/30 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden animate-fade-in divide-y divide-slate-800/60 flex flex-col font-mono text-[11px]">
                         {/* Header bar */}
                         <div className="bg-emerald-950/40 px-3 py-1.5 flex items-center justify-between text-[10px] text-emerald-400 font-bold tracking-wide uppercase border-b border-emerald-500/10">
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 font-sans font-bold">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                             Auto-completar Inteligente ({suggestions.length})
                           </span>
-                          <span className="text-slate-500 lowercase font-medium text-[9px]">
+                          <span className="text-slate-500 lowercase font-medium text-[9px] font-sans">
                             [setas] navegar • [tab / enter] aplicar
                           </span>
                         </div>
@@ -4384,10 +4653,10 @@ module.exports = {
                               }`}
                             >
                               <div className="flex items-center justify-between font-bold">
-                                <span className={index === selectedIndex ? "text-emerald-300" : "text-sky-300"}>
+                                <span className={index === selectedIndex ? "text-emerald-300 font-bold font-sans" : "text-sky-300 font-bold font-sans"}>
                                   {item.displayName}
                                 </span>
-                                <span className="bg-slate-900 border border-slate-800 text-slate-500 text-[9px] px-1 rounded font-normal uppercase">
+                                <span className="bg-slate-900 border border-slate-800 text-slate-500 text-[9px] px-1 rounded font-normal uppercase font-mono">
                                   {item.key}
                                 </span>
                               </div>
@@ -4403,328 +4672,539 @@ module.exports = {
                 </div>
 
                 {pythonWarnings.length > 0 && (
-                  <div className="bg-amber-500/10 border-t border-amber-500/20 px-4 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-amber-300 font-mono gap-2 animate-fade-in">
+                  <div className="bg-amber-500/10 border-t border-amber-500/20 px-4 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-amber-300 font-mono gap-2 animate-fade-in animate-pulse">
                     <div className="flex items-center gap-2">
                       <AlertTriangle size={14} className="text-amber-400 shrink-0" />
-                      <span>
-                        <strong>{pythonWarnings.length} termo(s) em Python detectado(s):</strong>{" "}
-                        {pythonWarnings.map(w => `'${w.py}' (linha ${w.lines.join(", ")})`).join(", ")}. Esqueceu de traduzir?
-                      </span>
+                      <span>Convertendo automaticamente recursos herdados do Python em tempo real!</span>
                     </div>
                     <button
-                      id="autoconvert-python-btn"
                       onClick={() => {
-                        try {
-                          const corrected = localTranslatePythonToPortulong(code);
-                          setCode(corrected);
-                          addTerminalLog("success", "✨ [AUTOCORRETOR] Termos Python detectados foram traduzidos para Portulong com sucesso!");
-                        } catch (e: any) {
-                          addTerminalLog("error", `❌ Falha ao aplicar autocorreção: ${e.message}`);
-                        }
+                        const corrected = localTranslatePythonToPortulong(code);
+                        setCode(corrected);
+                        setPythonWarnings([]);
+                        addTerminalLog("success", "✨ Código corrigido e transpilado de Python legon para Portulong nativo!");
                       }}
-                      className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold rounded flex items-center gap-1 transition-all text-[11px] cursor-pointer shadow border border-amber-400/20 shrink-0"
+                      className="px-2 py-1 bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 rounded font-bold uppercase text-[10px] tracking-wide transition-all"
                     >
-                      <Sparkles size={11} className="fill-current" /> Auto-corrigir todos
+                      Auto-Corrigir Agora
                     </button>
                   </div>
                 )}
-
-                <div className="bg-slate-950/90 px-4 py-3 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-mono">
-                  <div className="flex items-center gap-4">
-                    <span>Portulong - Baseado em Python</span>
-                    <span className="text-slate-700">|</span>
-                    <span>Linhas: {code.split("\n").length}</span>
-                    <span className="text-slate-700">|</span>
-                    <div className="flex items-center gap-1.5 font-sans font-semibold">
-                      <span className={`w-2 h-2 rounded-full ${compilationStatus === "success" ? "bg-emerald-500 animate-pulse" : compilationStatus === "warning" ? "bg-yellow-500" : "bg-red-500"}`} />
-                      <span className="text-[10px] text-slate-300">
-                        Sintaxe: {compilationStatus === "success" ? "OK • Sem Erros" : compilationStatus === "warning" ? "Avisos Detectados" : "Erro de Sintaxe"}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    id="trigger-compile-test-btn"
-                    onClick={handleCompileAndTest}
-                    className="px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 rounded-md hover:text-emerald-300 flex items-center gap-1 transition-all text-[11px] font-black font-mono shadow-sm"
-                  >
-                    <Play size={10} className="fill-current text-emerald-400" />
-                    TESTAR COMPILAÇÃO
-                  </button>
-                </div>
               </div>
-
             </div>
 
-            {/* RIGHT AREA: Guia de Instalação e Configuração de Ambiente Portulong 🐉 */}
-            <div className="flex flex-col gap-6 w-full">
+            {/* RIGHT AREA: Interactive Sidebar Hub (lg:col-span-5) */}
+            <div className="lg:col-span-5 flex flex-col gap-4">
               
-              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl flex flex-col">
-                {/* Header do Guia */}
-                <div className="bg-slate-950/50 px-5 py-4 border-b border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
-                      <Laptop size={16} />
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-200 uppercase tracking-widest font-mono">Guia de Instalação</span>
-                      <span className="text-[10px] text-slate-400 mt-0.5">Configure seu computador para rodar Portulong nativamente</span>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl flex flex-col min-h-[580px]">
+                
+                {/* Hub Header Tab Selector */}
+                <div className="bg-slate-950 p-2 flex border-b border-slate-800/80 gap-1 select-none">
+                  <button
+                    onClick={() => setSidebarTab("simulation")}
+                    className={`flex-1 text-center py-2 px-1 text-[11px] font-bold font-mono rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                      sidebarTab === "simulation"
+                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm font-bold"
+                        : "text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 border border-transparent"
+                    }`}
+                  >
+                    💬 Simulador Bot
+                  </button>
+                  <button
+                    onClick={() => setSidebarTab("tutor")}
+                    className={`flex-1 text-center py-2 px-1 text-[11px] font-bold font-mono rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                      sidebarTab === "tutor"
+                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm font-bold"
+                        : "text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 border border-transparent"
+                    }`}
+                  >
+                    🧙 Tutor & LSP
+                  </button>
+                  <button
+                    onClick={() => setSidebarTab("cli")}
+                    className={`flex-1 text-center py-2 px-1 text-[11px] font-bold font-mono rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                      sidebarTab === "cli"
+                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm font-bold"
+                        : "text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 border border-transparent"
+                    }`}
+                  >
+                    🐉 Guia CLI
+                  </button>
+                </div>
+
+                {/* Sub Tab Panel: SIMULATION */}
+                {sidebarTab === "simulation" && (
+                  <div className="p-4 flex flex-col gap-4 flex-1">
+                    <div className="text-slate-200 select-none">
+                      <span className="text-[10px] font-bold font-mono text-emerald-400 uppercase tracking-widest leading-none">Ambiente de Testes Virtual</span>
+                      <h3 className="text-xs font-bold text-slate-100 mt-0.5 font-sans">Simulador de Conversação integrada com Discord</h3>
                     </div>
-                  </div>
-                </div>
 
-                {/* Abas do Menu de Instalação */}
-                <div className="bg-slate-950/20 border-b border-slate-800/50 p-2 flex flex-wrap gap-1">
-                  <button
-                    onClick={() => setInstallTab("auto")}
-                    className={`flex-1 min-w-[80px] text-center py-2 px-1 text-[11px] font-bold font-mono rounded-lg transition-all cursor-pointer ${
-                      installTab === "auto"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm"
-                        : "text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 border border-transparent"
-                    }`}
-                  >
-                    📦 Automático
-                  </button>
-                  <button
-                    onClick={() => setInstallTab("vscode")}
-                    className={`flex-1 min-w-[80px] text-center py-2 px-1 text-[11px] font-bold font-mono rounded-lg transition-all cursor-pointer ${
-                      installTab === "vscode"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm"
-                        : "text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 border border-transparent"
-                    }`}
-                  >
-                    🎨 VS Code (Cores)
-                  </button>
-                  <button
-                    onClick={() => setInstallTab("pip")}
-                    className={`flex-1 min-w-[80px] text-center py-2 px-1 text-[11px] font-bold font-mono rounded-lg transition-all cursor-pointer ${
-                      installTab === "pip"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm"
-                        : "text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 border border-transparent"
-                    }`}
-                  >
-                    🧱 Via Pip (Manual)
-                  </button>
-                  <button
-                    onClick={() => setInstallTab("files")}
-                    className={`flex-1 min-w-[80px] text-center py-2 px-1 text-[11px] font-bold font-mono rounded-lg transition-all cursor-pointer ${
-                      installTab === "files"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm"
-                        : "text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 border border-transparent"
-                    }`}
-                  >
-                    📂 Descarregar
-                  </button>
-                </div>
+                    {/* Simulated Discord Channel Frame */}
+                    <div className="bg-[#313338] rounded-xl overflow-hidden border border-[#232428] flex flex-col h-[280px]">
+                      {/* channel header */}
+                      <div className="bg-[#313338] px-4 py-2.5 flex items-center justify-between border-b border-[#202225]/50 select-none">
+                        <div className="flex items-center gap-2 text-slate-200">
+                          <Hash size={14} className="text-slate-400" />
+                          <span className="text-xs font-bold font-sans"># {simulatedChannel}</span>
+                        </div>
+                        {/* select box for channel */}
+                        <select 
+                          value={simulatedChannel} 
+                          onChange={(e) => setSimulatedChannel(e.target.value)}
+                          className="bg-[#1e1f22] border border-[#2b2d31] text-slate-300 text-[10px] rounded px-2 py-0.5 outline-none font-mono cursor-pointer"
+                        >
+                          <option value="geral"># geral</option>
+                          <option value="ajuda"># ajuda</option>
+                          <option value="comandos"># comandos</option>
+                        </select>
+                      </div>
 
-                {/* Conteúdo das Abas com Animação */}
-                <div className="p-5 flex-1 flex flex-col gap-4 bg-slate-950/10 text-slate-300 text-xs leading-relaxed">
-                  <AnimatePresence mode="wait">
-                    {installTab === "auto" && (
-                      <motion.div
-                        key="auto"
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        transition={{ duration: 0.15 }}
-                        className="flex flex-col gap-4 font-sans"
+                      {/* messages output */}
+                      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 select-text max-h-[300px]">
+                        {discordMessages.map((msg) => (
+                          <div key={msg.id} className="flex gap-3 hover:bg-[#2e3035]/30 p-1 -mx-2 rounded transition-all">
+                            <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${msg.avatarColor} text-slate-100 flex items-center justify-center font-bold text-xs uppercase shrink-0`}>
+                              {msg.sender.substring(0, 2)}
+                            </div>
+                            <div className="flex flex-col gap-0.5 leading-tight">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-bold font-sans text-slate-100">{msg.sender}</span>
+                                {msg.isBot && <span className="bg-[#5865f2] text-white text-[8px] font-black uppercase px-1 py-0.5 rounded tracking-wide leading-none font-sans">BOT</span>}
+                                <span className="text-[9px] text-slate-400 font-mono">{msg.timestamp}</span>
+                              </div>
+                              <p className="text-xs text-slate-200 font-sans break-all">{msg.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* message submit form */}
+                      <form 
+                        onSubmit={(e) => { e.preventDefault(); simulateBotResponse(); }}
+                        className="p-3 bg-[#383a40]/30 border-t border-[#202225]/50 flex gap-2"
                       >
-                        <p>
-                          A partir da <strong>versão 1.0.71</strong>, obter o ecossistema completo do Portulong ficou extremamente rápido e integrado. Eliminamos comandos complexos estilo <code className="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded font-mono font-medium">curl</code> externos! Siga estes dois passos simples:
-                        </p>
-                        
-                        <div className="flex flex-col gap-3">
-                          {/* Passo 1 - pip */}
-                          <div className="flex flex-col gap-1.5">
-                            <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-widest">🔹 Passo 1: Instale o compilador núcleo (via PIP)</span>
-                            <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-slate-300 relative group flex items-center justify-between gap-3 text-[11px]">
-                              <span className="select-all break-all">pip install portulong.ptg</span>
+                        <input 
+                          type="text" 
+                          placeholder="Envie uma mensagem fictícia... Ex: !ping" 
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          className="flex-1 bg-[#383a40] text-slate-200 text-xs px-3 py-2 rounded-lg outline-none placeholder-slate-400 focus:bg-[#404249]"
+                        />
+                        <button 
+                          type="submit" 
+                          disabled={isSimulatingResponse}
+                          className="bg-[#5865f2] hover:bg-[#4752c4] text-white font-sans text-xs px-3 py-2 rounded-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1.5 shrink-0 select-none cursor-pointer font-bold"
+                        >
+                          <Send size={12} /><span>Enviar</span>
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Integrated Transpiler Logs console */}
+                    <div className="bg-slate-950 rounded-xl p-3.5 border border-slate-800 border-l-2 border-l-emerald-500/60 font-mono text-[10px] text-slate-300 flex flex-col gap-1.5 shadow-md flex-1">
+                      <div className="flex items-center justify-between border-b border-slate-900 pb-1.5 select-none font-sans">
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1">
+                          <Terminal size={10} /> Terminal de Compilação & Transpilação PTG
+                        </span>
+                        <button 
+                          onClick={() => setSimulatorLogs([])}
+                          title="Limpar Console"
+                          className="text-slate-600 hover:text-slate-400 text-[10px] hover:underline font-sans"
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                      <div className="max-h-28 overflow-y-auto flex flex-col gap-1 pr-1 font-mono">
+                        {simulatorLogs.map((log) => (
+                          <div key={log.id} className="flex gap-2 text-[10px] leading-relaxed">
+                            <span className="text-slate-600 shrink-0">{log.time}</span>
+                            <span className={`shrink-0 uppercase font-black px-1 rounded-[3px] text-[8px] leading-normal ${log.type === "success" ? "bg-emerald-950 text-emerald-400 border border-emerald-500/20" : log.type === "error" ? "bg-red-950 text-red-400 border border-red-500/20" : log.type === "warning" ? "bg-yellow-950 text-yellow-500 border border-yellow-500/20" : "bg-slate-900 text-slate-400"}`}>
+                              {log.type}
+                            </span>
+                            <span className="text-slate-300 font-mono">{log.message}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* Sub Tab Panel: TUTOR & CLIENT-SIDE LSP */}
+                {sidebarTab === "tutor" && (
+                  <div className="p-4 flex flex-col gap-4 flex-1">
+                    <div className="flex items-center justify-between select-none">
+                      <div className="text-slate-200">
+                        <span className="text-[10px] font-bold font-mono text-cyan-400 uppercase tracking-widest leading-none">Analisador de Linguagem LSP</span>
+                        <h3 className="text-xs font-bold text-slate-100 mt-0.5 font-sans">Símbolos Ativos & Copiloto Inteligente</h3>
+                      </div>
+                      <span className="bg-emerald-500/10 text-emerald-400 font-mono text-[10px] px-2 py-0.5 rounded border border-emerald-500/20 font-bold">LSP ATIVO</span>
+                    </div>
+
+                    {/* Real-time Client-side Language Server Metrics */}
+                    <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex flex-col gap-3 font-mono text-[11px] text-slate-300">
+                      
+                      {/* Active compiler nesting scopes detected */}
+                      <div className="flex flex-col gap-1 border-b border-slate-800/60 pb-2.5 animate-fade-in">
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-slate-500 flex items-center gap-1 font-sans">
+                          📡 Escopo de Sintaxe Ativo (Nesting)
+                        </span>
+                        <div className="max-h-20 overflow-y-auto flex flex-col gap-1 mt-1 pr-1">
+                          {getScopes(code).length === 0 ? (
+                            <span className="text-slate-500 italic text-[10px] font-sans">Nenhum escopo complexo (Classe ou Função) detectado.</span>
+                          ) : (
+                            getScopes(code).map((sc, scIdx) => (
+                              <div key={scIdx} className="flex items-center justify-between bg-slate-900/50 p-1 px-2 rounded border border-slate-800/40 text-[10px]">
+                                <span className="flex items-center gap-1.5 font-sans text-xs">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${sc.type === "classe" ? "bg-indigo-400" : sc.type === "metodo" ? "bg-amber-400" : "bg-emerald-400"}`} />
+                                  <strong className="text-slate-200 capitalize text-[10px] font-mono">{sc.type}</strong>
+                                  <code className="text-sky-300 font-bold font-mono text-[10px]">{sc.name}</code>
+                                </span>
+                                <span className="text-slate-500 font-mono text-[9px]">L: {sc.lineStart + 1}-{sc.lineEnd}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Real-time spelling & diagnostics reports */}
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-slate-500 flex items-center gap-1 font-sans">
+                          ⚠️ Diagnósticos de Compilação & Casing do Linter
+                        </span>
+                        <div className="max-h-24 overflow-y-auto flex flex-col gap-1 mt-1 pr-1 font-mono">
+                          {(() => {
+                            const lspDiagnostics: { line: number; type: "error" | "warning"; msg: string }[] = [];
+                            const lines = code.split("\n");
+                            const blockKeywords = ["se", "senaose", "senao", "para", "enquanto", "definir", "funcao", "classe", "tentar", "exceto"];
+                            
+                            lines.forEach((line, i) => {
+                              const trimmed = line.trim();
+                              if (!trimmed || trimmed.startsWith("#")) return;
+                              // block colon check
+                              const firstWordMatch = trimmed.match(/^([a-zA-Z0-9_]+)/);
+                              if (firstWordMatch) {
+                                const firstWord = firstWordMatch[1];
+                                if (blockKeywords.includes(firstWord) && !trimmed.endsWith(":")) {
+                                  lspDiagnostics.push({ line: i + 1, type: "error", msg: `Falta do caractere dois-pontos ':' ao final do bloco '${firstWord}'` });
+                                }
+                              }
+                              // spelling typo check
+                              const words = trimmed.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) || [];
+                              words.forEach(w => {
+                                const typo = findTypo(w, ALL_PORTULONG_WORDS);
+                                if (typo) {
+                                  lspDiagnostics.push({
+                                    line: i + 1,
+                                    type: typo.errorType === "casing" ? "warning" : "error",
+                                    msg: typo.errorType === "casing" 
+                                      ? `Erro de Capitalização: Use '${typo.correct}' em vez de '${w}'`
+                                      : `Sugestão de escrita: Você escreveu '${w}', quis dizer '${typo.correct}'?`
+                                  });
+                                }
+                              });
+                            });
+
+                            if (lspDiagnostics.length === 0) {
+                              return <span className="text-emerald-500 italic text-[10px] flex items-center gap-1 font-sans"><CheckCircle2 size={11} /> 0 problemas de sintaxe ativos.</span>;
+                            }
+
+                            return lspDiagnostics.map((dg, dgIdx) => (
+                              <div key={dgIdx} className={`text-[10px] leading-tight p-1 px-1.5 rounded flex gap-1.5 items-start ${dg.type === "error" ? "text-red-300 bg-red-950/20" : "text-amber-300 bg-amber-950/20"}`}>
+                                <span className="font-bold shrink-0">L{dg.line}:</span>
+                                <span>{dg.msg}</span>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Integrated AI Assistant Chatbot */}
+                    <div className="flex-1 flex flex-col gap-2 rounded-xl overflow-hidden border border-slate-800 bg-slate-950/40 p-3 h-[200px]">
+                      <span className="text-[9px] uppercase tracking-wider font-bold text-slate-500 flex items-center gap-1 select-none font-sans border-b border-slate-800 pb-1.5">
+                        🧙 Assistente de Código AI Tutor Portulong
+                      </span>
+                      <div className="flex-1 overflow-y-auto flex flex-col gap-2 p-1.5 text-xs max-h-[120px]">
+                        {chatHistory.map((msg) => (
+                          <div 
+                            key={msg.id} 
+                            className={`p-2.5 rounded-xl max-w-[85%] leading-relaxed ${
+                              msg.sender === "user" 
+                                ? "bg-emerald-500/10 text-emerald-300 self-end border border-emerald-500/20 rounded-tr-none font-sans" 
+                                : "bg-slate-900 text-slate-300 self-start border border-slate-800 rounded-tl-none font-sans"
+                            }`}
+                          >
+                            <p className="whitespace-pre-line font-sans">{msg.content}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* AI Input Form */}
+                      <div className="flex gap-2 font-mono">
+                        <input
+                          type="text"
+                          placeholder="Pergunte ao tutor... Ex: Como usar @robo.comando?"
+                          value={chatMessageInput}
+                          onChange={(e) => setChatMessageInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              sendChatMessage();
+                            }
+                          }}
+                          className="flex-1 bg-slate-900 border border-slate-800 text-slate-200 text-xs px-3 py-1.5 rounded-lg focus:outline-none placeholder-slate-500 font-sans"
+                        />
+                        <button
+                          onClick={sendChatMessage}
+                          disabled={isChatSending}
+                          className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black font-mono text-[10px]/none rounded-lg cursor-pointer"
+                        >
+                          {isChatSending ? "..." : "ENVIAR"}
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* Sub Tab Panel: CLI & ENVIRONMENT GUIDE (🐉 Original Guide) */}
+                {sidebarTab === "cli" && (
+                  <div className="p-4 flex flex-col gap-4 flex-1">
+                    <div className="text-slate-200 select-none">
+                      <span className="text-[10px] font-bold font-mono text-emerald-400 uppercase tracking-widest leading-none font-mono">Guia de Instalação</span>
+                      <h3 className="text-xs font-bold text-slate-100 mt-0.5 font-sans">Configure seu computador para rodar Portulong nativamente</h3>
+                    </div>
+
+                    {/* Original Inner Guide Sub-selectors */}
+                    <div className="bg-slate-950/20 border-b border-slate-800/50 p-1 flex gap-1 rounded-lg select-none">
+                      <button
+                        onClick={() => setInstallTab("auto")}
+                        className={`flex-1 text-center py-2 text-[10px] font-bold font-mono rounded-md transition-all cursor-pointer ${
+                          installTab === "auto"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm font-bold animate-fade-in"
+                            : "text-slate-400 hover:text-slate-300"
+                        }`}
+                      >
+                        📦 Auto
+                      </button>
+                      <button
+                        onClick={() => setInstallTab("vscode")}
+                        className={`flex-1 text-center py-2 text-[10px] font-bold font-mono rounded-md transition-all cursor-pointer ${
+                          installTab === "vscode"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm font-bold animate-fade-in"
+                            : "text-slate-400 hover:text-slate-300"
+                        }`}
+                      >
+                        🎨 vscode
+                      </button>
+                      <button
+                        onClick={() => setInstallTab("pip")}
+                        className={`flex-1 text-center py-2 text-[10px] font-bold font-mono rounded-md transition-all cursor-pointer ${
+                          installTab === "pip"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm font-bold animate-fade-in"
+                            : "text-slate-400 hover:text-slate-300"
+                        }`}
+                      >
+                        🧱 pip
+                      </button>
+                      <button
+                        onClick={() => setInstallTab("files")}
+                        className={`flex-1 text-center py-2 text-[10px] font-bold font-mono rounded-md transition-all cursor-pointer ${
+                          installTab === "files"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm font-bold animate-fade-in"
+                            : "text-slate-400 hover:text-slate-300"
+                        }`}
+                      >
+                        📂 manual
+                      </button>
+                    </div>
+
+                    {/* Original Inner Content mapping */}
+                    <div className="text-slate-300 text-[11px] leading-relaxed max-h-[300px] overflow-y-auto pr-1">
+                      <AnimatePresence mode="wait">
+                        {installTab === "auto" && (
+                          <motion.div
+                            key="auto"
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex flex-col gap-3 font-sans"
+                          >
+                            <p>
+                              A partir da <strong>versão 1.0.72</strong>, obter o ecossistema do Portulong ficou extremamente rápido e integrado. Siga estes dois passos simples:
+                            </p>
+                            
+                            <div className="flex flex-col gap-2">
+                              {/* Passo 1 - pip */}
+                              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-850 flex flex-col gap-1">
+                                <div className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-400 uppercase font-mono">
+                                  <span>1. Instale o Transpilador Oficial</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 mt-1 bg-slate-900 p-1 px-2 rounded font-mono text-[10px] text-slate-300">
+                                  <span>pip install portulong.ptg</span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText("pip install portulong.ptg");
+                                      setCopiedCommand("pip");
+                                      setTimeout(() => setCopiedCommand(null), 2000);
+                                    }}
+                                    className="text-slate-500 hover:text-emerald-400 shrink-0"
+                                  >
+                                    {copiedCommand === "pip" ? <Check size={12} /> : <Copy size={12} />}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Passo 2 - configurar */}
+                              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-850 flex flex-col gap-1">
+                                <div className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-400 uppercase font-mono">
+                                  <span>2. Execute o Script de Configuração</span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 font-sans">Abra seu terminal ou prompt de comando corporativo e digite:</p>
+                                <div className="flex items-center justify-between gap-2 mt-1 bg-slate-900 p-1 px-2 rounded font-mono text-[10px] text-slate-300">
+                                  <span>python -m portulong.configurar</span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText("python -m portulong.configurar");
+                                      setCopiedCommand("config");
+                                      setTimeout(() => setCopiedCommand(null), 2000);
+                                    }}
+                                    className="text-slate-500 hover:text-emerald-400 shrink-0"
+                                  >
+                                    {copiedCommand === "config" ? <Check size={12} /> : <Copy size={12} />}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {installTab === "vscode" && (
+                          <motion.div
+                            key="vscode"
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex flex-col gap-3 font-sans"
+                          >
+                            <p>
+                              Escreva código Portulong com destaque de sintaxe, diagnósticos, identificadores em tempo real e auto-completar inteligente!
+                            </p>
+                            
+                            <div className="flex flex-col gap-2">
+                              <div className="bg-[#1a1c23] p-2.5 rounded-lg border border-[#2d3139]">
+                                <span className="font-bold text-[10px] uppercase text-sky-400 font-mono">Método Sem Esforço:</span>
+                                <p className="text-[10px] text-slate-400 mt-1">O script de configuração automática do passo anterior já tenta empacotar, injetar e programar a extensão corporativa do editor VS Code localmente para você.</p>
+                              </div>
+                              
+                              <div className="bg-[#1a1c23] p-2.5 rounded-lg border border-[#2d3139]">
+                                <span className="font-bold text-[10px] uppercase text-emerald-400 font-mono">Recursos Habilitados no VS Code:</span>
+                                <ul className="list-disc pl-4 mt-1 text-[10px] text-slate-400 flex flex-col gap-0.5 leading-normal font-sans">
+                                  <li>🎨 <strong>Destaque de sintaxe nativo</strong> colorindo seu código.</li>
+                                  <li>🏷️ <strong>Ícones de dragão customizados</strong> para arquivos .ptg.</li>
+                                  <li>▶️ Botão de <strong>Execução Instantânea</strong> no cabeçalho do editor!</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {installTab === "pip" && (
+                          <motion.div
+                            key="pip"
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex flex-col gap-3 font-sans"
+                          >
+                            <p>
+                              Instale o transpilador global por terminal sem usar atalhos:
+                            </p>
+                            
+                            <div className="bg-slate-950 border border-slate-850 rounded-lg p-2.5 font-mono text-slate-300 relative group flex items-center justify-between gap-3 text-[10px]">
+                              <span>pip install portulong.ptg</span>
                               <button
                                 onClick={() => {
                                   navigator.clipboard.writeText("pip install portulong.ptg");
-                                  setCopiedCommand("pip-cmd");
+                                  setCopiedCommand("pip");
                                   setTimeout(() => setCopiedCommand(null), 2000);
                                 }}
-                                className={`p-1.5 rounded transition-all cursor-pointer shrink-0 ${copiedCommand === "pip-cmd" ? "text-emerald-400 bg-emerald-500/10" : "text-slate-500 group-hover:text-slate-300 hover:bg-slate-800"}`}
-                                title="Copiar Comando"
+                                className="text-slate-500 hover:text-emerald-400 shrink-0"
                               >
-                                {copiedCommand === "pip-cmd" ? <Check size={14} /> : <Copy size={14} />}
+                                {copiedCommand === "pip" ? <Check size={12} /> : <Copy size={12} />}
                               </button>
                             </div>
-                          </div>
 
-                          {/* Passo 2 - portulong instalar */}
-                          <div className="flex flex-col gap-1.5 mt-1">
-                            <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-widest">🔹 Passo 2: Configure os recursos nativos (via CLI)</span>
-                            <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-slate-300 relative group flex items-center justify-between gap-3 text-[11px]">
-                              <span className="select-all break-all">portulong instalar</span>
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText("portulong instalar");
-                                  setCopiedCommand("install-cmd");
-                                  setTimeout(() => setCopiedCommand(null), 2000);
-                                }}
-                                className={`p-1.5 rounded transition-all cursor-pointer shrink-0 ${copiedCommand === "install-cmd" ? "text-emerald-400 bg-emerald-500/10" : "text-slate-500 group-hover:text-slate-300 hover:bg-slate-800"}`}
-                                title="Copiar Comando"
-                              >
-                                {copiedCommand === "install-cmd" ? <Check size={14} /> : <Copy size={14} />}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg mt-1 flex gap-2 items-start">
-                          <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5 animate-pulse" />
-                          <p className="text-[11px] text-slate-400 leading-normal">
-                            <strong>O que essa CLI faz?</strong> Ela executa consultas seguras para obter as extensões VS Code originais, destaques de cores do editor, ícones de dragões exclusivos e atalhos globais de compilação automaticamente para você!
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {installTab === "vscode" && (
-                      <motion.div
-                        key="vscode"
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        transition={{ duration: 0.15 }}
-                        className="flex flex-col gap-4 font-sans"
-                      >
-                        <p>
-                          A extensão oficial traz realce visual profissional com as cores corretas para seus ficheiros <code className="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded font-mono font-medium">.ptg</code>, suporte a autocompletar e o botão de Play/Executar de 1 clique integrado!
-                        </p>
-                        
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
-                            <span className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-400 font-bold border border-blue-500/20 flex items-center justify-center shrink-0 font-mono text-xs">1</span>
-                            <div>
-                              <h4 className="font-bold text-slate-200">Descarregue o Arquivo Extensão VSIX</h4>
-                              <p className="text-[11px] text-slate-400 mt-0.5">Faça download em um clique do ficheiro <code className="text-slate-300 font-mono">portulong-vscode-1.0.71.vsix</code> no menu "Descarregar" ao lado.</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
-                            <span className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-400 font-bold border border-blue-500/20 flex items-center justify-center shrink-0 font-mono text-xs">2</span>
-                            <div>
-                              <h4 className="font-bold text-slate-200">Instale Manualmente no VS Code</h4>
-                              <p className="text-[11px] text-slate-400 mt-1 leading-normal">
-                                Abra o Visual Studio Code, vá até a aba de Extensões (<code className="text-emerald-400 font-mono">Ctrl+Shift+X</code>), clique nos três pontinhos (<code className="bg-slate-950 px-1 py-0.5 font-mono text-slate-300 rounded font-medium">...</code>) no cabeçalho do painel esquerdo e selecione <strong>"Instalar a partir de VSIX..."</strong>. Selecione o arquivo baixado.
+                            <div className="bg-slate-950 border border-slate-855 rounded-lg p-2.5 text-[10px] leading-relaxed">
+                              <span className="text-emerald-400 font-mono font-bold">portulong meu_bot.ptg</span>
+                              <p className="mt-1 text-slate-500 font-sans leading-normal">
+                                Transpilará o arquivo Portulong e gerará um script executável em Python temporário no terminal.
                               </p>
                             </div>
-                          </div>
+                          </motion.div>
+                        )}
 
-                          <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-400 font-bold border border-blue-500/20 flex items-center justify-center shrink-0 font-mono text-xs">3</span>
-                            <div>
-                              <h4 className="font-bold text-slate-200">Aproveite os Recursos Completos!</h4>
-                              <ul className="list-disc pl-4 mt-1 text-[11px] text-slate-400 flex flex-col gap-1 leading-normal">
-                                <li>✨ <strong>Destaque de sintaxe nativo</strong> colorindo seu código em tempo real.</li>
-                                <li>🏷️ <strong>Ícones de dragão customizados</strong> para seus arquivos de código.</li>
-                                <li>▶️ Botão de <strong>Play Inteligente</strong> no topo do editor para executar seu robô instantaneamente!</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {installTab === "pip" && (
-                      <motion.div
-                        key="pip"
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        transition={{ duration: 0.15 }}
-                        className="flex flex-col gap-4 font-sans"
-                      >
-                        <p>
-                          Se você prefere instalar e rodar os programas por linha de comando sem as extensões ou scripts automáticos, basta registrar diretamente do servidor de pacotes oficiais do Python usando o gerenciador de pacotes <code className="text-emerald-400 font-mono">pip</code>:
-                        </p>
-                        
-                        <div className="flex flex-col gap-1.5 mt-2">
-                          <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wider">Registrar via PIP:</span>
-                          <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-slate-300 relative group flex items-center justify-between gap-3 text-[11px]">
-                            <span>pip install portulong.ptg</span>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText("pip install portulong.ptg");
-                                setCopiedCommand("pip");
-                                setTimeout(() => setCopiedCommand(null), 2000);
-                              }}
-                              className={`p-1.5 rounded transition-all cursor-pointer ${copiedCommand === "pip" ? "text-emerald-400 bg-emerald-500/10" : "text-slate-500 group-hover:text-slate-300 hover:bg-slate-800"}`}
-                              title="Copiar Comando"
-                            >
-                              {copiedCommand === "pip" ? <Check size={14} /> : <Copy size={14} />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5 mt-2">
-                          <span className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wider">Como compilar arquivos:</span>
-                          <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-slate-400 text-[11px] leading-relaxed">
-                            <span className="text-emerald-400 font-mono">portulong meu_bot.ptg</span>
-                            <p className="mt-2 text-slate-500 font-sans leading-normal">
-                              Isso transpilará o arquivo Portulong e gerará um script executável em Python temporário no seu terminal.
+                        {installTab === "files" && (
+                          <motion.div
+                            key="files"
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex flex-col gap-3 font-sans"
+                          >
+                            <p>
+                              Descarregue arquivos do ecossistema de recursos de forma manual:
                             </p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
+                            
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              <a
+                                href="/instalar.py"
+                                download="instalar.py"
+                                className="p-2 bg-slate-950 hover:bg-slate-800/60 border border-slate-850 hover:border-emerald-500/30 rounded-lg flex flex-col gap-1 transition-all text-left text-slate-200"
+                              >
+                                <span className="font-bold font-mono text-[10px] text-emerald-400 flex items-center gap-1">
+                                  <FileCode size={11} /> instalar.py
+                                </span>
+                                <span className="text-[9px] text-slate-500 leading-normal font-sans">Injetor nativo de caminhos de arquivos.</span>
+                              </a>
 
-                    {installTab === "files" && (
-                      <motion.div
-                        key="files"
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        transition={{ duration: 0.15 }}
-                        className="flex flex-col gap-4 font-sans"
-                      >
-                        <p>
-                          Faça download manual de qualquer arquivo da nossa suíte oficial de recursos diretamente do servidor para testar no computador:
-                        </p>
-                        
-                        <div className="grid grid-cols-2 gap-3 mt-1.5">
-                          <a
-                            href="/instalar.py"
-                            download="instalar.py"
-                            className="p-3 bg-slate-950 hover:bg-slate-800/60 border border-slate-800 hover:border-emerald-500/30 rounded-xl flex flex-col gap-1.5 transition-all text-left text-slate-200"
-                          >
-                            <div className="flex items-center gap-1.5 font-bold font-mono text-xs text-emerald-400">
-                              <FileCode size={14} />
-                              instalar.py
-                            </div>
-                            <span className="text-[10px] text-slate-400 leading-normal font-sans">Script inteligente de instalação de dependências e caminhos.</span>
-                          </a>
+                              <a
+                                href="/desinstalar.py"
+                                download="desinstalar.py"
+                                className="p-2 bg-slate-950 hover:bg-slate-800/60 border border-slate-855 hover:border-rose-500/30 rounded-lg flex flex-col gap-1 transition-all text-left text-slate-200"
+                              >
+                                <span className="font-bold font-mono text-[10px] text-rose-400 flex items-center gap-1">
+                                  <FileCode size={11} /> desinstalar.py
+                                </span>
+                                <span className="text-[9px] text-slate-500 leading-normal font-sans">Faz a remoção completa.</span>
+                              </a>
 
-                          <a
-                            href="/desinstalar.py"
-                            download="desinstalar.py"
-                            className="p-3 bg-slate-950 hover:bg-slate-800/60 border border-slate-800 hover:border-rose-500/30 rounded-xl flex flex-col gap-1.5 transition-all text-left text-slate-200"
-                          >
-                            <div className="flex items-center gap-1.5 font-bold font-mono text-xs text-rose-400">
-                              <FileCode size={14} />
-                              desinstalar.py
+                              <a
+                                href="/portulong-vscode-1.0.72.vsix"
+                                download="portulong-vscode-1.0.72.vsix"
+                                className="p-2 bg-slate-950 hover:bg-slate-800/60 border border-slate-855 hover:border-sky-500/30 rounded-lg flex flex-col gap-1 transition-all text-left text-slate-200 col-span-2"
+                              >
+                                <span className="font-bold font-mono text-[10px] text-sky-400 flex items-center gap-1">
+                                  <Laptop size={11} /> portulong-vscode-1.0.72.vsix
+                                </span>
+                                <span className="text-[9px] text-slate-500 leading-normal font-sans">Pacote empacotado da Extensão VS Code v1.0.72.</span>
+                              </a>
                             </div>
-                            <span className="text-[10px] text-slate-400 leading-normal font-sans">Remoção limpa dos caminhos e chaves do editor.</span>
-                          </a>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
 
-                          <a
-                            href="/portulong-vscode-1.0.71.vsix"
-                            download="portulong-vscode-1.0.71.vsix"
-                            className="p-3 bg-slate-950 hover:bg-slate-800/60 border border-slate-800 hover:border-sky-500/30 rounded-xl flex flex-col gap-1.5 transition-all text-left text-slate-200 col-span-2"
-                          >
-                            <div className="flex items-center gap-1.5 font-bold font-mono text-xs text-sky-400">
-                              <Laptop size={14} />
-                              portulong-vscode-1.0.71.vsix
-                            </div>
-                            <span className="text-[10px] text-slate-400 leading-normal font-sans">Pacote empacotado da Extensão Oficial de realce, realce de cores e de ícones para o editor VS Code.</span>
-                          </a>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                  </div>
+                )}
+
               </div>
             </div>
 
