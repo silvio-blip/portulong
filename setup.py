@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="portulong",
-    version="1.0.1",
+    name="portulong-sistema",
+    version="1.0.2",
     author="portulong",
     author_email="portulong@example.com",
     description="Linguagem de programação em Português de Portugal para criar páginas web",
