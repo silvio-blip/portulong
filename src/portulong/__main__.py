@@ -4,8 +4,8 @@
 import sys
 import os
 
-# Adicionar o diretório do pacote ao path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Adicionar o diretório src ao path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from portulong.core import main
 
