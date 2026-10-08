@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Empretador portulong - Converte .ptg (PT-PT) em paginas web"""
+"""Empretador portulong - Executa .ptg diretamente no navegador sem gerar arquivos"""
 
-import re, sys, os, shutil, webbrowser, threading
+import re, sys, os, webbrowser, threading, tempfile, shutil
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import urlparse
+
+# Caminho do pacote (para encontrar a imagem)
+PACOTE_DIR = Path(__file__).parent
+ICONE_PACOTE = PACOTE_DIR / "imagens" / "Portulong.png"
 
 class Empretador:
     def __init__(self):
@@ -47,17 +52,20 @@ class Empretador:
     
     def _gerar_html(self):
         corpo = '\n'.join(self.elementos)
-        css = self._traduzir_css('\n'.join(self.estilos))
-        js = self._traduzir_js('\n'.join(self.funcoes))
+        css = '\n'.join(self.estilos)
+        js = '\n'.join(self.funcoes)
+        
+        # Usar dados da imagem em base64 para não precisar de arquivo
+        icone_base64 = self._icone_base64()
         
         html = '<!DOCTYPE html><html lang="pt-PT"><head>'
         html += '<meta charset="UTF-8">'
         html += f'<title>{self.título}</title>'
-        html += f'<link rel="icon" href="imagens/Portulong.png">'
+        html += f'<link rel="icon" href="data:image/png;base64,{icone_base64}">'
         html += f'<style>body{{font-family:Arial;margin:0;padding:20px;}}{css}</style>'
         html += '</head><body>'
         html += f'<div style="position:fixed;top:10px;right:10px;z-index:1000;">'
-        html += f'<img src="imagens/Portulong.png" width="40" height="40" style="border-radius:5px;">'
+        html += f'<img src="data:image/png;base64,{icone_base64}" width="40" height="40" style="border-radius:5px;">'
         html += '</div>'
         html += corpo
         if js:
@@ -65,112 +73,41 @@ class Empretador:
         html += '</body></html>'
         return html
     
-    def _traduzir_css(self, css):
-        """Traduz propriedades CSS de PT-PT para ingles"""
-        traducoes = {
-            'fundo': 'background',
-            'cor': 'color',
-            'cor-fundo': 'background-color',
-            'tamanho-fonte': 'font-size',
-            'fonte-familia': 'font-family',
-            'margem': 'margin',
-            'margem-esquerda': 'margin-left',
-            'margem-direita': 'margin-right',
-            'margem-topo': 'margin-top',
-            'margem-base': 'margin-bottom',
-            'espacamento': 'padding',
-            'espacamento-interno': 'padding',
-            'largura': 'width',
-            'largura-maxima': 'max-width',
-            'altura': 'height',
-            'altura-maxima': 'max-height',
-            'alinhamento': 'text-align',
-            'alinhamento-centro': 'center',
-            'borda': 'border',
-            'borda-arredondada': 'border-radius',
-            'sombra': 'box-shadow',
-            'espacamento-letra': 'letter-spacing',
-            'linha-altura': 'line-height',
-            'transicao': 'transition',
-            'cursor': 'cursor',
-            'posicao': 'position',
-            'z-index': 'z-index',
-            'topo': 'top',
-            'direita': 'right',
-            'esquerda': 'left',
-            'baixo': 'bottom',
-            'exibir': 'display',
-            'grid-colunas': 'grid-template-columns',
-            'gap': 'gap',
-        }
-        
-        for pt, en in traducoes.items():
-            css = css.replace(pt, en)
-        
-        return css
-    
-    def _traduzir_js(self, js):
-        """Traduz comandos PT-PT para JavaScript"""
-        traducoes = [
-            ('funcao ', 'function '),
-            ('escreva ', 'console.log('),
-            ('alerta ', 'alert('),
-            ('confirmar ', 'confirm('),
-            ('prompt ', 'prompt('),
-            ('se ', 'if ('),
-            ('entao ', ''),
-            ('senao ', '} else {'),
-            ('enquanto ', 'while ('),
-            ('para ', 'for ('),
-            ('retorne ', 'return '),
-            ('verdadeiro ', 'true'),
-            ('falso ', 'false'),
-            ('nulo ', 'null'),
-            ('classe ', 'class '),
-            ('novo ', 'new '),
-            ('importar ', 'import '),
-            ('de ', 'from '),
-            ('como ', 'as '),
-        ]
-        
-        for pt, en in traducoes:
-            js = js.replace(pt, en)
-        
-        return js
+    def _icone_base64(self):
+        """Converte a imagem para base64"""
+        try:
+            import base64
+            if ICONE_PACOTE.exists():
+                with open(icone_PACOTE, 'rb') as f:
+                    return base64.b64encode(f.read()).decode('utf-8')
+        except:
+            pass
+        return ""
 
-class Servidor(BaseHTTPRequestHandler):
-    html = ""
-    base = "."
+class ServidorHTTP(BaseHTTPRequestHandler):
+    html_content = ""
     
     def do_GET(self):
-        if self.path == '/':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
-            self.wfile.write(self.html.encode())
-        else:
-            caminho = self.path.lstrip('/')
-            arquivo = os.path.join(self.base, caminho)
-            if os.path.isfile(arquivo):
-                self.send_response(200)
-                if arquivo.endswith('.png'):
-                    self.send_header('Content-type', 'image/png')
-                self.end_headers()
-                with open(arquivo, 'rb') as f:
-                    self.wfile.write(f.read())
-            else:
-                self.send_response(404)
-                self.end_headers()
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html; charset=utf-8')
+        self.end_headers()
+        self.wfile.write(self.html_content.encode('utf-8'))
     
     def log_message(self, format, *args):
         pass
 
-def servir(html, base_dir, porta=8000):
-    Servidor.html = html
-    Servidor.base = base_dir
-    server = HTTPServer(('localhost', porta), Servidor)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    webbrowser.open(f'http://localhost:{porta}/')
+def servir(html, porta=8000):
+    """Inicia servidor HTTP temporário e abre o navegador"""
+    ServidorHTTP.html_content = html
+    
+    server = HTTPServer(('localhost', porta), ServidorHTTP)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    
+    url = f'http://localhost:{porta}/'
+    print(f"Abrindo no navegador: {url}")
+    webbrowser.open(url)
+    
     try:
         threading.Event().wait()
     except KeyboardInterrupt:
@@ -178,7 +115,7 @@ def servir(html, base_dir, porta=8000):
 
 def main():
     if len(sys.argv) < 2:
-        print("Uso: python portulong.py arquivo.ptg")
+        print("Uso: portulong arquivo.ptg")
         sys.exit(1)
     
     arquivo = sys.argv[1]
@@ -195,20 +132,8 @@ def main():
     empretador = Empretador()
     html = empretador.empretar(codigo)
     
-    caminho = Path(arquivo)
-    saida = caminho.parent / (caminho.stem + '.html')
-    with open(saida, 'w', encoding='utf-8') as f:
-        f.write(html)
-    
-    icone_origem = Path(__file__).parent / "imagens" / "Portulong.png"
-    icone_destino = caminho.parent / "imagens" / "Portulong.png"
-    icone_destino.parent.mkdir(exist_ok=True)
-    if icone_origem.exists():
-        shutil.copy2(icone_origem, icone_destino)
-    
-    print(f"Pagina gerada: {saida}")
-    print(f"Servidor em: http://localhost:8000")
-    servir(html, str(caminho.parent))
+    print("Executando portulong...")
+    servir(html)
 
 if __name__ == '__main__':
     main()
