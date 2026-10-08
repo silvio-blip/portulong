@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Empretador portulong - Executa .ptg diretamente no navegador sem gerar arquivos"""
+"""Sistema completo portulong - Frontend + Backend 100% em PT-PT"""
 
-import re, sys, os, webbrowser, threading, tempfile, shutil
+import re, sys, os, webbrowser, threading, base64, json, importlib.util
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
-# Caminho do pacote (para encontrar a imagem)
 PACOTE_DIR = Path(__file__).parent
 ICONE_PACOTE = PACOTE_DIR / "imagens" / "Portulong.png"
 
@@ -16,10 +15,14 @@ class Empretador:
         self.elementos = []
         self.estilos = []
         self.funcoes = []
+        self.imports = []
+        self.rotas = {}
+        self.componentes = {}
     
     def empretar(self, codigo):
         linhas = codigo.split('\n')
         secao = None
+        bloco_atual = []
         
         for linha in linhas:
             linha = linha.strip()
@@ -28,35 +31,101 @@ class Empretador:
             
             if linha.startswith('pagina '):
                 self.título = linha.replace('pagina ', '').strip().strip('"')
-            elif linha.startswith('cabecalho '):
-                texto = linha.replace('cabecalho ', '').strip().strip('"')
-                self.elementos.append(f'<h1>{texto}</h1>')
-            elif linha.startswith('paragrafo '):
-                texto = linha.replace('paragrafo ', '').strip().strip('"')
-                self.elementos.append(f'<p>{texto}</p>')
-            elif linha.startswith('botao '):
-                partes = linha.replace('botao ', '').split(' acao ')
-                texto = partes[0].strip().strip('"')
-                acao = partes[1].strip().strip('"') if len(partes) > 1 else ''
-                self.elementos.append(f'<button onclick="{acao}">{texto}</button>')
+            elif linha.startswith('importar '):
+                modulo = linha.replace('importar ', '').strip()
+                self.imports.append(modulo)
+            elif linha.startswith('componente '):
+                nome = linha.replace('componente ', '').rstrip(':').strip()
+                secao = f'componente_{nome}'
+                bloco_atual = []
+            elif linha.startswith('rota '):
+                partes = linha.replace('rota ', '').split(' ')
+                metodo = partes[0].upper()
+                caminho = partes[1]
+                secao = f'rota_{metodo}_{caminho}'
+                bloco_atual = []
             elif linha.startswith('estilo:'):
                 secao = 'estilo'
             elif linha.startswith('script:'):
                 secao = 'script'
+            elif linha.startswith('servidor:'):
+                secao = 'servidor'
+            elif secao and secao.startswith('componente_'):
+                if linha:
+                    bloco_atual.append(linha)
+            elif secao and secao.startswith('rota_'):
+                if linha:
+                    bloco_atual.append(linha)
             elif secao == 'estilo' and linha:
                 self.estilos.append(linha)
             elif secao == 'script' and linha:
                 self.funcoes.append(linha)
+            elif secao == 'servidor' and linha:
+                self._processar_servidor(linha)
+            else:
+                if linha.startswith('cabecalho '):
+                    texto = linha.replace('cabecalho ', '').strip().strip('"')
+                    self.elementos.append(f'<h1>{texto}</h1>')
+                elif linha.startswith('paragrafo '):
+                    texto = linha.replace('paragrafo ', '').strip().strip('"')
+                    self.elementos.append(f'<p>{texto}</p>')
+                elif linha.startswith('botao '):
+                    partes = linha.replace('botao ', '').split(' acao ')
+                    texto = partes[0].strip().strip('"')
+                    acao = partes[1].strip().strip('"') if len(partes) > 1 else ''
+                    self.elementos.append(f'<button onclick="{acao}">{texto}</button>')
+                elif linha.startswith('input '):
+                    partes = linha.replace('input ', '').split(' ')
+                    tipo = partes[0]
+                    nome = partes[1] if len(partes) > 1 else 'input'
+                    self.elementos.append(f'<input type="{tipo}" name="{nome}" id="{nome}">')
+                elif linha.startswith('formulario '):
+                    partes = linha.replace('formulario ', '').split(' acao ')
+                    acao = partes[1].strip().strip('"') if len(partes) > 1 else ''
+                    self.elementos.append(f'<form onsubmit="event.preventDefault(); {acao}">')
+                elif linha == 'fim_formulario':
+                    self.elementos.append('</form>')
+                elif linha.startswith('div '):
+                    classe = linha.replace('div ', '').strip()
+                    self.elementos.append(f'<div class="{classe}">')
+                elif linha == 'fim_div':
+                    self.elementos.append('</div>')
+        
+        # Processar componentes salvos
+        for secao_name, conteudo in bloco_atual:
+            if secao_name.startswith('componente_'):
+                nome = secao_name.replace('componente_', '')
+                self.componentes[nome] = '\n'.join(conteudo)
+            elif secao_name.startswith('rota_'):
+                partes = secao_name.replace('rota_', '').split('_')
+                metodo = partes[0]
+                caminho = '_'.join(partes[1:])
+                self.rotas[caminho] = {'metodo': metodo, 'codigo': '\n'.join(conteudo)}
         
         return self._gerar_html()
+    
+    def _processar_servidor(self, linha):
+        if linha.startswith('porta '):
+            self.porta = int(linha.replace('porta ', '').strip())
+        elif linha.startswith('host '):
+            self.host = linha.replace('host ', '').strip()
     
     def _gerar_html(self):
         corpo = '\n'.join(self.elementos)
         css = '\n'.join(self.estilos)
         js = '\n'.join(self.funcoes)
         
-        # Usar dados da imagem em base64 para não precisar de arquivo
         icone_base64 = self._icone_base64()
+        
+        # Adicionar componentes ao JS
+        componentes_js = ""
+        for nome, codigo in self.componentes.items():
+            componentes_js += f"window.componente_{nome} = `{codigo}`;\n"
+        
+        # Adicionar rotas ao JS
+        rotas_js = ""
+        for caminho, info in self.rotas.items():
+            rotas_js += f"window.rota_{info['metodo'].lower()}_{caminho.replace('/', '_')} = `{info['codigo']}`;\n"
         
         html = '<!DOCTYPE html><html lang="pt-PT"><head>'
         html += '<meta charset="UTF-8">'
@@ -68,43 +137,88 @@ class Empretador:
         html += f'<img src="data:image/png;base64,{icone_base64}" width="40" height="40" style="border-radius:5px;">'
         html += '</div>'
         html += corpo
-        if js:
-            html += f'<script>{js}</script>'
+        if js or componentes_js or rotas_js:
+            html += f'<script>{componentes_js}{rotas_js}{js}</script>'
         html += '</body></html>'
         return html
     
     def _icone_base64(self):
-        """Converte a imagem para base64"""
         try:
-            import base64
             if ICONE_PACOTE.exists():
-                with open(icone_PACOTE, 'rb') as f:
+                with open(ICONE_PACOTE, 'rb') as f:
                     return base64.b64encode(f.read()).decode('utf-8')
         except:
             pass
         return ""
 
+
 class ServidorHTTP(BaseHTTPRequestHandler):
     html_content = ""
+    api_rotas = {}
     
     def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html; charset=utf-8')
-        self.end_headers()
-        self.wfile.write(self.html_content.encode('utf-8'))
+        if self.path == '/' or self.path == '/index.html':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(self.html_content.encode('utf-8'))
+        elif self.path.startswith('/api/'):
+            self._processar_api('GET', self.path, None)
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def do_POST(self):
+        if self.path.startswith('/api/'):
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            self._processar_api('POST', self.path, post_data)
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def _processar_api(self, metodo, caminho, dados):
+        rota_key = caminho.replace('/api/', '')
+        if rota_key in self.api_rotas:
+            try:
+                if dados:
+                    dados = json.loads(dados)
+                else:
+                    dados = {}
+                
+                # Executar código da rota
+                codigo = self.api_rotas[rota_key]
+                local_vars = {'dados': dados, 'resposta': {}}
+                exec(codigo, {'json': json}, local_vars)
+                resultado = local_vars.get('resposta', {})
+                
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps(resultado, ensure_ascii=False).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(json.dumps({'erro': str(e)}, ensure_ascii=False).encode('utf-8'))
+        else:
+            self.send_response(404)
+            self.end_headers()
     
     def log_message(self, format, *args):
         pass
 
-def servir(html, porta=8000):
-    """Inicia servidor HTTP temporário e abre o navegador"""
+
+def servir(html, api_rotas=None, porta=8000, host='localhost'):
     ServidorHTTP.html_content = html
+    if api_rotas:
+        ServidorHTTP.api_rotas = api_rotas
     
-    server = HTTPServer(('localhost', porta), ServidorHTTP)
+    server = HTTPServer((host, porta), ServidorHTTP)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     
-    url = f'http://localhost:{porta}/'
+    url = f'http://{host}:{porta}/'
     print(f"Abrindo no navegador: {url}")
     webbrowser.open(url)
     
@@ -112,6 +226,7 @@ def servir(html, porta=8000):
         threading.Event().wait()
     except KeyboardInterrupt:
         server.shutdown()
+
 
 def main():
     if len(sys.argv) < 2:
@@ -133,7 +248,8 @@ def main():
     html = empretador.empretar(codigo)
     
     print("Executando portulong...")
-    servir(html)
+    servir(html, empretador.rotas, getattr(empretador, 'porta', 8000), getattr(empretador, 'host', 'localhost'))
+
 
 if __name__ == '__main__':
     main()

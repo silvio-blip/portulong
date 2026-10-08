@@ -14,8 +14,8 @@ cd "$PROJETO"
 # Verificar se Git está configurado
 if ! git config user.email > /dev/null 2>&1; then
     echo "Configurando Git..."
-    git config user.email "silvio@example.com"
-    git config user.name "silvio"
+    git config user.email "silviok4000@gmail.com"
+    git config user.name "silvio-blip"
 fi
 
 # Adicionar remote

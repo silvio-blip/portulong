@@ -1,0 +1,98 @@
+pagina "Sistema Completo portulong"
+
+importar json
+
+componente cabecalho:
+<div class="cabecalho">
+    <h1>Meu Sistema</h1>
+    <nav>
+        <a href="#inicio">Início</a>
+        <a href="#sobre">Sobre</a>
+        <a href="#api">API</a>
+    </nav>
+</div>
+
+componente rodape:
+<footer>
+    <p>&copy; 2026 portulong - Sistema completo em PT-PT</p>
+</footer>
+
+rota GET /api/usuarios:
+    resposta = {"usuarios": [{"id": 1, "nome": "João"}, {"id": 2, "nome": "Maria"}]}
+
+rota POST /api/usuario:
+    nome = dados.get("nome", "")
+    resposta = {"sucesso": true, "mensagem": "Usuario " + nome + " criado"}
+
+estilo:
+body { fundo: #f5f5f5; fonte-familia: Arial, sans-serif; margem: 0; espacamento: 0; }
+.cabecalho { fundo: #333; cor: branco; espacamento: 20px; }
+.cabecalho nav a { cor: branco; margem-direita: 15px; texto-decoracao: none; }
+.container { max-width: 800px; margem: 0 auto; espacamento: 20px; }
+.card { fundo: branco; borda-arredondada: 8px; espacamento: 20px; margem-base: 20px; sombra: 0 2px 10px rgba(0,0,0,0.1); }
+button { fundo: #667eea; cor: branco; borda: none; espacamento: 10px 20px; borda-arredondada: 5px; cursor: pointer; }
+input { espacamento: 10px; margem-direita: 10px; borda: 1px solid #ddd; borda-arredondada: 4px; }
+footer { fundo: #333; cor: branco; texto-centro: centro; espacamento: 20px; margem-topo: 40px; }
+
+script:
+funcao carregarUsuarios():
+    fetch('/api/usuarios')
+        .then(r => r.json())
+        .then(dados => {
+            var lista = document.getElementById('lista-usuarios')
+            lista.innerHTML = ''
+            dados.usuarios.forEach(u => {
+                var li = document.createElement('li')
+                li.textContent = u.nome
+                lista.appendChild(li)
+            })
+        })
+
+funcao criarUsuario():
+    var nome = document.getElementById('novo-usuario').value
+    fetch('/api/usuario', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({nome: nome})
+    })
+    .then(r => r.json())
+    .then(dados => {
+        alert(dados.mensagem)
+        carregarUsuarios()
+    })
+
+servidor:
+    porta 8000
+    host localhost
+
+cabecalho "Sistema Completo portulong"
+
+<div class="container">
+    <div class="card">
+        <h2>Frontend + Backend</h2>
+        <p>Sistema completo 100% em PT-PT</p>
+        <button onclick="carregarUsuarios()">Carregar Usuarios</button>
+    </div>
+    
+    <div class="card">
+        <h2>API REST</h2>
+        <p>Endpoints disponiveis:</p>
+        <ul>
+            <li>GET /api/usuarios</li>
+            <li>POST /api/usuario</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <h2>Criar Usuario</h2>
+        <input type="text" id="novo-usuario" placeholder="Nome do usuario">
+        <button onclick="criarUsuario()">Criar</button>
+    </div>
+    
+    <div class="card">
+        <h2>Usuarios</h2>
+        <ul id="lista-usuarios"></ul>
+    </div>
+</div>
+
+rodape
