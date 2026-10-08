@@ -19,6 +19,7 @@ setup(
     entry_points={
         "console_scripts": [
             "portulong-sistema=portulong.__main__:main",
+            "portulong-install=portulong.portulong_installer:main",
         ],
     },
     classifiers=[
