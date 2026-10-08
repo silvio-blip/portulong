@@ -23,6 +23,7 @@ class Empretador:
         linhas = codigo.split('\n')
         secao = None
         bloco_atual = []
+        secao_atual = None
         
         for linha in linhas:
             linha = linha.strip()
@@ -35,27 +36,36 @@ class Empretador:
                 modulo = linha.replace('importar ', '').strip()
                 self.imports.append(modulo)
             elif linha.startswith('componente '):
+                if secao_atual and bloco_atual:
+                    self._salvar_bloco(secao_atual, bloco_atual)
                 nome = linha.replace('componente ', '').rstrip(':').strip()
                 secao = f'componente_{nome}'
+                secao_atual = secao
                 bloco_atual = []
             elif linha.startswith('rota '):
+                if secao_atual and bloco_atual:
+                    self._salvar_bloco(secao_atual, bloco_atual)
                 partes = linha.replace('rota ', '').split(' ')
                 metodo = partes[0].upper()
                 caminho = partes[1]
                 secao = f'rota_{metodo}_{caminho}'
+                secao_atual = secao
                 bloco_atual = []
             elif linha.startswith('estilo:'):
+                if secao_atual and bloco_atual:
+                    self._salvar_bloco(secao_atual, bloco_atual)
                 secao = 'estilo'
+                secao_atual = secao
             elif linha.startswith('script:'):
+                if secao_atual and bloco_atual:
+                    self._salvar_bloco(secao_atual, bloco_atual)
                 secao = 'script'
+                secao_atual = secao
             elif linha.startswith('servidor:'):
+                if secao_atual and bloco_atual:
+                    self._salvar_bloco(secao_atual, bloco_atual)
                 secao = 'servidor'
-            elif secao and secao.startswith('componente_'):
-                if linha:
-                    bloco_atual.append(linha)
-            elif secao and secao.startswith('rota_'):
-                if linha:
-                    bloco_atual.append(linha)
+                secao_atual = secao
             elif secao == 'estilo' and linha:
                 self.estilos.append(linha)
             elif secao == 'script' and linha:
@@ -90,25 +100,24 @@ class Empretador:
                     self.elementos.append(f'<div class="{classe}">')
                 elif linha == 'fim_div':
                     self.elementos.append('</div>')
+                elif secao_atual and secao_atual not in ['estilo', 'script', 'servidor']:
+                    bloco_atual.append(linha)
         
-        # Processar componentes salvos
-        for secao_name, conteudo in bloco_atual:
-            if secao_name.startswith('componente_'):
-                nome = secao_name.replace('componente_', '')
-                self.componentes[nome] = '\n'.join(conteudo)
-            elif secao_name.startswith('rota_'):
-                partes = secao_name.replace('rota_', '').split('_')
-                metodo = partes[0]
-                caminho = '_'.join(partes[1:])
-                self.rotas[caminho] = {'metodo': metodo, 'codigo': '\n'.join(conteudo)}
+        # Salvar último bloco
+        if secao_atual and bloco_atual:
+            self._salvar_bloco(secao_atual, bloco_atual)
         
         return self._gerar_html()
     
-    def _processar_servidor(self, linha):
-        if linha.startswith('porta '):
-            self.porta = int(linha.replace('porta ', '').strip())
-        elif linha.startswith('host '):
-            self.host = linha.replace('host ', '').strip()
+    def _salvar_bloco(self, secao, conteudo):
+        if secao.startswith('componente_'):
+            nome = secao.replace('componente_', '')
+            self.componentes[nome] = '\n'.join(conteudo)
+        elif secao.startswith('rota_'):
+            partes = secao.replace('rota_', '').split('_')
+            metodo = partes[0]
+            caminho = '_'.join(partes[1:])
+            self.rotas[caminho] = {'metodo': metodo, 'codigo': '\n'.join(conteudo)}
     
     def _gerar_html(self):
         corpo = '\n'.join(self.elementos)
@@ -150,6 +159,12 @@ class Empretador:
         except:
             pass
         return ""
+
+    def _processar_servidor(self, linha):
+        if linha.startswith('porta '):
+            self.porta = int(linha.replace('porta ', '').strip())
+        elif linha.startswith('host '):
+            self.host = linha.replace('host ', '').strip()
 
 
 class ServidorHTTP(BaseHTTPRequestHandler):
