@@ -46,8 +46,8 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="portulong-sistema",
-    version="1.0.6",
+    name="portulong",
+    version="1.0.9",
     author="portulong",
     author_email="portulong@example.com",
     description="Linguagem de programação em Português de Portugal para criar páginas web",
