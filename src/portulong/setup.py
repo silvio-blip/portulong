@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="portulong-sistema",
-    version="1.0.2",
+    version="1.0.3",
     author="portulong",
     author_email="portulong@example.com",
     description="Linguagem de programação em Português de Portugal para criar páginas web",
@@ -18,7 +18,7 @@ setup(
     install_requires=[],
     entry_points={
         "console_scripts": [
-            "portulong=portulong.__main__:main",
+            "portulong-sistema=portulong.__main__:main",
         ],
     },
     classifiers=[
