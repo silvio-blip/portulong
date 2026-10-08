@@ -20,6 +20,8 @@ setup(
         "console_scripts": [
             "portulong-sistema=portulong.__main__:main",
             "portulong-install=portulong.portulong_installer:main",
+            "ptg=portulong.ptg_wrapper:main",
+            "ptg-atualizar=portulong.ptg_atualizar:main",
         ],
     },
     classifiers=[
