@@ -1,0 +1,87 @@
+{
+    "name": "portulong",
+    "scopeName": "source.portulong",
+    "fileTypes": ["ptg"],
+    "injectionSelector": "L:source.portulong",
+    "patterns": [
+        {
+            "include": "#keywords"
+        },
+        {
+            "include": "#strings"
+        },
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#numbers"
+        },
+        {
+            "include": "#operators"
+        }
+    ],
+    "repository": {
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.portulong",
+                    "match": "\\b(pagina|importar|componente|rota|estilo|script|servidor|cabecalho|paragrafo|botao|input|formulario|fim_formulario|div|fim_div|funcao|se|entao|senao|enquanto|para|retorne|verdadeiro|falso|nulo|classe|novo|importar|de|como|estende)\\b"
+                },
+                {
+                    "name": "keyword.section.portulong",
+                    "match": "^(pagina|importar|componente|rota|estilo|script|servidor|cabecalho|paragrafo|botao|input|formulario|fim_formulario|div|fim_div|estilo|script|servidor):"
+                }
+            ]
+        },
+        "strings": {
+            "patterns": [
+                {
+                    "name": "string.quoted.double.portulong",
+                    "begin": "\"",
+                    "end": "\"",
+                    "patterns": [
+                        {
+                            "name": "constant.character.escape.portulong",
+                            "match": "\\\\."
+                        }
+                    ]
+                },
+                {
+                    "name": "string.quoted.single.portulong",
+                    "begin": "'",
+                    "end": "'",
+                    "patterns": [
+                        {
+                            "name": "constant.character.escape.portulong",
+                            "match": "\\\\."
+                        }
+                    ]
+                }
+            ]
+        },
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.line.number-sign.portulong",
+                    "match": "#.*$"
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.portulong",
+                    "match": "\\b\\d+(\\.\\d+)?\\b"
+                }
+            ]
+        },
+        "operators": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.portulong",
+                    "match": "(acao|quando|clica|entao|senao|e|ou|nao|==|!=|<=|>=|<|>|=|\\+|-|\\*|/|%)"
+                }
+            ]
+        }
+    }
+}
