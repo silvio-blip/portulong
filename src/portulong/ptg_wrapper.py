@@ -29,6 +29,10 @@ def main():
     # Adicionar PATH do usuário
     os.environ['PATH'] = os.path.expanduser('~/.local/bin') + ':' + os.environ.get('PATH', '')
     
+    # Verificar subcomando
+    if len(sys.argv) > 1 and sys.argv[1] == 'iniciar':
+        sys.argv.pop(1)  # Remover 'iniciar' dos argumentos
+    
     # Auto-configuração na primeira execução
     if not verificar_configuracao():
         configurar_automatico()
