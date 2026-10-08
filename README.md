@@ -5,7 +5,7 @@ Linguagem de programação em **Português de Portugal** para criar páginas web
 ## Instalação
 
 ```bash
-pip install portulong
+pip install portulong-sistema
 ```
 
 Após instalar, execute uma vez para configurar automaticamente (ícone, associação .ptg, VS Code):
