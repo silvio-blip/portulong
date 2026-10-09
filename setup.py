@@ -47,7 +47,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="portulong-sistema",
-    version="1.0.14",
+    version="1.0.15",
     author="portulong",
     author_email="portulong@example.com",
     description="Linguagem de programação em Português de Portugal para criar páginas web",
@@ -58,7 +58,7 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     package_data={
-        "portulong": ["images/*.png", "*.ptg", "syntaxes/*.json", "snippets/*.json"],
+        "portulong": ["imagens/*.png", "*.ptg", "syntaxes/*.json", "snippets/*.json"],
     },
     install_requires=[],
     entry_points={

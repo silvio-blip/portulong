@@ -39,7 +39,7 @@ def instalar_icone():
         # Fallback: copiar do pacote local
         try:
             from portulong import __file__ as portulong_file
-            icone_local = Path(portulong_file).parent / "images" / "Portulong.png"
+            icone_local = Path(portulong_file).parent / "imagens" / "Portulong.png"
             if icone_local.exists():
                 shutil.copy2(icone_local, icone_destino)
                 print(f"✅ Ícone copiado do pacote local")
