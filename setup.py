@@ -47,7 +47,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="portulong-sistema",
-    version="1.0.17",
+    version="1.0.18",
     author="portulong",
     author_email="portulong@example.com",
     description="Linguagem de programação em Português de Portugal para criar páginas web",

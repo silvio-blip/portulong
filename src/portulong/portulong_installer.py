@@ -7,6 +7,7 @@ Configura tudo automaticamente: ícones, MIME, VS Code, atalhos
 import os
 import sys
 import subprocess
+import urllib.request
 import shutil
 from pathlib import Path
 
@@ -23,21 +24,28 @@ def run_cmd(cmd, check=True):
         return None
 
 def instalar_icone():
-    """Instala ícone do pacote local"""
-    print("📥 Instalando ícone...")
+    """Baixa e instala ícone do imgur"""
+    print("📥 Baixando ícone...")
+    icone_url = "https://i.imgur.com/CCsXVnb.png"
     icone_destino = Path.home() / ".local/share/icons/hicolor/128x128/apps/portulong.png"
     icone_destino.parent.mkdir(parents=True, exist_ok=True)
     
-    # Usar ícone do pacote local (já incluído no pip install)
     try:
-        from portulong import __file__ as portulong_file
-        icone_local = Path(portulong_file).parent / "imagens" / "Portulong.png"
-        if icone_local.exists():
-            shutil.copy2(icone_local, icone_destino)
-            print(f"✅ Ícone instalado: {icone_destino}")
-            return True
+        urllib.request.urlretrieve(icone_url, icone_destino)
+        print(f"✅ Ícone instalado: {icone_destino}")
+        return True
     except Exception as e:
-        print(f"❌ Erro ao instalar ícone: {e}")
+        print(f"❌ Erro ao baixar ícone: {e}")
+        # Fallback: copiar do pacote local
+        try:
+            from portulong import __file__ as portulong_file
+            icone_local = Path(portulong_file).parent / "imagens" / "Portulong.png"
+            if icone_local.exists():
+                shutil.copy2(icone_local, icone_destino)
+                print(f"✅ Ícone copiado do pacote local")
+                return True
+        except:
+            pass
     return False
 
 def configurar_mime():
@@ -72,7 +80,7 @@ Version=1.0
 Type=Application
 Name=portulong
 Comment=Executar arquivos portulong (.ptg)
-Exec=portulong %f
+Exec=ptg %f
 Icon=portulong
 Terminal=true
 Categories=Development;
@@ -84,6 +92,26 @@ MIMETypes=application/x-ptg;
     run_cmd("update-desktop-database ~/.local/share/applications/")
     run_cmd("xdg-mime default portulong.desktop application/x-ptg")
     print("✅ Arquivo .desktop configurado")
+
+def instalar_vscode_extension():
+    """Instala extensão VS Code"""
+    print("📦 Instalando extensão VS Code...")
+    # Verificar se code está disponível
+    if shutil.which("code"):
+        result = run_cmd("code --install-extension silvio-blip.portulong", check=False)
+        if result and result.returncode == 0:
+            print("✅ Extensão VS Code instalada")
+        else:
+            print("⚠️ Extensão não encontrada no marketplace - configure manualmente")
+            print("   VS Code > Extensões > procurar 'portulong'")
+    elif shutil.which("codegoes"):
+        result = run_cmd("codegoes --install-extension silvio-blip.portulong", check=False)
+        if result and result.returncode == 0:
+            print("✅ Extensão CodeGoes instalada")
+        else:
+            print("⚠️ Extensão não encontrada no marketplace - configure manualmente")
+    else:
+        print("ℹ️ VS Code/CodeGoes não encontrado - instale manualmente")
 
 def configurar_vscode():
     """Configura VS Code/CodeGoes para .ptg"""
@@ -114,6 +142,66 @@ def configurar_vscode():
     import json
     settings_file.write_text(json.dumps(settings, indent=2))
     print("✅ VS Code configurado")
+    
+    # Criar pasta de snippets
+    snippets_dir = vscode_dir / "snippets"
+    snippets_dir.mkdir(parents=True, exist_ok=True)
+    snippets_file = snippets_dir / "portulong.json"
+    snippets_content = {
+        "Página": {
+            "prefix": "pagina",
+            "body": [
+                'pagina "${1:Minha Página}"',
+                "",
+                'cabecalho "${2:Olá, mundo!}"',
+                'paragrafo "${3:Bem-vindo ao portulong.}"',
+                'botao "${4:Clique Aqui}" acao "alerta(\'${5:Olá, mundo!}\')"',
+                "",
+                "estilo:",
+                "body { fundo: #f0f0f0; }",
+                "h1 { cor: #333; }",
+                "",
+                "script:",
+                "funcao alerta(mensagem):",
+                "    alerta(mensagem)"
+            ],
+            "description": "Cria página portulong básica"
+        },
+        "Cabeçalho": {
+            "prefix": "cabecalho",
+            "body": ['cabecalho "${1:Título}"'],
+            "description": "Cria cabeçalho h1"
+        },
+        "Parágrafo": {
+            "prefix": "paragrafo",
+            "body": ['paragrafo "${1:Texto}"'],
+            "description": "Cria parágrafo"
+        },
+        "Botão": {
+            "prefix": "botao",
+            "body": ['botao "${1:Label}" acao "${2:alerta(\'clicado\')}"'],
+            "description": "Cria botão com ação"
+        },
+        "Estilo": {
+            "prefix": "estilo",
+            "body": [
+                "estilo:",
+                "${1:seletor} { ${2:propriedade}: ${3:valor}; }"
+            ],
+            "description": "Bloco de estilo CSS"
+        },
+        "Script": {
+            "prefix": "script",
+            "body": [
+                "script:",
+                "funcao ${1:nome}(${2:param}):",
+                "    ${3:codigo}"
+            ],
+            "description": "Bloco de script com função"
+        }
+    }
+    snippets_file.write_text(json.dumps(snippets_content, indent=2, ensure_ascii=False))
+    print("✅ Snippets VS Code criados")
 
 def atualizar_caches():
     """Atualiza caches do sistema"""
@@ -129,19 +217,6 @@ def reiniciar_gerenciadores():
     for cmd in ["nautilus -q", "dolphin -q", "thunar -q", "pcmanfm -q"]:
         run_cmd(cmd, check=False)
     print("✅ Gerenciadores reiniciados")
-
-def instalar_vscode_extension():
-    """Tenta instalar extensão VS Code"""
-    print("📦 Instalando extensão VS Code...")
-    # Verificar se code está disponível
-    if shutil.which("code"):
-        run_cmd("code --install-extension silvio-blip.portulong", check=False)
-        print("✅ Extensão VS Code instalada")
-    elif shutil.which("codegoes"):
-        run_cmd("codegoes --install-extension silvio-blip.portulong", check=False)
-        print("✅ Extensão CodeGoes instalada")
-    else:
-        print("ℹ️ VS Code/CodeGoes não encontrado - instale manualmente")
 
 def main():
     print("=" * 50)
@@ -170,7 +245,12 @@ def main():
     print()
     print("Agora você pode:")
     print("  ptg arquivo.ptg          # Executar arquivo")
-    print("  ptg-atualizar            # Atualizar tudo")
+    print("  ptg install              # Instala e configura tudo")
+    print("  ptg update               # Atualiza versão")
+    print("  ptg uninstall            # Remove tudo")
+    print("  ptg version              # Mostra versão")
+    print("  ptg config               # Configura sistema")
+    print("  ptg help                 # Mostra ajuda")
     print("  Duplo clique em .ptg     # Executa automaticamente")
     print()
     print("Reinicie o VS Code/CodeGoes para ver:")
