@@ -8,6 +8,8 @@ import os
 import sys
 import subprocess
 import urllib.request
+import shutil
+import time
 from pathlib import Path
 
 def run_cmd(cmd, check=True):
@@ -23,19 +25,23 @@ def run_cmd(cmd, check=True):
         return None
 
 def instalar_icone():
-    """Baixa e instala ícone do imgur"""
+    """Baixa e instala ícone do imgur com retry"""
     print("📥 Baixando ícone...")
     icone_url = "https://i.imgur.com/0FCTw66.png"
     icone_destino = Path.home() / ".local/share/icons/hicolor/128x128/apps/portulong.png"
     icone_destino.parent.mkdir(parents=True, exist_ok=True)
     
-    try:
-        urllib.request.urlretrieve(icone_url, icone_destino)
-        print(f"✅ Ícone instalado: {icone_destino}")
-        return True
-    except Exception as e:
-        print(f"❌ Erro ao baixar ícone: {e}")
-        return False
+    for tentativa in range(3):
+        try:
+            urllib.request.urlretrieve(icone_url, icone_destino)
+            print(f"✅ Ícone instalado: {icone_destino}")
+            return True
+        except Exception as e:
+            print(f"⚠️ Tentativa {tentativa+1}/3 falhou: {e}")
+            if tentativa < 2:
+                time.sleep(2)
+    print(f"❌ Falha ao baixar ícone após 3 tentativas")
+    return False
 
 def configurar_mime():
     """Configura tipo MIME para .ptg"""
