@@ -8,7 +8,6 @@ import os
 import sys
 import subprocess
 import urllib.request
-import shutil
 from pathlib import Path
 
 def run_cmd(cmd, check=True):
@@ -26,7 +25,7 @@ def run_cmd(cmd, check=True):
 def instalar_icone():
     """Baixa e instala ícone do imgur"""
     print("📥 Baixando ícone...")
-    icone_url = "https://i.imgur.com/CCsXVnb.png"
+    icone_url = "https://i.imgur.com/0FCTw66.png"
     icone_destino = Path.home() / ".local/share/icons/hicolor/128x128/apps/portulong.png"
     icone_destino.parent.mkdir(parents=True, exist_ok=True)
     
@@ -36,17 +35,7 @@ def instalar_icone():
         return True
     except Exception as e:
         print(f"❌ Erro ao baixar ícone: {e}")
-        # Fallback: copiar do pacote local
-        try:
-            from portulong import __file__ as portulong_file
-            icone_local = Path(portulong_file).parent / "imagens" / "Portulong.png"
-            if icone_local.exists():
-                shutil.copy2(icone_local, icone_destino)
-                print(f"✅ Ícone copiado do pacote local")
-                return True
-        except:
-            pass
-    return False
+        return False
 
 def configurar_mime():
     """Configura tipo MIME para .ptg"""
