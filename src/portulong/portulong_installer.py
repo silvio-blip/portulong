@@ -7,9 +7,7 @@ Configura tudo automaticamente: ícones, MIME, VS Code, atalhos
 import os
 import sys
 import subprocess
-import urllib.request
 import shutil
-import time
 from pathlib import Path
 
 def run_cmd(cmd, check=True):
@@ -25,19 +23,23 @@ def run_cmd(cmd, check=True):
         return None
 
 def instalar_icone():
-    """Baixa ícone do GitHub (raw) - sempre funciona"""
-    print("📥 Baixando ícone...")
-    icone_url = "https://raw.githubusercontent.com/silvio-blip/portulong/main/imagens/Portulong.png"
+    """Instala ícone do pacote instalado (vem com pip install)"""
+    print("📥 Instalando ícone do pacote...")
     icone_destino = Path.home() / ".local/share/icons/hicolor/128x128/apps/portulong.png"
     icone_destino.parent.mkdir(parents=True, exist_ok=True)
     
     try:
-        urllib.request.urlretrieve(icone_url, icone_destino)
-        print(f"✅ Ícone instalado: {icone_destino}")
-        return True
+        from portulong import __file__ as portulong_file
+        icone_local = Path(portulong_file).parent / "imagens" / "Portulong.png"
+        if icone_local.exists():
+            shutil.copy2(icone_local, icone_destino)
+            print(f"✅ Ícone instalado: {icone_destino}")
+            return True
+        else:
+            print(f"❌ Ícone não encontrado no pacote: {icone_local}")
     except Exception as e:
-        print(f"❌ Erro ao baixar ícone: {e}")
-        return False
+        print(f"❌ Erro ao instalar ícone: {e}")
+    return False
 
 def configurar_mime():
     """Configura tipo MIME para .ptg"""
