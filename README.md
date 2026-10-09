@@ -8,22 +8,35 @@ Linguagem de programação em **Português de Portugal** para criar páginas web
 pip install portulong-sistema
 ```
 
-Após instalar, execute uma vez para configurar automaticamente (ícone, associação .ptg, VS Code):
+## Comandos
+
+| Comando | Descrição |
+|---------|-----------|
+| `ptg arquivo.ptg` | Executa arquivo .ptg (abre no browser) |
+| `ptg install` | Instala e configura tudo 100% (ícones, MIME, VS Code, atalhos) |
+| `ptg update` | Atualiza para última versão |
+| `ptg uninstall` | Remove portulong completamente |
+| `ptg version` | Mostra versão atual |
+| `ptg config` | Configura sistema (ícones, associações, VS Code) |
+| `ptg help` | Mostra ajuda |
+
+## Uso Rápido
 
 ```bash
-ptg
-```
+# Executar arquivo (configura automaticamente na 1ª vez)
+ptg exemplos/exemplo.ptg
 
-## Uso
+# Instalação completa do sistema
+ptg install
 
-```bash
-ptg arquivo.ptg
-```
+# Ver versão
+ptg version
 
-Ou use o subcomando explícito:
+# Atualizar
+ptg update
 
-```bash
-ptg iniciar arquivo.ptg
+# Ajuda
+ptg help
 ```
 
 ## Sintaxe
@@ -44,26 +57,30 @@ funcao alerta(mensagem):
     alerta(mensagem)
 ```
 
-## Comandos
+## Comandos da Linguagem
 
-| Comando | Descrição |
-|---------|-----------|
-| `pagina` | Título da página (`<title>`) |
-| `cabecalho` | Cabeçalho `<h1>` |
-| `paragrafo` | Parágrafo `<p>` |
-| `botao` | Botão `<button>` |
-| `estilo` | CSS (usa nomes PT: `fundo`, `cor`, `tamanho`, etc.) |
-| `script` | JavaScript com `funcao` |
-| `alerta()` | Mostra alerta no browser |
+| Comando | HTML Gerado |
+|---------|-------------|
+| `pagina "titulo"` | `<title>` |
+| `cabecalho "texto"` | `<h1>` |
+| `paragrafo "texto"` | `<p>` |
+| `botao "label" acao "js"` | `<button onclick="js">` |
+| `estilo:` | `<style>` (CSS com nomes PT) |
+| `script:` | `<script>` (JS com `funcao`) |
+| `alerta("msg")` | `alert("msg")` |
 
-## Funcionalidades
+## Propriedades CSS em PT
 
-- 100% em Português de Portugal
-- Ícone incluído automaticamente (canto + favicon)
-- Servidor HTTP integrado (porta 8000)
-- Abertura automática no navegador
-- Configuração automática na 1ª execução
-- Funciona em qualquer editor de código
+| PT | CSS |
+|----|-----|
+| `fundo` | `background` |
+| `cor` | `color` |
+| `tamanho` | `font-size` |
+| `largura` | `width` |
+| `altura` | `height` |
+| `margem` | `margin` |
+| `preenchimento` | `padding` |
+| `borda` | `border` |
 
 ## Exemplos
 
@@ -72,16 +89,21 @@ ptg exemplos/exemplo.ptg
 ptg exemplos/sistema_completo.ptg
 ```
 
-## Atualização
+## Funcionalidades
+
+- ✅ 100% Português de Portugal
+- ✅ Ícone automático (canto + favicon)
+- ✅ Servidor HTTP integrado (porta 8000)
+- ✅ Abertura automática no navegador
+- ✅ Configuração automática na 1ª execução
+- ✅ Syntax highlighting VS Code
+- ✅ Snippets (digite `pagina` + Tab)
+- ✅ Associação .ptg (duplo clique executa)
+
+## Desenvolvimento
 
 ```bash
-ptg-atualizar
+# Modo desenvolvimento
+pip install -e .
+ptg arquivo.ptg
 ```
-
-## Instalação completa do sistema
-
-```bash
-portulong-install
-```
-
-Instala ícone do sistema, associação de arquivo .ptg, entrada no menu de aplicações e snippets VS Code.
