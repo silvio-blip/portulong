@@ -7,7 +7,6 @@ Configura tudo automaticamente: ícones, MIME, VS Code, atalhos
 import os
 import sys
 import subprocess
-import urllib.request
 import shutil
 from pathlib import Path
 
@@ -24,28 +23,21 @@ def run_cmd(cmd, check=True):
         return None
 
 def instalar_icone():
-    """Baixa e instala ícone do GitHub"""
-    print("📥 Baixando ícone...")
-    icone_url = "https://raw.githubusercontent.com/silvio-blip/portulong/main/imagens/Portulong.png"
+    """Instala ícone do pacote local"""
+    print("📥 Instalando ícone...")
     icone_destino = Path.home() / ".local/share/icons/hicolor/128x128/apps/portulong.png"
     icone_destino.parent.mkdir(parents=True, exist_ok=True)
     
+    # Usar ícone do pacote local (já incluído no pip install)
     try:
-        urllib.request.urlretrieve(icone_url, icone_destino)
-        print(f"✅ Ícone salvo em: {icone_destino}")
-        return True
+        from portulong import __file__ as portulong_file
+        icone_local = Path(portulong_file).parent / "imagens" / "Portulong.png"
+        if icone_local.exists():
+            shutil.copy2(icone_local, icone_destino)
+            print(f"✅ Ícone instalado: {icone_destino}")
+            return True
     except Exception as e:
-        print(f"❌ Erro ao baixar ícone: {e}")
-        # Fallback: copiar do pacote local
-        try:
-            from portulong import __file__ as portulong_file
-            icone_local = Path(portulong_file).parent / "imagens" / "Portulong.png"
-            if icone_local.exists():
-                shutil.copy2(icone_local, icone_destino)
-                print(f"✅ Ícone copiado do pacote local")
-                return True
-        except:
-            pass
+        print(f"❌ Erro ao instalar ícone: {e}")
     return False
 
 def configurar_mime():
