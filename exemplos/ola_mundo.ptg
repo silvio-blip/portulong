@@ -1,0 +1,15 @@
+pagina "Ola, Mundo em Portulong"
+
+cabecalho "Ola, Mundo em Portulong!"
+paragrafo "Esta pagina foi criada 100% em Portugues de Portugal."
+botao "Carregar Saudacao" acao "alerta('Ola do Portulong! Tudo funciona nativamente no seu computador.')"
+
+estilo:
+body { fundo: #f8fafc; espacamento: 40px; fonte-familia: sans-serif; }
+h1 { cor: #1e3a8a; margem-base: 15px; }
+p { cor: #334155; tamanho-fonte: 18px; }
+button { fundo: #2563eb; cor: branco; espacamento: 12px 24px; borda: nenhum; borda-arredondada: 8px; cursor: ponteiro; tamanho-fonte: 16px; sombra: 0 4px 6px rgba(0,0,0,0.1); }
+
+script:
+funcao alerta(mensagem):
+    alerta(mensagem)

@@ -1,0 +1,6 @@
+{
+  "name": "Portulong",
+  "description": "Linguagem de programação em Português de Portugal para criar páginas web com interpretador e servidor integrado.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

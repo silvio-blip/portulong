@@ -1,84 +1,51 @@
 #!/usr/bin/env python3
-"""Setup com post-install automático"""
-
 from setuptools import setup, find_packages
-from setuptools.command.install import install
-from setuptools.command.develop import develop
-import subprocess
-import sys
-import os
+from pathlib import Path
 
-class PostInstallCommand(install):
-    """Post-install para configuração automática"""
-    def run(self):
-        install.run(self)
-        self.executar_configuracao()
-
-    def executar_configuracao(self):
-        try:
-            # Importar e executar instalador
-            sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-            from portulong.portulong_installer import main
-            print("\n🔧 Executando configuração automática...")
-            main()
-        except Exception as e:
-            print(f"⚠️ Configuração automática falhou: {e}")
-            print("Execute manualmente: portulong-install")
-
-class PostDevelopCommand(develop):
-    """Post-develop para modo desenvolvimento"""
-    def run(self):
-        develop.run(self)
-        self.executar_configuracao()
-
-    def executar_configuracao(self):
-        try:
-            sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-            from portulong.portulong_installer import main
-            print("\n🔧 Executando configuração automática...")
-            main()
-        except Exception as e:
-            print(f"⚠️ Configuração automática falhou: {e}")
-            print("Execute manualmente: portulong-install")
-
-# Ler README
-with open("README.md", "r", encoding="utf-8") as f:
-    long_description = f.read()
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text(encoding="utf-8") if (this_directory / "README.md").exists() else ""
 
 setup(
-    name="portulong-sistema",
-    version="1.0.24",
-    author="portulong",
-    author_email="portulong@example.com",
-    description="Linguagem de programação em Português de Portugal para criar páginas web",
-    long_description=open("README.md", "r", encoding="utf-8").read(),
+    name="portulong",
+    version="1.2.0",
+    description="Linguagem de programação em Português de Portugal para a Web com servidor e interpretador nativos.",
+    long_description=long_description,
     long_description_content_type="text/markdown",
+    author="Silvio",
+    author_email="silviok5000@gmail.com",
     url="https://github.com/silvio-blip/portulong",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    license="MIT",
+    packages=find_packages(),
     include_package_data=True,
     package_data={
-        "portulong": ["imagens/*.png", "*.ptg", "syntaxes/*.json", "snippets/*.json"],
-    },
-    install_requires=[],
-    entry_points={
-        "console_scripts": [
-            "portulong-sistema=portulong.__main__:main",
-            "portulong-install=portulong.portulong_installer:main",
-            "ptg=portulong.ptg_wrapper:main",
-            "ptg-iniciar=portulong.ptg_wrapper:main",
-            "ptg-atualizar=portulong.ptg_atualizar:main",
+        "portulong": [
+            "imagens/*",
         ],
     },
-    cmdclass={
-        'install': PostInstallCommand,
-        'develop': PostDevelopCommand,
+    entry_points={
+        "console_scripts": [
+            "ptg=portulong.cli:main",
+            "portulong=portulong.cli:main",
+        ],
+        "gui_scripts": [
+            "ptg-gui=portulong.cli:main",
+        ],
     },
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "Topic :: Software Development :: Compilers",
+        "Topic :: Software Development :: Interpreters",
         "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
         "Natural Language :: Portuguese",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )

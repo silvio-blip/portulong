@@ -1,0 +1,39 @@
+pagina "Contador e Calculadora em Portulong"
+
+cabecalho "Contador Interativo em Portulong"
+paragrafo "Exemplo demonstrando manipulacao do estado e funcoes 100% em Portugues."
+
+caixa "cartao":
+    titulo2 "Valor do Contador:"
+    caixa "mostrador":
+        paragrafo "0"
+    fim_caixa
+    
+    caixa "botoes":
+        botao "- Diminuir" acao "alterar(-1)"
+        botao "+ Aumentar" acao "alterar(1)"
+        botao "Reiniciar" acao "reiniciar()"
+    fim_caixa
+fim_caixa
+
+estilo:
+body { fundo: #f0fdf4; espacamento: 30px; fonte-familia: system-ui, sans-serif; }
+.cartao { fundo: branco; espacamento: 25px; borda-arredondada: 12px; largura-maxima: 380px; sombra: 0 4px 15px rgba(0,0,0,0.06); alinhamento-texto: centro; }
+.mostrador p { tamanho-fonte: 48px; cor: #15803d; margem: 15px 0; peso-fonte: negrito; }
+.botoes { exibicao: flexivel; intervalo: 10px; justificar-conteudo: centro; }
+button { fundo: #16a34a; cor: branco; espacamento: 10px 18px; borda: nenhum; borda-arredondada: 6px; cursor: ponteiro; tamanho-fonte: 14px; }
+
+script:
+var contador = 0
+
+funcao alterar(delta):
+    contador += delta
+    var el = document.querySelector('.mostrador p')
+    se el:
+        el.textContent = contador
+
+funcao reiniciar():
+    contador = 0
+    var el = document.querySelector('.mostrador p')
+    se el:
+        el.textContent = 0
