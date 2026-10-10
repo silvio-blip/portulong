@@ -8,10 +8,11 @@
         "strings": true
     },
     "editor.suggestOnTriggerCharacters": true,
-    "files.iconAssociations": {
-        "*.ptg": "portulong"
-    },
     "files.exclude": {
         "**/.vscode": true
-    }
+    },
+    "explorer.fileExtensions": {
+        "ptg": "portulong-icon"
+    },
+    "workbench.iconTheme": "vs-seti"
 }

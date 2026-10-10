@@ -517,7 +517,7 @@ export class Empretador {
           <!-- Rodapé do Terminal -->
           <div style="background:#090d16;padding:6px 16px;border-top:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#64748b;font-family:ui-monospace,monospace;">
             <span>● Pronto</span>
-            <span>v1.0.31</span>
+            <span>v1.0.32</span>
           </div>
         </div>
       </div>

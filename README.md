@@ -1,4 +1,4 @@
-# Portulong (v1.0.31)
+# Portulong (v1.0.32)
 
 Linguagem de programação em Português de Portugal para criar páginas web e aplicações completas com interpretador e servidor integrado.
 
