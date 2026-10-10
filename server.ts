@@ -129,7 +129,14 @@ async function startServer() {
         return next();
       }
       try {
-        let template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+        const indexPath = path.resolve(__dirname, 'index.html');
+        let template = '';
+        if (fs.existsSync(indexPath)) {
+          template = fs.readFileSync(indexPath, 'utf-8');
+        } else {
+          template = `<!doctype html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Portulong</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>`;
+          fs.writeFileSync(indexPath, template, 'utf-8');
+        }
         template = await vite.transformIndexHtml(url, template);
         res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(template);
       } catch (e: any) {

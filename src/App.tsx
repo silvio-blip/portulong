@@ -49,28 +49,31 @@ export default function App() {
   const compiler = useMemo(() => new Empretador(), []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Escutar logs do Portulong enviados pelo iframe
+  // Escutar logs do Portulong enviados pelo iframe (com limite para alta performance)
   useEffect(() => {
     const escutarLogs = (e: MessageEvent) => {
       if (e.data?.type === 'PORTULONG_CONSOLE_LOG') {
         const txt = String(e.data.texto);
-        setLogsConsole(prev => [...prev, txt]);
+        setLogsConsole(prev => {
+          const next = [...prev, txt];
+          return next.length > 50 ? next.slice(-50) : next;
+        });
       }
     };
     window.addEventListener('message', escutarLogs);
     return () => window.removeEventListener('message', escutarLogs);
   }, []);
 
-  // Compilar código
+  // Compilar código de forma rápida sem travamentos
   const compilar = (codigoFonte: string = codigo) => {
     setCompilando(true);
     setLogsConsole([]);
     try {
       const resultadoHtml = compiler.empretar(codigoFonte);
       setHtmlCompilado(resultadoHtml);
-      setStatusMsg(`Compilado com sucesso • ${compiler.titulo}`);
+      setStatusMsg(`Compilado • ${compiler.titulo}`);
 
-      // Notificar o backend sobre o código atual para atualizar /preview
+      // Notificar o backend sobre o código atual para atualizar /preview de forma assíncrona
       fetch('/api/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,9 +81,9 @@ export default function App() {
       }).catch(() => {});
     } catch (err: any) {
       console.error(err);
-      setStatusMsg(`Erro de compilação: ${err?.message || 'Sintaxe inválida'}`);
+      setStatusMsg(`Erro: ${err?.message || 'Sintaxe inválida'}`);
     } finally {
-      setTimeout(() => setCompilando(false), 200);
+      setCompilando(false);
     }
   };
 
@@ -158,7 +161,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
+    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
       {/* Barra de Topo Principal */}
       <header className="bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 shadow-sm shrink-0 z-30">
         {/* Identificação da Linguagem */}

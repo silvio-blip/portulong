@@ -1,3 +1,4 @@
+# Python builds
 __pycache__/
 *.pyc
 *.pyo
@@ -6,4 +7,11 @@ __pycache__/
 build/
 dist/
 .eggs/
-*.html
+
+# Node & Vite
+node_modules/
+.env.local
+
+# Ficheiros temporários de saída
+saida_portulong.html
+dados_portulong.json
