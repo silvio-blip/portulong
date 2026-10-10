@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Portulong",
+  "scopeName": "source.ptg",
+  "fileTypes": ["ptg"],
+  "patterns": [
+    {
+      "name": "comment.line.number-sign.ptg",
+      "match": "#.*$"
+    },
+    {
+      "name": "string.quoted.double.ptg",
+      "begin": "\"",
+      "end": "\""
+    },
+    {
+      "name": "string.quoted.single.ptg",
+      "begin": "'",
+      "end": "'"
+    },
+    {
+      "name": "constant.numeric.ptg",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    },
+    {
+      "name": "keyword.control.ptg",
+      "match": "\\b(se|senao|enquanto|para|cada|em|de|ate|repetir|interromper|parar|quebrar|continuar|retornar)\\b"
+    },
+    {
+      "name": "storage.type.function.ptg",
+      "match": "\\b(funcao|componente|rota|estilo|script|servidor|importar|de)\\b"
+    },
+    {
+      "name": "support.function.ptg",
+      "match": "\\b(escrever|imprimir|ler|alerta|obter_valor|definir_valor|definir_texto|definir_conteudo|limpar_elemento|adicionar_item|pedir_dados|enviar_dados)\\b"
+    },
+    {
+      "name": "entity.name.tag.ptg",
+      "match": "\\b(pagina|cabecalho|titulo1|titulo2|titulo3|paragrafo|texto|destaque|botao|campo|input|caixa|div|lista|item|imagem|ligacao|fim_caixa|fim_div|fim_lista|fim_estilo|fim_script|fim_servidor|fim_componente)\\b"
+    },
+    {
+      "name": "constant.language.ptg",
+      "match": "\\b(verdadeiro|falso|nulo)\\b"
+    }
+  ]
+}

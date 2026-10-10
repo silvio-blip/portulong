@@ -33,49 +33,40 @@ interface ItemSugestao {
 }
 
 const CATALOGO_SUGESTOES: ItemSugestao[] = [
-  // Discord
-  { gatilho: 'discord.CriarBot', texto: 'discord.CriarBot(prefixo="!")', inserir: 'discord.CriarBot(prefixo="!")', tipo: 'discord', detalhe: 'Instancia um novo bot Discord' },
-  { gatilho: 'discord.Incorporado', texto: 'discord.Incorporado(titulo, descricao, cor)', inserir: 'discord.Incorporado("Título", "Descrição", "#5865F2")', tipo: 'discord', detalhe: 'Cria uma mensagem incorporada (Embed)' },
-  { gatilho: 'discord.instalar', texto: 'discord.instalar()', inserir: 'discord.instalar()', tipo: 'discord', detalhe: 'Instala discord.py automaticamente' },
-  { gatilho: 'bot.comando', texto: 'comando bot.comando("ola"):', inserir: 'comando bot.comando("ola"):\n    funcao responder_ola(ctx):\n        ctx.responder("Olá!")', tipo: 'discord', detalhe: 'Regista comando por prefixo (!ola)' },
-  { gatilho: 'bot.comando_barra', texto: 'barra bot.comando_barra("ajuda", "desc"):', inserir: 'barra bot.comando_barra("ajuda", "Mostra ajuda"):\n    funcao responder_ajuda(ctx):\n        ctx.responder("Comando ativo!")', tipo: 'discord', detalhe: 'Regista Slash Command (/ajuda)' },
-  { gatilho: 'bot.quando_pronto', texto: 'ao bot.quando_pronto:', inserir: 'ao bot.quando_pronto:\n    funcao ao_ligar():\n        escrever("Bot conectado ao Discord!")', tipo: 'discord', detalhe: 'Evento quando o bot fica online' },
-  { gatilho: 'bot.iniciar', texto: 'bot.iniciar(token)', inserir: 'bot.iniciar(token)', tipo: 'discord', detalhe: 'Inicia conexão do bot com o token' },
-  { gatilho: 'ctx.responder', texto: 'ctx.responder("texto")', inserir: 'ctx.responder("Olá!")', tipo: 'discord', detalhe: 'Responde à mensagem do utilizador' },
-  { gatilho: 'ctx.enviar', texto: 'ctx.enviar("texto")', inserir: 'ctx.enviar("Mensagem no canal")', tipo: 'discord', detalhe: 'Envia mensagem para o canal do comando' },
-  { gatilho: 'ctx.autor.nome', texto: 'ctx.autor.nome', inserir: 'ctx.autor.nome', tipo: 'discord', detalhe: 'Nome do utilizador que enviou a mensagem' },
-  { gatilho: 'ctx.canal.nome', texto: 'ctx.canal.nome', inserir: 'ctx.canal.nome', tipo: 'discord', detalhe: 'Nome do canal onde o comando foi enviado' },
+  // Discord Context (ctx)
+  { gatilho: 'ctx.autor', texto: 'ctx.autor', inserir: 'ctx.autor', tipo: 'discord', detalhe: 'Objeto do utilizador que enviou a mensagem' },
+  { gatilho: 'ctx.autor.nome', texto: 'ctx.autor.nome', inserir: 'ctx.autor.nome', tipo: 'discord', detalhe: 'Nome do autor' },
+  { gatilho: 'ctx.autor.id', texto: 'ctx.autor.id', inserir: 'ctx.autor.id', tipo: 'discord', detalhe: 'ID do autor' },
+  { gatilho: 'ctx.autor.mencao', texto: 'ctx.autor.mencao', inserir: 'ctx.autor.mencao', tipo: 'discord', detalhe: 'Menção ao autor (@nome)' },
+  { gatilho: 'ctx.canal', texto: 'ctx.canal', inserir: 'ctx.canal', tipo: 'discord', detalhe: 'Objeto do canal' },
+  { gatilho: 'ctx.canal.nome', texto: 'ctx.canal.nome', inserir: 'ctx.canal.nome', tipo: 'discord', detalhe: 'Nome do canal' },
+  { gatilho: 'ctx.servidor', texto: 'ctx.servidor', inserir: 'ctx.servidor', tipo: 'discord', detalhe: 'Objeto do servidor (guild)' },
+  { gatilho: 'ctx.responder', texto: 'ctx.responder("msg")', inserir: 'ctx.responder("$1")', tipo: 'discord', detalhe: 'Responde à mensagem' },
+  { gatilho: 'ctx.enviar', texto: 'ctx.enviar("msg")', inserir: 'ctx.enviar("$1")', tipo: 'discord', detalhe: 'Envia mensagem no canal' },
+
+  // Bot Discord
+  { gatilho: 'discord.CriarBot', texto: 'discord.CriarBot(prefixo="!")', inserir: 'discord.CriarBot(prefixo="!")', tipo: 'discord', detalhe: 'Instancia um novo bot' },
+  { gatilho: 'bot.comando', texto: 'comando bot.comando("nome"):', inserir: 'comando bot.comando("$1"):\n    funcao ${1:nome}(ctx):\n        ctx.responder("$2")', tipo: 'discord', detalhe: 'Comando por prefixo' },
+  { gatilho: 'bot.comando_barra', texto: 'barra bot.comando_barra("nome", "desc"):', inserir: 'barra bot.comando_barra("$1", "$2"):\n    funcao ${1:nome}(ctx):\n        ctx.responder("$3")', tipo: 'discord', detalhe: 'Slash Command' },
+  { gatilho: 'bot.iniciar', texto: 'bot.iniciar(token)', inserir: 'bot.iniciar("$1")', tipo: 'discord', detalhe: 'Inicia o bot' },
 
   // Ambiente (.env)
-  { gatilho: 'ambiente.carregar_ambiente', texto: 'ambiente.carregar_ambiente(".env")', inserir: 'ambiente.carregar_ambiente(".env")', tipo: 'modulo', detalhe: 'Carrega variáveis do ficheiro .env' },
-  { gatilho: 'ambiente.obter_ambiente', texto: 'ambiente.obter_ambiente("CHAVE")', inserir: 'ambiente.obter_ambiente("CHAVE", "padrao")', tipo: 'modulo', detalhe: 'Obtém valor de variável de ambiente' },
-  { gatilho: 'ambiente.definir_ambiente', texto: 'ambiente.definir_ambiente("CHAVE", val)', inserir: 'ambiente.definir_ambiente("CHAVE", valor)', tipo: 'modulo', detalhe: 'Define variável de ambiente em tempo real' },
+  { gatilho: 'ambiente.carregar_ambiente', texto: 'ambiente.carregar_ambiente(".env")', inserir: 'ambiente.carregar_ambiente(".env")', tipo: 'modulo', detalhe: 'Carrega .env' },
+  { gatilho: 'ambiente.obter_ambiente', texto: 'ambiente.obter_ambiente("CHAVE")', inserir: 'ambiente.obter_ambiente("$1")', tipo: 'modulo', detalhe: 'Obtém variável' },
 
-  // Base de Dados & Supabase
-  { gatilho: 'base_dados.conectar_supabase', texto: 'base_dados.conectar_supabase(url, chave)', inserir: 'base_dados.conectar_supabase(url, chave)', tipo: 'modulo', detalhe: 'Conecta ao Supabase nativamente' },
-  { gatilho: 'base_dados.BaseDadosMemoria', texto: 'base_dados.BaseDadosMemoria()', inserir: 'base_dados.BaseDadosMemoria()', tipo: 'modulo', detalhe: 'Cria base de dados local em memória/JSON' },
+  // Base de Dados
+  { gatilho: 'base_dados.conectar_supabase', texto: 'base_dados.conectar_supabase(url, chave)', inserir: 'base_dados.conectar_supabase("$1", "$2")', tipo: 'modulo', detalhe: 'Conecta Supabase' },
+  { gatilho: 'db.de', texto: 'db.de("tabela")', inserir: 'db.de("$1")', tipo: 'modulo', detalhe: 'Seleciona tabela' },
 
   // Escrita & Terminal
-  { gatilho: 'escrever', texto: 'escrever("texto")', inserir: 'escrever("ola mundo")', tipo: 'funcao', detalhe: 'Imprime texto ou variável no terminal (print)' },
-  { gatilho: 'imprimir', texto: 'imprimir("texto")', inserir: 'imprimir("ola mundo")', tipo: 'funcao', detalhe: 'Alias para escrever no terminal' },
-  { gatilho: 'ler', texto: 'ler("pergunta")', inserir: 'ler("Introduza valor: ")', tipo: 'funcao', detalhe: 'Lê entrada do utilizador no terminal' },
+  { gatilho: 'escrever', texto: 'escrever("texto")', inserir: 'escrever("$1")', tipo: 'funcao', detalhe: 'Imprime no terminal' },
+  { gatilho: 'ler', texto: 'ler("pergunta")', inserir: 'ler("$1")', tipo: 'funcao', detalhe: 'Entrada do utilizador' },
 
   // Controlo de Fluxo
-  { gatilho: 'enquanto', texto: 'enquanto condicao:', inserir: 'enquanto contador <= 10:\n    escrever(contador)\n    contador += 1', tipo: 'controlo', detalhe: 'Loop de repetição enquanto verdadeiro (while)' },
-  { gatilho: 'repetir', texto: 'repetir:', inserir: 'repetir:\n    escrever("Executando loop")\n    interromper', tipo: 'controlo', detalhe: 'Loop contínuo (while True)' },
-  { gatilho: 'interromper', texto: 'interromper', inserir: 'interromper', tipo: 'controlo', detalhe: 'Para e sai do loop atual (break)' },
-  { gatilho: 'continuar', texto: 'continuar', inserir: 'continuar', tipo: 'controlo', detalhe: 'Avança para a próxima iteração (continue)' },
-  { gatilho: 'se', texto: 'se condicao:', inserir: 'se x > 0:\n    escrever("Positivo")\nsenao:\n    escrever("Zero ou negativo")', tipo: 'controlo', detalhe: 'Estrutura condicional se / senão (if/else)' },
-  { gatilho: 'senao', texto: 'senao:', inserir: 'senao:\n    ', tipo: 'controlo', detalhe: 'Bloco alternativo senão (else)' },
-  { gatilho: 'para cada', texto: 'para cada item em lista:', inserir: 'para cada item em lista:\n    escrever(item)', tipo: 'controlo', detalhe: 'Itera sobre elementos de uma lista (for each)' },
-  { gatilho: 'para de', texto: 'para i de 1 ate 10:', inserir: 'para i de 1 ate 10:\n    escrever(i)', tipo: 'controlo', detalhe: 'Loop numérico com início e fim' },
-  { gatilho: 'funcao', texto: 'funcao nome(args):', inserir: 'funcao minhaFuncao(param):\n    retornar param * 2', tipo: 'funcao', detalhe: 'Declara uma nova função (def)' },
-  { gatilho: 'retornar', texto: 'retornar valor', inserir: 'retornar resultado', tipo: 'controlo', detalhe: 'Retorna um valor da função (return)' },
-
-  // Importações
-  { gatilho: 'importar discord', texto: 'importar discord', inserir: 'importar discord', tipo: 'modulo', detalhe: 'Importa biblioteca oficial do Discord' },
-  { gatilho: 'importar ambiente', texto: 'importar ambiente', inserir: 'importar ambiente', tipo: 'modulo', detalhe: 'Importa módulo de variáveis .env' },
-  { gatilho: 'importar base_dados', texto: 'importar base_dados', inserir: 'importar base_dados', tipo: 'modulo', detalhe: 'Importa módulo de banco de dados e Supabase' },
+  { gatilho: 'enquanto', texto: 'enquanto condicao:', inserir: 'enquanto ${1:condicao}:\n    $0', tipo: 'controlo', detalhe: 'Loop enquanto' },
+  { gatilho: 'para cada', texto: 'para cada item em lista:', inserir: 'para cada ${1:item} em ${2:lista}:\n    $0', tipo: 'controlo', detalhe: 'Loop for each' },
+  { gatilho: 'se', texto: 'se condicao:', inserir: 'se ${1:condicao}:\n    $2\nsenao:\n    $3', tipo: 'controlo', detalhe: 'Estrutura se/senao' },
+  { gatilho: 'funcao', texto: 'funcao nome(args):', inserir: 'funcao ${1:nome}(${2:args}):\n    $0', tipo: 'funcao', detalhe: 'Declara função' },
 ];
 
 export default function App() {
@@ -132,6 +123,11 @@ export default function App() {
       const resultadoHtml = compiler.empretar(codigoFonte);
       setHtmlCompilado(resultadoHtml);
       setStatusMsg(`Compilado • ${compiler.titulo}`);
+
+      // Se não for uma página web visual, mudar automaticamente para a aba de terminal
+      if (!codigoFonte.includes('pagina ')) {
+        setAbaDireita('terminal');
+      }
 
       // Notificar o backend sobre o código atual para atualizar /preview de forma assíncrona
       fetch('/api/compile', {
@@ -275,6 +271,33 @@ export default function App() {
         textareaRef.current.setSelectionRange(novaPos, novaPos);
       }
     }, 10);
+  };
+
+  const validarSintaxePortulong = (texto: string) => {
+    const erros: string[] = [];
+    const linhas = texto.split('\n');
+    let caixasAbertas = 0;
+    let listasAbertas = 0;
+
+    linhas.forEach((raw, idx) => {
+      const l = raw.trim();
+      if (!l || l.startsWith('#')) return;
+
+      // Verificar blocos que exigem dois pontos ':'
+      if (/^(se|enquanto|para|funcao|rota)\b/.test(l) && !l.endsWith(':') && !l.includes('=>')) {
+        erros.push(`Linha ${idx + 1}: Estrutura de controlo deve terminar com ':' (ex: se condicao:)`);
+      }
+
+      if (l.startsWith('caixa ') || l.startsWith('div ')) caixasAbertas++;
+      if (l === 'fim_caixa' || l === 'fim_div') caixasAbertas--;
+      if (l.startsWith('lista ')) listasAbertas++;
+      if (l === 'fim_lista') listasAbertas--;
+    });
+
+    if (caixasAbertas > 0) erros.push(`Aviso: Existe ${caixasAbertas} 'caixa' aberta sem o respetivo 'fim_caixa'.`);
+    if (listasAbertas > 0) erros.push(`Aviso: Existe ${listasAbertas} 'lista' aberta sem o respetivo 'fim_lista'.`);
+
+    return erros;
   };
 
   return (
@@ -512,6 +535,18 @@ export default function App() {
               </div>
             )}
           </div>
+
+          {/* Banner de Erros / Avisos em Tempo Real (Linter) */}
+          {validarSintaxePortulong(codigo).length > 0 && (
+            <div className="bg-amber-950/40 border-t border-amber-500/40 px-3 py-1.5 text-[11px] text-amber-300 font-mono flex flex-col gap-0.5 shrink-0">
+              {validarSintaxePortulong(codigo).map((err, i) => (
+                <div key={i} className="flex items-center gap-1.5 truncate">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
+                  <span>{err}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Barra Inferior com Atalhos de Sintaxe Clicáveis e Abreviaturas */}
           <div className="p-2 bg-slate-900/90 border-t border-slate-800 text-[11px] flex items-center gap-1.5 overflow-x-auto shrink-0 select-none">
@@ -1154,7 +1189,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-slate-400">
           <span className="hidden sm:inline">Servidor: <strong className="text-slate-200 font-mono">0.0.0.0:3000</strong></span>
-          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.29</strong></span>
+          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.30</strong></span>
           <span className="hidden xs:inline">PyPI: <strong className="text-emerald-400 font-mono">portulong-sistema</strong></span>
         </div>
       </footer>

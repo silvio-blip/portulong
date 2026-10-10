@@ -1,0 +1,8 @@
+pagina "Teste Servidor Nativo"
+cabecalho "Servidor Ativo em Portulong"
+paragrafo "Este servidor roda nativamente no terminal!"
+
+servidor:
+    porta: 3000
+    host: 0.0.0.0
+fim_servidor

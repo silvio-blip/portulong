@@ -43,9 +43,39 @@ bot.iniciar(token)
 `,
   },
   {
-    id: "terminal_simples",
-    nome: "Script de Terminal (escrever)",
-    descricao: "Execução direta de comandos e escrita no terminal (como no Python).",
+    id: "calculadora_simples",
+    nome: "Calculadora Simples (Variáveis)",
+    descricao: "Exemplo de calculadora básica com variáveis, funções e operações aritméticas em Portulong.",
+    codigo: `# Calculadora Simples 100% em Portulong
+escrever("=== Calculadora Portulong ===")
+
+# Definir variáveis
+num1 = 15
+num2 = 5
+
+escrever("Número 1: " + num1)
+escrever("Número 2: " + num2)
+
+# Operações
+soma = num1 + num2
+subtracao = num1 - num2
+multiplicacao = num1 * num2
+divisao = num1 / num2
+
+escrever("Soma (+): " + soma)
+escrever("Subtração (-): " + subtracao)
+escrever("Multiplicação (*): " + multiplicacao)
+escrever("Divisão (/): " + divisao)
+
+# Função de soma personalizada
+funcao somar_valores(a, b):
+    retornar a + b
+
+resultado = somar_valores(100, 250)
+escrever("Resultado da função somar_valores(100, 250): " + resultado)
+escrever("=== Fim do Programa ===")
+`,
+  },
     codigo: `escrever("ola tudo ?")
 escrever("Bem-vindo ao Portulong no terminal!")
 

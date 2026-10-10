@@ -1,0 +1,28 @@
+{
+  "comments": {
+    "lineComment": "#"
+  },
+  "brackets": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    { "open": "{", "close": "}" },
+    { "open": "[", "close": "]" },
+    { "open": "(", "close": ")" },
+    { "open": "\"", "close": "\"", "notIn": ["string", "comment"] },
+    { "open": "'", "close": "'", "notIn": ["string", "comment"] }
+  ],
+  "surroundingPairs": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""],
+    ["'", "'"]
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "^\\s*(pagina|cabecalho|titulo1|titulo2|titulo3|paragrafo|botao|campo|caixa|div|lista|item|rota|estilo|script|servidor|se|senao|enquanto|para|funcao|repetir|componente|comando|barra).*:\\s*$",
+    "decreaseIndentPattern": "^\\s*(fim_caixa|fim_div|fim_lista|fim_estilo|fim_script|fim_servidor|fim_componente|senao)\\b"
+  }
+}

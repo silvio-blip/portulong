@@ -7,5 +7,8 @@
         "comments": true,
         "strings": true
     },
-    "editor.suggestOnTriggerCharacters": true
+    "editor.suggestOnTriggerCharacters": true,
+    "files.iconAssociations": {
+        "*.ptg": "portulong"
+    }
 }
