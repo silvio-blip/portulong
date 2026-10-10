@@ -33,23 +33,74 @@ ptg config
 
 ---
 
-## 🚀 Comandos da Linha de Comandos (CLI)
-
-| Comando | Descrição |
-|---------|-----------|
-| `ptg arquivo.ptg` | Executa o arquivo `.ptg` nativamente em memória (SEM gerar nenhum HTML no disco) |
-| `ptg atualizar` | Atualiza para a última versão do PyPI (`pip install --upgrade portulong-sistema`) |
-| `ptg config` | Configura tudo 100% em tempo real (ícones dos arquivos, duplo clique e botão Run) |
-| `ptg novo meu_app.ptg` | Cria um novo arquivo pronto com modelo em português |
-| `ptg vscode` | Instala a extensão oficial do Portulong no VS Code com botão de Run |
-| `ptg versao` | Mostra a versão instalada do Portulong |
-| `ptg ajuda` | Mostra o manual completo com todos os comandos |
-
-> ⚡ **Execução 100% Nativa em Memória**: O Portulong **não polui o seu disco com nenhum arquivo HTML**. Ao rodar `ptg arquivo.ptg`, o motor processa e executa tudo diretamente na memória RAM em tempo real!
+# Portulong (1.0.26) 🚀
+Linguagem de programação para web, servidores, bots e bases de dados, **100% em Português de Portugal**.
 
 ---
 
-## 💻 Como Publicar no PyPI
+## 📦 Ecossistema Modular
+O Portulong agora é modular! Importe apenas o que precisa no início do seu arquivo `.ptg`:
+
+```ptg
+importar ambiente
+importar base_dados
+importar bots
+importar erros
+```
+
+| Módulo | Descrição |
+|--------|-----------|
+| `ambiente` | Gestão de variáveis de ambiente (`.env`) |
+| `base_dados` | Supabase/PostgreSQL nativo com CRUD e Tempo Real |
+| `bots` | Integração nativa com Discord e Telegram |
+| `erros` | Tratamento amigável de sintaxe em PT |
+
+---
+
+## ⚡ Comandos da Linha de Comandos (CLI)
+
+| Comando | Descrição |
+|---------|-----------|
+| `ptg arquivo.ptg` | Executa o arquivo nativamente em memória (sem arquivos HTML no disco) |
+| `ptg atualizar` | Atualiza para a última versão do PyPI |
+| `ptg config` | Configura ícones, associações, oculta .vscode/.vsix e botão Run |
+| `ptg novo nome.ptg` | Cria um novo arquivo modelo |
+| `ptg vscode` | Instala a extensão oficial (Syntax, Indentação, Snippets) |
+
+---
+
+## 🛠️ Controlo de Execução
+
+- **Servidor Nativo**: Inicia automaticamente apenas se existir o bloco `servidor:` no arquivo.
+- **Botão de Run (Opcional)**: Adicione `barra_execucao` no seu `.ptg` para mostrar o botão de execução na visualização web.
+
+---
+
+## 💾 Base de Dados (Supabase/PostgreSQL)
+
+Use o módulo `base_dados` para operações CRUD nativas:
+
+```ptg
+importar base_dados
+
+script:
+    ligar_supabase "URL", "CHAVE"
+    consultar_tabela "utilizadores" onde "status" é "ativo" -> lista
+    inserir_dados {"nome": "Novo"} em "utilizadores"
+    atualizar_dados {"nome": "Editado"} em "utilizadores" onde "id" é "1"
+    remover_dados em "utilizadores" onde "id" é "1"
+    tempo_real "utilizadores" para INSERT -> funcao_callback
+```
+
+---
+
+## 🎨 VS Code / Codespaces
+A extensão oficial oferece:
+- **Cores Ricas**: Destaque de sintaxe completo em PT.
+- **Indentação Inteligente**: Auto-indentação em blocos (`se`, `funcao`, `rota`, etc.).
+- **Snippets**: Abreviações como `pagina`, `rota`, `funcao` com preenchimento automático.
+- **Interface Limpa**: Oculta automaticamente pastas `.vscode` e arquivos `.vsix`.
+
 
 Se você for o desenvolvedor do Portulong e quiser enviar uma nova versão para o PyPI:
 

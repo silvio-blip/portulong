@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8") if
 
 setup(
     name="portulong-sistema",
-    version="1.0.26",
+    version="1.0.27",
     description="Linguagem de programação em Português de Portugal para a Web com servidor e interpretador nativos.",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -273,6 +273,8 @@ class Empretador:
         self.imports = []
         self.rotas = {}
         self.componentes = {}
+        self.servidor_necessario = False
+        self.exibir_barra = False
 
         linhas = codigo.split('\n')
         secao_atual = None
@@ -283,6 +285,11 @@ class Empretador:
             if not linha_limpa or linha_limpa.startswith('#'):
                 continue
 
+            # Detetar diretivas especiais
+            if linha_limpa == 'barra_execucao':
+                self.exibir_barra = True
+                continue
+            
             # Seções principais
             if linha_limpa.startswith('pagina '):
                 self.titulo = linha_limpa.replace('pagina ', '').strip().strip('"').strip("'")
@@ -396,6 +403,63 @@ class Empretador:
                     txt = partes[0].strip().strip('"').strip("'")
                     href = partes[1].strip().strip('"').strip("'") if len(partes) > 1 else '#'
                     self.elementos.append(f'<a href="{href}">{txt}</a>')
+                elif linha_limpa.startswith('carregar_ambiente '):
+                    caminho = linha_limpa.replace('carregar_ambiente ', '').strip().strip('"').strip("'")
+                    self.funcoes.append(f"importar ambiente; ambiente.carregar_ambiente('{caminho}')")
+                elif linha_limpa.startswith('obter_variavel '):
+                    # Sintaxe: obter_variavel "CHAVE" (ou "valor_padrao")? -> variavel
+                    match = re.match(r'obter_variavel\s+"([^"]+)"(?:\s+ou\s+"([^"]+)")?\s*->\s*([a-zA-Z0-9_]+)', linha_limpa)
+                    if match:
+                        chave, padrao, var_nome = match.groups()
+                        padrao_str = f"'{padrao}'" if padrao else "None"
+                        self.funcoes.append(f"var {var_nome} = ambiente.obter_variavel('{chave}', {padrao_str})")
+                    else:
+                        relatar_erro_sintaxe(i + 1, linha_limpa, "Sintaxe de obter_variavel inválida. Use: obter_variavel \"CHAVE\" (ou \"PADRAO\") -> variavel")
+                elif linha_limpa.startswith('ligar_supabase '):
+                    partes = linha_limpa.replace('ligar_supabase ', '').split(',')
+                    url = partes[0].strip().strip('"').strip("'")
+                    chave = partes[1].strip().strip('"').strip("'") if len(partes) > 1 else ""
+                    self.funcoes.append(f"importar base_dados; var db = base_dados.ligar_supabase('{url}', '{chave}'); var __supabase = window.supabase_client;")
+                elif linha_limpa.startswith('consultar_tabela '):
+                    # Sintaxe: consultar_tabela "TABELA" (onde "COLUNA" é "VALOR")? -> variavel
+                    match = re.match(r'consultar_tabela\s+"([^"]+)"(?:\s+onde\s+"([^"]+)"\s+e\s+"([^"]+)")?\s*->\s*([a-zA-Z0-9_]+)', linha_limpa)
+                    if match:
+                        tabela, coluna, valor, var_nome = match.groups()
+                        if coluna and valor:
+                            self.funcoes.append(f"var {var_nome} = await db.consultar('{tabela}', {{'{coluna}': '{valor}'}})")
+                        else:
+                            self.funcoes.append(f"var {var_nome} = await db.consultar('{tabela}')")
+                    else:
+                        relatar_erro_sintaxe(i + 1, linha_limpa, "Sintaxe de consultar_tabela inválida. Use: consultar_tabela \"TABELA\" (onde \"COLUNA\" e \"VALOR\") -> variavel")
+                elif linha_limpa.startswith('inserir_dados '):
+                    partes = linha_limpa.replace('inserir_dados ', '').split(' em ')
+                    dados = partes[0].strip()
+                    tabela = partes[1].strip().strip('"').strip("'")
+                    self.funcoes.append(f"await db.inserir('{tabela}', {dados})")
+                elif linha_limpa.startswith('atualizar_dados '):
+                    # Sintaxe: atualizar_dados {dados} em "TABELA" onde "COLUNA" é "VALOR"
+                    match = re.match(r'atualizar_dados\s+(\{.*\})\s+em\s+"([^"]+)"\s+onde\s+"([^"]+)"\s+é\s+"([^"]+)"', linha_limpa)
+                    if match:
+                        dados, tabela, coluna, valor = match.groups()
+                        self.funcoes.append(f"await db.atualizar('{tabela}', {{'{coluna}': '{valor}'}}, {dados})")
+                    else:
+                        relatar_erro_sintaxe(i + 1, linha_limpa, "Sintaxe de atualizar_dados inválida. Use: atualizar_dados {dados} em \"TABELA\" onde \"COLUNA\" é \"VALOR\"")
+                elif linha_limpa.startswith('remover_dados '):
+                    # Sintaxe: remover_dados em "TABELA" onde "COLUNA" é "VALOR"
+                    match = re.match(r'remover_dados\s+em\s+"([^"]+)"\s+onde\s+"([^"]+)"\s+é\s+"([^"]+)"', linha_limpa)
+                    if match:
+                        tabela, coluna, valor = match.groups()
+                        self.funcoes.append(f"await db.remover('{tabela}', {{'{coluna}': '{valor}'}})")
+                    else:
+                        relatar_erro_sintaxe(i + 1, linha_limpa, "Sintaxe de remover_dados inválida. Use: remover_dados em \"TABELA\" onde \"COLUNA\" é \"VALOR\"")
+                elif linha_limpa.startswith('tempo_real '):
+                    # Sintaxe: tempo_real "TABELA" para evento (INSERT|UPDATE|DELETE) -> funcao_callback
+                    match = re.match(r'tempo_real\s+"([^"]+)"\s+para\s+(INSERT|UPDATE|DELETE)\s+->\s+([a-zA-Z0-9_]+)', linha_limpa)
+                    if match:
+                        tabela, evento, callback = match.groups()
+                        self.funcoes.append(f"db.subscrever('{tabela}', '{evento}', {callback})")
+                    else:
+                        relatar_erro_sintaxe(i + 1, linha_limpa, "Sintaxe de tempo_real inválida. Use: tempo_real \"TABELA\" para evento (INSERT|UPDATE|DELETE) -> funcao_callback")
                 elif linha_limpa == 'quebra_linha':
                     self.elementos.append('<br>')
                 elif linha_limpa == 'linha_horizontal':
@@ -408,16 +472,15 @@ class Empretador:
         if secao_atual and bloco_atual:
             self.salvar_bloco(secao_atual, bloco_atual)
 
-        return self.gerar_html()
+        return self.gerar_html(exibir_barra=self.exibir_barra)
 
-    def gerar_html(self):
+    def gerar_html(self, exibir_barra=False):
         corpo = '\n'.join(self.elementos)
         css = '\n'.join(self.estilos)
         js = self.traduzir_script(self.funcoes)
 
         icone_src = f"data:image/png;base64,{self.icone_base64}" if self.icone_base64 else "/imagens/Portulong.png"
 
-        # Barra do Portulong integrada com o Botão de Run / Recarregar nativo
         barra_portulong = f"""
         <!-- Barra de Execução Nativa Portulong -->
         <div id="portulong-runner-bar" style="position:fixed;top:12px;right:12px;z-index:999999;display:flex;align-items:center;gap:8px;background:#0f172a;color:#f8fafc;padding:6px 12px;border-radius:10px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.3);border:1px solid #334155;font-family:system-ui,-apple-system,sans-serif;font-size:12px;user-select:none;">
@@ -428,7 +491,8 @@ class Empretador:
             </button>
             <span style="display:inline-block;width:8px;height:8px;background:#22c55e;border-radius:50%;" title="Servidor Ligado"></span>
         </div>
-        """
+        """ if exibir_barra else ""
+
 
         # Biblioteca de funções nativas 100% em Português no JavaScript
         helpers_pt = """
@@ -499,7 +563,7 @@ class Empretador:
   </style>
 </head>
 <body>
-  {barra_portulong}
+  {''.join([barra_portulong]) if exibir_barra else ''}
   {corpo}
   <script>
     {helpers_pt}
@@ -572,8 +636,12 @@ class ServidorPortulong(BaseHTTPRequestHandler):
         pass
 
 
-def servir(html, rotas=None, porta=3000, host='0.0.0.0', abrir_navegador=True):
-    """Inicia o servidor HTTP nativo do Portulong e abre o navegador em qualquer ambiente"""
+def servir(html, rotas=None, porta=3000, host='0.0.0.0', abrir_navegador=True, servidor_necessario=True):
+    """Inicia o servidor HTTP nativo do Portulong SE servidor_necessario for True"""
+    if not servidor_necessario:
+        print("⚡ Modo sem servidor ativo. Apenas compilação.")
+        return
+
     ServidorPortulong.html_content = html
     if rotas:
         ServidorPortulong.api_rotas = rotas

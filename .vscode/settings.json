@@ -1,5 +1,9 @@
 {
     "files.associations": {
         "*.ptg": "portulong"
+    },
+    "files.exclude": {
+        "*.vsix": true,
+        ".vscode": true
     }
 }

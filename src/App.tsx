@@ -160,7 +160,7 @@ export default function App() {
               <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider">
                 100% PT
               </span>
-              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">v1.0.26</span>
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">v1.0.27</span>
             </div>
             <p className="text-[11px] text-slate-400 hidden md:block">
               Linguagem em Português para Frontend e Backend Web
@@ -580,7 +580,7 @@ export default function App() {
                     Publicar <span className="text-emerald-400 font-mono">portulong-sistema</span> no PyPI
                   </h2>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    O pacote está 100% configurado para a versão <strong className="text-slate-200">1.0.26</strong>. Pode publicar tanto pela linha de comando quanto automaticamente via GitHub Actions ao fazer push!
+                    O pacote está 100% configurado para a versão <strong className="text-slate-200">1.0.27</strong>. Pode publicar tanto pela linha de comando quanto automaticamente via GitHub Actions ao fazer push!
                   </p>
                 </div>
 
@@ -595,9 +595,9 @@ export default function App() {
                   <div className="space-y-2 text-xs">
                     <div className="text-slate-300 font-medium">Basta rodar no seu Git:</div>
                     <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800 overflow-x-auto">
-                      <span>git add . && git commit -m "Publicar v1.0.26" && git push origin main</span>
+                      <span>git add . && git commit -m "Publicar v1.0.27" && git push origin main</span>
                       <button 
-                        onClick={() => copiarTexto('git add . && git commit -m "Publicar v1.0.26" && git push origin main', 'cmdgit')}
+                        onClick={() => copiarTexto('git add . && git commit -m "Publicar v1.0.27" && git push origin main', 'cmdgit')}
                         className="hover:text-white shrink-0 ml-2 cursor-pointer"
                       >
                         {copiado === 'cmdgit' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -840,7 +840,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-slate-400">
           <span className="hidden sm:inline">Servidor: <strong className="text-slate-200 font-mono">0.0.0.0:3000</strong></span>
-          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.26</strong></span>
+          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.27</strong></span>
           <span className="hidden xs:inline">PyPI: <strong className="text-emerald-400 font-mono">portulong-sistema</strong></span>
         </div>
       </footer>

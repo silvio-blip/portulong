@@ -153,7 +153,11 @@ def main():
         codigo = caminho.read_text(encoding='utf-8')
         interpretador = Empretador()
         html = interpretador.empretar(codigo)
-        servir(html, interpretador.rotas, interpretador.porta, interpretador.host)
+        
+        # Iniciar servidor apenas se o script pedir
+        servir(html, interpretador.rotas, interpretador.porta, interpretador.host, 
+               servidor_necessario=interpretador.servidor_necessario)
+               
     except Exception as e:
         print(f"❌ Erro ao executar: {e}")
 

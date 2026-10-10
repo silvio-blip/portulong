@@ -369,6 +369,8 @@ export class Empretador {
           this.elementos.push(`<ul${idAttr}>`);
         } else if (linha === "fim_lista") {
           this.elementos.push("</ul>");
+        } else if (linha === "barra_execucao") {
+          this.exibirBarra = true;
         } else if (linha.startsWith("item ")) {
           const txt = linha.replace("item ", "").trim().replace(/^["']|["']$/g, "");
           this.elementos.push(`<li>${txt}</li>`);
@@ -398,15 +400,15 @@ export class Empretador {
       this.salvarBloco(secaoAtual, blocoAtual);
     }
 
-    return this.gerarHtml();
+    return this.gerarHtml(this.exibirBarra);
   }
 
-  gerarHtml(): string {
+  gerarHtml(exibirBarra: boolean = false): string {
     const corpo = this.elementos.join("\n");
     const css = this.estilos.join("\n");
     const js = this.traduzirScript(this.funcoes);
 
-    const barraPortulong = `
+    const barraPortulong = exibirBarra ? `
       <div id="portulong-runner-bar" style="position:fixed;top:12px;right:12px;z-index:999999;display:flex;align-items:center;gap:8px;background:#0f172a;color:#f8fafc;padding:6px 12px;border-radius:10px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.3);border:1px solid #334155;font-family:system-ui,-apple-system,sans-serif;font-size:12px;user-select:none;">
         <img src="/imagens/Portulong.png" width="28" height="28" style="border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.2);" alt="Portulong">
         <span style="font-weight:700;color:#60a5fa;letter-spacing:0.5px;">Portulong</span>
@@ -415,7 +417,8 @@ export class Empretador {
         </button>
         <span style="display:inline-block;width:8px;height:8px;background:#22c55e;border-radius:50%;" title="Servidor Ligado"></span>
       </div>
-    `;
+    ` : '';
+
 
     // Helpers nativos do Portulong no cliente (100% PT)
     const helpersPt = `

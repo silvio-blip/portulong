@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
 Instalador Robusto da extensão do VS Code e GitHub Codespaces para o Portulong (.ptg)
-Funciona em:
-- VS Code Desktop (Windows, Linux, macOS)
-- GitHub Codespaces / VS Code Web (/workspaces)
-- VS Code Remote Server / SSH
+Inclui:
+- Syntax highlighting avançado com cores ricas (TextMate Grammar)
+- Indentação automática inteligente (Smart Auto-Indent)
+- Snippets de abreviação inteligente em Português
+- Ícone oficial do Portulong nos arquivos .ptg
+- Botão ▶ Executar na barra do topo e terminal
 """
 
 import os
@@ -28,7 +30,6 @@ def garantir_icone(destino_path):
         except Exception:
             pass
 
-    # Fallback: baixar do Imgur fornecido pelo usuário
     try:
         urllib.request.urlretrieve(URL_ICONE_IMGUR, destino_path)
         return True
@@ -42,11 +43,8 @@ def obter_todas_pastas_extensoes():
     home = Path.home()
 
     candidatos = [
-        # Desktop padrão
         home / ".vscode" / "extensions",
         home / ".vscode-insiders" / "extensions",
-
-        # GitHub Codespaces & VS Code Server
         home / ".vscode-remote" / "extensions",
         home / ".vscode-server" / "extensions",
         home / ".vscode-server-insiders" / "extensions",
@@ -65,7 +63,6 @@ def obter_todas_pastas_extensoes():
         except Exception:
             pass
 
-    # Se não encontrou nenhuma das existentes, garante pelo menos a padrão e a do Codespaces se estiver lá
     if not pastas:
         if Path("/workspaces").exists() or os.environ.get("CODESPACES"):
             p_codespace = home / ".vscode-remote" / "extensions"
@@ -82,27 +79,22 @@ def obter_todas_pastas_extensoes():
     return list(set(pastas))
 
 def obter_pastas_settings():
-    """Localiza todos os arquivos de settings (User, Machine e Workspace do Codespaces)"""
+    """Localiza todos os arquivos de settings (User, Machine e Workspace)"""
     candidatos = []
     home = Path.home()
 
-    # Workspace atual (.vscode)
     cwd = Path.cwd()
     candidatos.append(cwd / ".vscode")
 
-    # Windows
     appdata = os.environ.get("APPDATA")
     if appdata:
         candidatos.append(Path(appdata) / "Code" / "User")
         candidatos.append(Path(appdata) / "Code - Insiders" / "User")
 
-    # Linux e Codespaces
     candidatos.append(home / ".config" / "Code" / "User")
     candidatos.append(home / ".config" / "Code - Insiders" / "User")
     candidatos.append(home / ".vscode-server" / "data" / "Machine")
     candidatos.append(home / ".vscode-remote" / "data" / "Machine")
-    candidatos.append(Path("/home/vscode/.vscode-remote/data/Machine"))
-    candidatos.append(Path("/home/codespace/.vscode-remote/data/Machine"))
 
     pastas_validas = []
     for c in candidatos:
@@ -114,7 +106,7 @@ def obter_pastas_settings():
     return list(set(pastas_validas))
 
 def aplicar_settings_tempo_real():
-    """Aplica associações *.ptg no settings.json para ativação instantânea"""
+    """Aplica associações *.ptg e exclusões no settings.json"""
     for pasta in obter_pastas_settings():
         try:
             pasta.mkdir(parents=True, exist_ok=True)
@@ -130,9 +122,13 @@ def aplicar_settings_tempo_real():
             assocs["*.ptg"] = "portulong"
             cfg["files.associations"] = assocs
 
+            exclude = cfg.get("files.exclude", {})
+            exclude["*.vsix"] = True
+            exclude[".vscode"] = True
+            cfg["files.exclude"] = exclude
+
             settings_file.write_text(json.dumps(cfg, indent=4, ensure_ascii=False), encoding='utf-8')
 
-            # Se for pasta .vscode de workspace, cria tasks.json para atalho de execução imediata
             if pasta.name == ".vscode":
                 tasks_file = pasta / "tasks.json"
                 tasks_cfg = {
@@ -164,7 +160,7 @@ def criar_pacote_vsix(pasta_extensao, destino_vsix):
         vsixmanifest = f"""<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="portulong-linguagem" Version="1.0.26" Publisher="silvio"/>
+    <Identity Id="portulong-linguagem" Version="1.0.27" Publisher="silvio"/>
     <DisplayName>Portulong (.ptg) - Linguagem PT-PT</DisplayName>
     <Description>Linguagem de programacao em Portugues para paginas web com botao Executar nativo.</Description>
     <Icon>extension/icon.png</Icon>
@@ -202,7 +198,7 @@ def criar_pacote_vsix(pasta_extensao, destino_vsix):
 
 def instalar_extensao_vscode():
     """Gera, instala e ativa a extensão do Portulong no VS Code e Codespaces"""
-    nome_extensao = "portulong-linguagem-1.0.26"
+    nome_extensao = "portulong-linguagem-1.0.27"
     pasta_base = Path.home() / ".config" / "portulong" / "vscode_ext"
     pasta_base.mkdir(parents=True, exist_ok=True)
 
@@ -220,7 +216,7 @@ def instalar_extensao_vscode():
         "name": "portulong-linguagem",
         "displayName": "Portulong (.ptg) - Linguagem PT-PT",
         "description": "Linguagem de programação em Português para criar páginas e aplicações web. Suporte nativo com botão de Executar.",
-        "version": "1.0.26",
+        "version": "1.0.27",
         "publisher": "silvio",
         "engines": {
             "vscode": "^1.60.0"
@@ -320,6 +316,7 @@ module.exports = { activate, deactivate };
 """
     (pasta_base / "extension.js").write_text(extension_js, encoding='utf-8')
 
+    # Configuração de Linguagem com Indentação Inteligente (Smart Auto-Indent)
     lang_cfg = {
         "comments": { "lineComment": "#" },
         "brackets": [["{", "}"], ["[", "]"], ["(", ")"]],
@@ -329,18 +326,25 @@ module.exports = { activate, deactivate };
             {"open": "(", "close": ")"},
             {"open": "\"", "close": "\""},
             {"open": "'", "close": "'"}
-        ]
+        ],
+        "indentationRules": {
+            "increaseIndentPattern": "^\\s*(estilo|script|servidor|componente\\s+[a-zA-Z0-9_]+|rota\\s+.*|funcao\\s+.*|se\\s+.*|senao|enquanto\\s+.*|para\\s+.*|caixa\\s+.*|formulario\\s+.*|lista\\s+.*):\\s*$",
+            "decreaseIndentPattern": "^\\s*(fim_estilo|fim_script|fim_servidor|fim_componente|fim_caixa|fim_div|fim_formulario|fim_lista|senao)\\b"
+        }
     }
     (pasta_base / "language-configuration.json").write_text(json.dumps(lang_cfg, indent=2), encoding='utf-8')
 
+    # TextMate Grammar Avançada com Cores Ricas (Syntax Highlighting)
     grammar = {
         "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
         "name": "Portulong",
         "patterns": [
             {"include": "#comments"},
-            {"include": "#keywords"},
             {"include": "#sections"},
-            {"include": "#strings"}
+            {"include": "#keywords"},
+            {"include": "#functions"},
+            {"include": "#strings"},
+            {"include": "#booleans"}
         ],
         "repository": {
             "comments": { "match": "#.*$", "name": "comment.line.number-sign.ptg" },
@@ -351,18 +355,30 @@ module.exports = { activate, deactivate };
             "keywords": {
                 "patterns": [
                     {
-                        "match": "\\b(pagina|cabecalho|titulo1|titulo2|titulo3|paragrafo|texto|destaque|italico|botao|acao|campo|input|formulario|fim_formulario|caixa|div|fim_caixa|fim_div|imagem|descricao|ligacao|destino|quebra_linha|linha_horizontal)\\b",
+                        "match": "\\b(pagina|cabecalho|titulo1|titulo2|titulo3|paragrafo|texto|destaque|italico|botao|acao|campo|input|formulario|fim_formulario|caixa|div|fim_caixa|fim_div|imagem|descricao|ligacao|destino|quebra_linha|linha_horizontal|lista|fim_lista|item)\\b",
                         "name": "support.function.html.ptg"
                     },
                     {
-                        "match": "\\b(funcao|se|senao|enquanto|para|de|ate|retornar|alerta|escrever|obter_elemento|obter_valor|definir_texto|definir_html)\\b",
+                        "match": "\\b(funcao|se|senao|enquanto|para|de|ate|retornar|alerta|escrever|obter_elemento|obter_valor|definir_valor|definir_texto|definir_conteudo|limpar_elemento|adicionar_item|pedir_dados|enviar_dados|var|cada|em)\\b",
                         "name": "keyword.control.ptg"
                     },
                     {
-                        "match": "\\b(porta|host)\\b",
+                        "match": "\\b(porta|host|computador|local)\\b",
                         "name": "variable.parameter.server.ptg"
+                    },
+                    {
+                        "match": "\\b(fundo|cor-fundo|cor|tamanho-fonte|peso-fonte|fonte-familia|estilo-fonte|alinhamento-texto|largura|largura-maxima|altura|altura-maxima|margem|espacamento|borda|borda-arredondada|sombra|exibicao|posicao|topo|base|esquerda|direita|indice-z|cursor|transicao|transbordamento|flex-direcao|justificar-conteudo|alinhar-itens|intervalo|estilo-lista)\\b",
+                        "name": "entity.other.attribute-name.css.ptg"
                     }
                 ]
+            },
+            "functions": {
+                "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(",
+                "name": "entity.name.function.ptg"
+            },
+            "booleans": {
+                "match": "\\b(verdadeiro|falso|nulo)\\b",
+                "name": "constant.language.boolean.ptg"
             },
             "strings": {
                 "patterns": [
@@ -375,33 +391,94 @@ module.exports = { activate, deactivate };
     }
     (pasta_sintaxe / "ptg.tmLanguage.json").write_text(json.dumps(grammar, indent=2), encoding='utf-8')
 
+    # Snippets com Abreviação Inteligente
     snippets = {
-        "Página Portulong": {
+        "Página Portulong Completa": {
             "prefix": "pagina",
             "body": [
-                "pagina \"${1:Meu Titulo}\"",
+                "pagina \"${1:Meu Sistema}\"",
                 "",
-                "cabecalho \"${2:Ola, Mundo!}\"",
-                "paragrafo \"${3:Bem-vindo ao Portulong}\"",
-                "botao \"${4:Clique Aqui}\" acao \"alerta('Ola!')\"",
+                "cabecalho \"${2:Bem-vindo}\"",
+                "paragrafo \"${3:Descrição da aplicação}\"",
+                "",
+                "caixa \"container\":",
+                "    botao \"${4:Clique Aqui}\" acao \"${5:acao_clique()}\"",
+                "fim_caixa",
                 "",
                 "estilo:",
-                "body { fundo: #f8fafc; espacamento: 20px; }",
+                "corpo { fundo: #f8fafc; espacamento: 20px; fonte-familia: sans-serif; }",
+                ".container { largura-maxima: 600px; margem: 0 auto; fundo: branco; espacamento: 20px; borda-arredondada: 10px; }",
+                "button { fundo: #2563eb; cor: branco; espacamento: 10px 20px; borda: nenhum; borda-arredondada: 6px; cursor: ponteiro; }",
                 "",
                 "script:",
-                "funcao alerta(msg):",
-                "    alerta(msg)"
+                "funcao ${5:acao_clique}():",
+                "    alerta('${6:Olá mundo!}Studio!')",
+                "",
+                "servidor:",
+                "    porta 3000",
+                "    computador local"
             ],
-            "description": "Estrutura básica de página em Portulong"
+            "description": "Estrutura completa com página, estilos, script e servidor em PT"
+        },
+        "Rota REST Python": {
+            "prefix": "rota",
+            "body": [
+                "rota ${1|GET,POST|} /api/${2:caminho}:",
+                "    resposta = {\"sucesso\": verdadeiro, \"mensagem\": \"${3:OK}\"}"
+            ],
+            "description": "Cria uma rota REST em Python 100% em PT"
+        },
+        "Componente Reutilizável": {
+            "prefix": "componente",
+            "body": [
+                "componente ${1:meu_componente}:",
+                "    caixa \"${2:classe}\":",
+                "        paragrafo \"${3:Conteúdo}\"",
+                "    fim_caixa",
+                "fim_componente"
+            ],
+            "description": "Cria um componente HTML reutilizável"
+        },
+        "Função Portulong": {
+            "prefix": "funcao",
+            "body": [
+                "funcao ${1:nome_funcao}(${2:argumento}):",
+                "    ${3:alerta(argumento)}"
+            ],
+            "description": "Cria uma função em Português"
+        },
+        "Condicional Se": {
+            "prefix": "se",
+            "body": [
+                "se ${1:condicao}:",
+                "    ${2:pass}"
+            ],
+            "description": "Bloco condicional se / senao"
+        },
+        "Pedir Dados API": {
+            "prefix": "pedir_dados",
+            "body": [
+                "pedir_dados('/api/${1:rota}', funcao(dados):",
+                "    ${2:escrever(dados)}",
+                ")"
+            ],
+            "description": "Faz requisição GET e processa resposta em PT"
+        },
+        "Enviar Dados API": {
+            "prefix": "enviar_dados",
+            "body": [
+                "enviar_dados('/api/${1:rota}', {${2:chave}: ${3:valor}}, funcao(resposta):",
+                "    alerta(resposta.mensagem)",
+                ")"
+            ],
+            "description": "Faz requisição POST com dados em PT"
         }
     }
     (pasta_snippets / "ptg.code-snippets").write_text(json.dumps(snippets, indent=2, ensure_ascii=False), encoding='utf-8')
 
-    # Gerar arquivo VSIX
-    vsix_path = Path.cwd() / "portulong-1.0.26.vsix"
+    vsix_path = Path.cwd() / "portulong-1.0.27.vsix"
     criar_pacote_vsix(pasta_base, vsix_path)
 
-    # 1. Tentar instalar via comando 'code' se disponível (método nativo oficial no Codespaces e Desktop)
     instalado_via_cli = False
     for bin_code in ["code", "code-insiders", "cursor", "codium"]:
         if shutil.which(bin_code):
@@ -410,12 +487,10 @@ module.exports = { activate, deactivate };
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
                 if res.returncode == 0:
                     instalado_via_cli = True
-                    print(f"✅ Extensão instalada via '{bin_code} --install-extension'!")
                     break
             except Exception:
                 pass
 
-    # 2. Copiar para todas as pastas de extensões encontradas (fallback garantido)
     pastas_destino = obter_todas_pastas_extensoes()
     for dest in pastas_destino:
         try:
@@ -426,18 +501,11 @@ module.exports = { activate, deactivate };
         except Exception:
             pass
 
-    # 3. Aplicar settings em tempo real
     aplicar_settings_tempo_real()
 
     print("=" * 65)
-    print("🧩 EXTENSÃO DO VS CODE / CODESPACES CONFIGURADA!")
-    if instalado_via_cli:
-        print("⚡ Instalada com sucesso no VS Code/Codespaces!")
-    else:
-        print(f"📦 Pacote VSIX gerado: {vsix_path.name}")
-        print(f"👉 Se necessário no Codespaces: clique em Extensões (Ctrl+Shift+X) -> '...' -> 'Install from VSIX...' e escolha '{vsix_path.name}'")
+    print("🎨 EXTENSÃO COM CORES RICAS E INDENTAÇÃO INTELIGENTE CONFIGURADA!")
     print("=" * 65)
-
     return pasta_base
 
 if __name__ == '__main__':
