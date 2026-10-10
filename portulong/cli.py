@@ -4,7 +4,7 @@ import argparse
 import http.server
 import socketserver
 import json
-from .core import PortulongCompilador
+from .core import Empretador, PortulongCompilador
 
 class PortulongHTTPHandler(http.server.SimpleHTTPRequestHandler):
     html_conteudo = ""
@@ -52,8 +52,68 @@ def main():
     args = parser.parse_args()
 
     if not args.arquivo:
-        print("Portulong v1.0.28 • Linguagem 100% PT-PT")
+        print("Portulong v1.0.29 • Linguagem 100% PT-PT")
         print("Uso: ptg <ficheiro.ptg> [--servidor] [--porta <numero>]")
+        print("     ptg config      (configura ambiente, cores, ícones e VS Code)")
+        print("     ptg instalar    (instala dependências e pacotes como Discord)")
+        print("     ptg ajuda       (mostra o manual e comandos disponíveis)")
+        print("     ptg atualizar   (atualiza a linguagem Portulong)")
+        print("     ptg remover     (limpa configurações)")
+        sys.exit(0)
+
+    cmd = args.arquivo.lower()
+
+    if cmd in ["config", "configurar"]:
+        from . import vscode
+        vscode.configurar_vscode()
+        print("✨ Portulong configurado com sucesso! Cores, ícones e snippets ativados.")
+        sys.exit(0)
+
+    if cmd in ["instalar", "install"]:
+        from . import instalador
+        if len(sys.argv) > 2 and "discord" in sys.argv[2].lower():
+            instalador.instalar_discord()
+        else:
+            instalador.instalar_tudo()
+        sys.exit(0)
+
+    if cmd in ["ajuda", "help", "manual"]:
+        print("""
+📖 Manual Oficial do Portulong v1.0.29 (100% PT-PT)
+--------------------------------------------------
+Comandos CLI:
+  ptg <ficheiro.ptg>          Executa e interpreta um ficheiro .ptg
+  ptg <ficheiro.ptg> --servidor  Inicia o servidor web integrado
+  ptg config                  Configura ícones, cores e editor VS Code
+  ptg instalar [discord]      Instala dependências automaticamente
+  ptg ajuda                   Exibe este manual
+
+Sintaxe Básica (.ptg):
+  escrever("Olá mundo")       Escreve no terminal (print)
+  pagina "Meu Site"           Define o título da página web
+  cabecalho "Título Principal" Cria um cabeçalho H1
+  botao "Clique" acao "alerta()" Cria um botão interativo
+  enquanto x <= 10:           Loop de repetição
+      interromper             Para o loop (break)
+  se condicao: ... senao:     Condicional
+  importar discord            Importa biblioteca do Discord
+  importar ambiente           Importa variáveis de ambiente (.env)
+  importar base_dados         Importa banco de dados e Supabase
+        """)
+        sys.exit(0)
+
+    if cmd in ["atualizar", "update"]:
+        print("🔄 A verificar atualizações para Portulong v1.0.29...")
+        import subprocess
+        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "portulong-sistema"])
+        sys.exit(0)
+
+    if cmd in ["remover", "uninstall"]:
+        print("🧹 A limpar configurações e cache do Portulong...")
+        import shutil
+        if os.path.exists(".vscode"):
+            shutil.rmtree(".vscode")
+        print("✅ Portulong limpo com sucesso.")
         sys.exit(0)
 
     caminho = args.arquivo
@@ -65,34 +125,22 @@ def main():
     with open(caminho, "r", encoding="utf-8") as f:
         codigo = f.read()
 
-    compilador = PortulongCompilador()
-    html = compilador.compilar(codigo)
+    empretador = Empretador()
+    html = empretador.empretar(codigo)
 
-    # 1. Executar comandos diretamente no terminal (ex: escrever("..."), bots, etc.)
-    print("--- [Início da Execução no Terminal] ---")
-    compilador.executar_terminal()
-    print("--- [Fim da Execução no Terminal] ---")
+    # Executar comandos diretamente no terminal (ex: escrever("..."), bots, etc.)
+    empretador.executar_terminal()
 
-    # Guardar versão compilada em memória / ficheiro de pré-visualização
-    nome_saida = "saida_portulong.html"
-    try:
-        with open(nome_saida, "w", encoding="utf-8") as f:
-            f.write(html)
-    except Exception:
-        pass
-
-    print(f"✅ Compilação web bem-sucedida! Título: {compilador.titulo}")
-
-    deve_iniciar_servidor = args.servidor or compilador.tem_servidor
-    porta = args.porta if args.porta != 3000 else compilador.porta
+    deve_iniciar_servidor = args.servidor or empretador.tem_servidor
+    porta = args.porta if args.porta != 3000 else empretador.porta
 
     if deve_iniciar_servidor:
-        print(f"🚀 A iniciar Servidor Integrado Portulong em http://localhost:{porta} ...")
+        print(f"🚀 A iniciar Servidor Integrado Portulong em http://localhost:{porta} (100% em memória RAM) ...")
         PortulongHTTPHandler.html_conteudo = html
-        PortulongHTTPHandler.rotas_api = {c: r["codigo"] for c, r in compilador.rotas.items()}
+        PortulongHTTPHandler.rotas_api = {c: r["codigo"] for c, r in empretador.rotas.items()}
         
         try:
-            with socketserver.TCPServer((compilador.host, porta), PortulongHTTPHandler) as httpd:
+            with socketserver.TCPServer((empretador.host, porta), PortulongHTTPHandler) as httpd:
                 print(f"✨ Servidor Portulong ativo! Pressione Ctrl+C para parar.")
                 httpd.serve_forever()
         except KeyboardInterrupt:

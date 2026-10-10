@@ -136,6 +136,23 @@ export class Empretador {
         jsLinhas.push("}");
       }
 
+      // interromper (break) e continuar (continue)
+      if (["interromper", "parar", "quebrar"].includes(trimmed)) {
+        jsLinhas.push("break;");
+        continue;
+      }
+      if (trimmed === "continuar") {
+        jsLinhas.push("continue;");
+        continue;
+      }
+
+      // repetir: (loop infinito)
+      if (trimmed === "repetir:") {
+        jsLinhas.push("while (true) {");
+        indentStack.push(indent);
+        continue;
+      }
+
       // para cada item em colecao:
       const matchParaCada = trimmed.match(/^para\s+cada\s+([a-zA-Z0-9_]+)\s+em\s+(.*?)\s*:$/);
       if (matchParaCada) {
@@ -165,7 +182,11 @@ export class Empretador {
       // se condicao:
       const matchSe = trimmed.match(/^se\s+(.*?)\s*:$/);
       if (matchSe) {
-        jsLinhas.push(`if (${matchSe[1]}) {`);
+        let cond = matchSe[1]
+          .replace(/\be\b/g, "&&")
+          .replace(/\bou\b/g, "||")
+          .replace(/\bnao\b/g, "!");
+        jsLinhas.push(`if (${cond}) {`);
         indentStack.push(indent);
         continue;
       }
@@ -173,7 +194,11 @@ export class Empretador {
       // senao se condicao:
       const matchSenaoSe = trimmed.match(/^senao\s+se\s+(.*?)\s*:$/);
       if (matchSenaoSe) {
-        jsLinhas.push(`else if (${matchSenaoSe[1]}) {`);
+        let cond = matchSenaoSe[1]
+          .replace(/\be\b/g, "&&")
+          .replace(/\bou\b/g, "||")
+          .replace(/\bnao\b/g, "!");
+        jsLinhas.push(`else if (${cond}) {`);
         indentStack.push(indent);
         continue;
       }
@@ -188,7 +213,11 @@ export class Empretador {
       // enquanto condicao:
       const matchEnquanto = trimmed.match(/^enquanto\s+(.*?)\s*:$/);
       if (matchEnquanto) {
-        jsLinhas.push(`while (${matchEnquanto[1]}) {`);
+        let cond = matchEnquanto[1]
+          .replace(/\be\b/g, "&&")
+          .replace(/\bou\b/g, "||")
+          .replace(/\bnao\b/g, "!");
+        jsLinhas.push(`while (${cond}) {`);
         indentStack.push(indent);
         continue;
       }
@@ -222,6 +251,8 @@ export class Empretador {
         processed = processed.replace(/\bimprimir\s*\(/g, "__escrever(");
       }
 
+      processed = processed.replace(/\bler\s*\((.*?)\)/g, "prompt($1)");
+      processed = processed.replace(/\bler\s*\(\)/g, "prompt()");
       processed = processed.replace(/\bobter_valor\s*\((.*?)\)/g, "__obter_valor($1)");
       processed = processed.replace(/\bdefinir_valor\s*\((.*?),\s*(.*?)\)/g, "__definir_valor($1, $2)");
       processed = processed.replace(/\bobter_elemento\s*\((.*?)\)/g, "document.getElementById($1)");
@@ -486,7 +517,7 @@ export class Empretador {
           <!-- Rodapé do Terminal -->
           <div style="background:#090d16;padding:6px 16px;border-top:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#64748b;font-family:ui-monospace,monospace;">
             <span>● Pronto</span>
-            <span>v1.0.28</span>
+            <span>v1.0.29</span>
           </div>
         </div>
       </div>

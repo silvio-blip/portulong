@@ -24,9 +24,69 @@ import {
 import { EXEMPLOS } from './exemplos';
 import { Empretador } from './compiler/portulong';
 
+interface ItemSugestao {
+  gatilho: string;
+  texto: string;
+  inserir: string;
+  tipo: 'discord' | 'modulo' | 'funcao' | 'controlo' | 'ui';
+  detalhe: string;
+}
+
+const CATALOGO_SUGESTOES: ItemSugestao[] = [
+  // Discord
+  { gatilho: 'discord.CriarBot', texto: 'discord.CriarBot(prefixo="!")', inserir: 'discord.CriarBot(prefixo="!")', tipo: 'discord', detalhe: 'Instancia um novo bot Discord' },
+  { gatilho: 'discord.Incorporado', texto: 'discord.Incorporado(titulo, descricao, cor)', inserir: 'discord.Incorporado("Título", "Descrição", "#5865F2")', tipo: 'discord', detalhe: 'Cria uma mensagem incorporada (Embed)' },
+  { gatilho: 'discord.instalar', texto: 'discord.instalar()', inserir: 'discord.instalar()', tipo: 'discord', detalhe: 'Instala discord.py automaticamente' },
+  { gatilho: 'bot.comando', texto: 'comando bot.comando("ola"):', inserir: 'comando bot.comando("ola"):\n    funcao responder_ola(ctx):\n        ctx.responder("Olá!")', tipo: 'discord', detalhe: 'Regista comando por prefixo (!ola)' },
+  { gatilho: 'bot.comando_barra', texto: 'barra bot.comando_barra("ajuda", "desc"):', inserir: 'barra bot.comando_barra("ajuda", "Mostra ajuda"):\n    funcao responder_ajuda(ctx):\n        ctx.responder("Comando ativo!")', tipo: 'discord', detalhe: 'Regista Slash Command (/ajuda)' },
+  { gatilho: 'bot.quando_pronto', texto: 'ao bot.quando_pronto:', inserir: 'ao bot.quando_pronto:\n    funcao ao_ligar():\n        escrever("Bot conectado ao Discord!")', tipo: 'discord', detalhe: 'Evento quando o bot fica online' },
+  { gatilho: 'bot.iniciar', texto: 'bot.iniciar(token)', inserir: 'bot.iniciar(token)', tipo: 'discord', detalhe: 'Inicia conexão do bot com o token' },
+  { gatilho: 'ctx.responder', texto: 'ctx.responder("texto")', inserir: 'ctx.responder("Olá!")', tipo: 'discord', detalhe: 'Responde à mensagem do utilizador' },
+  { gatilho: 'ctx.enviar', texto: 'ctx.enviar("texto")', inserir: 'ctx.enviar("Mensagem no canal")', tipo: 'discord', detalhe: 'Envia mensagem para o canal do comando' },
+  { gatilho: 'ctx.autor.nome', texto: 'ctx.autor.nome', inserir: 'ctx.autor.nome', tipo: 'discord', detalhe: 'Nome do utilizador que enviou a mensagem' },
+  { gatilho: 'ctx.canal.nome', texto: 'ctx.canal.nome', inserir: 'ctx.canal.nome', tipo: 'discord', detalhe: 'Nome do canal onde o comando foi enviado' },
+
+  // Ambiente (.env)
+  { gatilho: 'ambiente.carregar_ambiente', texto: 'ambiente.carregar_ambiente(".env")', inserir: 'ambiente.carregar_ambiente(".env")', tipo: 'modulo', detalhe: 'Carrega variáveis do ficheiro .env' },
+  { gatilho: 'ambiente.obter_ambiente', texto: 'ambiente.obter_ambiente("CHAVE")', inserir: 'ambiente.obter_ambiente("CHAVE", "padrao")', tipo: 'modulo', detalhe: 'Obtém valor de variável de ambiente' },
+  { gatilho: 'ambiente.definir_ambiente', texto: 'ambiente.definir_ambiente("CHAVE", val)', inserir: 'ambiente.definir_ambiente("CHAVE", valor)', tipo: 'modulo', detalhe: 'Define variável de ambiente em tempo real' },
+
+  // Base de Dados & Supabase
+  { gatilho: 'base_dados.conectar_supabase', texto: 'base_dados.conectar_supabase(url, chave)', inserir: 'base_dados.conectar_supabase(url, chave)', tipo: 'modulo', detalhe: 'Conecta ao Supabase nativamente' },
+  { gatilho: 'base_dados.BaseDadosMemoria', texto: 'base_dados.BaseDadosMemoria()', inserir: 'base_dados.BaseDadosMemoria()', tipo: 'modulo', detalhe: 'Cria base de dados local em memória/JSON' },
+
+  // Escrita & Terminal
+  { gatilho: 'escrever', texto: 'escrever("texto")', inserir: 'escrever("ola mundo")', tipo: 'funcao', detalhe: 'Imprime texto ou variável no terminal (print)' },
+  { gatilho: 'imprimir', texto: 'imprimir("texto")', inserir: 'imprimir("ola mundo")', tipo: 'funcao', detalhe: 'Alias para escrever no terminal' },
+  { gatilho: 'ler', texto: 'ler("pergunta")', inserir: 'ler("Introduza valor: ")', tipo: 'funcao', detalhe: 'Lê entrada do utilizador no terminal' },
+
+  // Controlo de Fluxo
+  { gatilho: 'enquanto', texto: 'enquanto condicao:', inserir: 'enquanto contador <= 10:\n    escrever(contador)\n    contador += 1', tipo: 'controlo', detalhe: 'Loop de repetição enquanto verdadeiro (while)' },
+  { gatilho: 'repetir', texto: 'repetir:', inserir: 'repetir:\n    escrever("Executando loop")\n    interromper', tipo: 'controlo', detalhe: 'Loop contínuo (while True)' },
+  { gatilho: 'interromper', texto: 'interromper', inserir: 'interromper', tipo: 'controlo', detalhe: 'Para e sai do loop atual (break)' },
+  { gatilho: 'continuar', texto: 'continuar', inserir: 'continuar', tipo: 'controlo', detalhe: 'Avança para a próxima iteração (continue)' },
+  { gatilho: 'se', texto: 'se condicao:', inserir: 'se x > 0:\n    escrever("Positivo")\nsenao:\n    escrever("Zero ou negativo")', tipo: 'controlo', detalhe: 'Estrutura condicional se / senão (if/else)' },
+  { gatilho: 'senao', texto: 'senao:', inserir: 'senao:\n    ', tipo: 'controlo', detalhe: 'Bloco alternativo senão (else)' },
+  { gatilho: 'para cada', texto: 'para cada item em lista:', inserir: 'para cada item em lista:\n    escrever(item)', tipo: 'controlo', detalhe: 'Itera sobre elementos de uma lista (for each)' },
+  { gatilho: 'para de', texto: 'para i de 1 ate 10:', inserir: 'para i de 1 ate 10:\n    escrever(i)', tipo: 'controlo', detalhe: 'Loop numérico com início e fim' },
+  { gatilho: 'funcao', texto: 'funcao nome(args):', inserir: 'funcao minhaFuncao(param):\n    retornar param * 2', tipo: 'funcao', detalhe: 'Declara uma nova função (def)' },
+  { gatilho: 'retornar', texto: 'retornar valor', inserir: 'retornar resultado', tipo: 'controlo', detalhe: 'Retorna um valor da função (return)' },
+
+  // Importações
+  { gatilho: 'importar discord', texto: 'importar discord', inserir: 'importar discord', tipo: 'modulo', detalhe: 'Importa biblioteca oficial do Discord' },
+  { gatilho: 'importar ambiente', texto: 'importar ambiente', inserir: 'importar ambiente', tipo: 'modulo', detalhe: 'Importa módulo de variáveis .env' },
+  { gatilho: 'importar base_dados', texto: 'importar base_dados', inserir: 'importar base_dados', tipo: 'modulo', detalhe: 'Importa módulo de banco de dados e Supabase' },
+];
+
 export default function App() {
   const [exemploSelecionado, setExemploSelecionado] = useState<string>(EXEMPLOS[0].id);
   const [codigo, setCodigo] = useState<string>(EXEMPLOS[0].codigo);
+  
+  // Autocomplete / Sugestões em Tempo Real
+  const [sugestoesAtivas, setSugestoesAtivas] = useState<ItemSugestao[]>([]);
+  const [indiceSugestao, setIndiceSugestao] = useState<number>(0);
+  const [posicaoSugestao, setPosicaoSugestao] = useState<{ inicio: number; fim: number } | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Painel Ativo no Mobile: 'editor' ou 'preview'
   const [abaMobile, setAbaMobile] = useState<'editor' | 'preview'>('editor');
@@ -160,6 +220,63 @@ export default function App() {
     setCodigo(prev => prev + '\n' + snippet);
   };
 
+  const verificarSugestoes = (texto: string, cursorIndex: number) => {
+    const antes = texto.slice(0, cursorIndex);
+    
+    // 1. Contexto após ponto (ex: discord., bot., ctx., ambiente., base_dados.)
+    const matchPonto = antes.match(/([a-zA-Z0-9_]+\.)$/);
+    if (matchPonto) {
+      const prefixo = matchPonto[1].toLowerCase();
+      const filtradas = CATALOGO_SUGESTOES.filter(s => s.gatilho.toLowerCase().startsWith(prefixo));
+      if (filtradas.length > 0) {
+        setSugestoesAtivas(filtradas);
+        setIndiceSugestao(0);
+        setPosicaoSugestao({ inicio: cursorIndex - prefixo.length, fim: cursorIndex });
+        return;
+      }
+    }
+
+    // 2. Digitação parcial de palavra (mínimo 2 letras)
+    const matchPalavra = antes.match(/([a-zA-Z0-9_]+)$/);
+    if (matchPalavra && matchPalavra[1].length >= 2) {
+      const termo = matchPalavra[1].toLowerCase();
+      const filtradas = CATALOGO_SUGESTOES.filter(s => 
+        s.gatilho.toLowerCase().includes(termo) || 
+        s.texto.toLowerCase().includes(termo)
+      );
+      if (filtradas.length > 0) {
+        setSugestoesAtivas(filtradas.slice(0, 6));
+        setIndiceSugestao(0);
+        setPosicaoSugestao({ inicio: cursorIndex - matchPalavra[1].length, fim: cursorIndex });
+        return;
+      }
+    }
+
+    setSugestoesAtivas([]);
+    setPosicaoSugestao(null);
+  };
+
+  const aplicarSugestao = (sugestao: ItemSugestao) => {
+    if (!posicaoSugestao) {
+      setCodigo(prev => prev + '\n' + sugestao.inserir);
+      setSugestoesAtivas([]);
+      return;
+    }
+    const antes = codigo.slice(0, posicaoSugestao.inicio);
+    const depois = codigo.slice(posicaoSugestao.fim);
+    const novoCodigo = antes + sugestao.inserir + depois;
+    setCodigo(novoCodigo);
+    setSugestoesAtivas([]);
+    setPosicaoSugestao(null);
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const novaPos = antes.length + sugestao.inserir.length;
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(novaPos, novaPos);
+      }
+    }, 10);
+  };
+
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
       {/* Barra de Topo Principal */}
@@ -177,7 +294,7 @@ export default function App() {
               <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider">
                 100% PT
               </span>
-              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">v1.0.28</span>
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">v1.0.29</span>
             </div>
             <p className="text-[11px] text-slate-400 hidden md:block">
               Linguagem em Português para Frontend e Backend Web
@@ -309,12 +426,41 @@ export default function App() {
             </div>
           </div>
 
-          {/* Área do Textarea com Rolagem Suave */}
+          {/* Área do Textarea com Rolagem Suave e Autocomplete Inteligente */}
           <div className="flex-1 relative overflow-hidden bg-slate-950">
             <textarea
+              ref={textareaRef}
               value={codigo}
-              onChange={(e) => setCodigo(e.target.value)}
+              onChange={(e) => {
+                setCodigo(e.target.value);
+                verificarSugestoes(e.target.value, e.target.selectionStart);
+              }}
+              onClick={(e) => {
+                verificarSugestoes(codigo, e.currentTarget.selectionStart);
+              }}
               onKeyDown={(e) => {
+                if (sugestoesAtivas.length > 0) {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setIndiceSugestao((prev) => (prev + 1) % sugestoesAtivas.length);
+                    return;
+                  }
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setIndiceSugestao((prev) => (prev - 1 + sugestoesAtivas.length) % sugestoesAtivas.length);
+                    return;
+                  }
+                  if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    aplicarSugestao(sugestoesAtivas[indiceSugestao]);
+                    return;
+                  }
+                  if (e.key === 'Escape') {
+                    setSugestoesAtivas([]);
+                    return;
+                  }
+                }
+
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                   e.preventDefault();
                   compilar();
@@ -322,15 +468,104 @@ export default function App() {
               }}
               spellCheck={false}
               className="w-full h-full p-4 font-mono text-sm leading-relaxed text-indigo-50 bg-slate-950 resize-none focus:outline-none selection:bg-indigo-900 selection:text-white overflow-y-auto"
-              placeholder="Escreva código em Portulong (.ptg) aqui..."
+              placeholder="Escreva código em Portulong (.ptg) aqui... (digite discord., bot., ctx., escrever, enquanto para sugestões)"
             />
+
+            {/* Menu Popover Flutuante de Autocomplete / Sugestões em Tempo Real */}
+            {sugestoesAtivas.length > 0 && (
+              <div className="absolute left-4 sm:left-6 bottom-3 max-h-60 w-[310px] sm:w-[400px] bg-slate-900/95 border border-indigo-500/40 rounded-xl shadow-2xl z-40 overflow-hidden flex flex-col font-mono text-xs backdrop-blur-md">
+                <div className="bg-slate-950 px-3 py-1.5 border-b border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                  <span className="flex items-center gap-1.5 font-semibold text-indigo-400">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Sugestões Portulong
+                  </span>
+                  <span className="text-[10px] text-slate-500 hidden sm:inline">Tab / Enter para inserir</span>
+                </div>
+                <div className="overflow-y-auto divide-y divide-slate-800/60 p-1">
+                  {sugestoesAtivas.map((sug, i) => (
+                    <div
+                      key={sug.gatilho + i}
+                      onClick={() => aplicarSugestao(sug)}
+                      onMouseEnter={() => setIndiceSugestao(i)}
+                      className={`p-2 rounded-lg cursor-pointer flex flex-col gap-0.5 transition ${
+                        i === indiceSugestao ? 'bg-indigo-600/30 border border-indigo-500/50 text-white' : 'hover:bg-slate-800/60 text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-slate-100 flex items-center gap-1.5 truncate">
+                          {sug.texto}
+                        </span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-semibold shrink-0 ${
+                          sug.tipo === 'discord' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
+                          sug.tipo === 'modulo' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                          sug.tipo === 'funcao' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                          'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                        }`}>
+                          {sug.tipo}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {sug.detalhe}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Barra Inferior com Atalhos de Sintaxe Clicáveis */}
+          {/* Barra Inferior com Atalhos de Sintaxe Clicáveis e Abreviaturas */}
           <div className="p-2 bg-slate-900/90 border-t border-slate-800 text-[11px] flex items-center gap-1.5 overflow-x-auto shrink-0 select-none">
             <span className="font-medium text-slate-400 mr-1 flex items-center gap-1 shrink-0">
-              <Sparkles className="w-3 h-3 text-amber-400" /> Inserir:
+              <Sparkles className="w-3 h-3 text-amber-400" /> Abreviaturas:
             </span>
+            <button 
+              onClick={() => inserirSnippet('importar discord\nbot = discord.CriarBot(prefixo="!")')}
+              className="bg-indigo-950/80 hover:bg-indigo-900/80 border border-indigo-700/50 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + discord.CriarBot
+            </button>
+            <button 
+              onClick={() => inserirSnippet('comando bot.comando("ola"):\n    funcao responder_ola(ctx):\n        ctx.responder("Olá!")')}
+              className="bg-indigo-950/80 hover:bg-indigo-900/80 border border-indigo-700/50 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + bot.comando
+            </button>
+            <button 
+              onClick={() => inserirSnippet('barra bot.comando_barra("ajuda", "Mostra ajuda"):\n    funcao responder_ajuda(ctx):\n        ctx.responder("Ajuda!")')}
+              className="bg-indigo-950/80 hover:bg-indigo-900/80 border border-indigo-700/50 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + comando_barra
+            </button>
+            <button 
+              onClick={() => inserirSnippet('escrever("Mensagem no terminal")')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-emerald-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + escrever(...)
+            </button>
+            <button 
+              onClick={() => inserirSnippet('enquanto contador <= 5:\n    escrever(contador)\n    contador += 1')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-amber-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + enquanto
+            </button>
+            <button 
+              onClick={() => inserirSnippet('se condicao:\n    escrever("Verdadeiro")\nsenao:\n    escrever("Falso")')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-blue-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + se / senao
+            </button>
+            <button 
+              onClick={() => inserirSnippet('interromper')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-rose-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + interromper
+            </button>
+            <button 
+              onClick={() => inserirSnippet('importar ambiente\nambiente.carregar_ambiente(".env")')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-cyan-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + ambiente
+            </button>
             <button 
               onClick={() => inserirSnippet('cabecalho "Novo Titulo"')}
               className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
@@ -342,12 +577,6 @@ export default function App() {
               className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
             >
               + botao
-            </button>
-            <button 
-              onClick={() => inserirSnippet('caixa "painel":\n    paragrafo "Conteudo"\nfim_caixa')}
-              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
-            >
-              + caixa
             </button>
             <button 
               onClick={() => inserirSnippet('estilo:\nbody { fundo: #f8fafc; espacamento: 20px; }')}
@@ -556,7 +785,7 @@ export default function App() {
                 <div className="flex-1 bg-slate-900/90 rounded-xl border border-slate-800 p-4 font-mono text-sm overflow-auto shadow-inner flex flex-col">
                   <div className="text-slate-500 text-xs mb-3 flex items-center justify-between">
                     <span>// Saída de comandos em Português de Portugal</span>
-                    <span>v1.0.28</span>
+                    <span>v1.0.29</span>
                   </div>
                   
                   <div className="space-y-1.5 flex-1">
@@ -665,7 +894,7 @@ export default function App() {
                     Publicar <span className="text-emerald-400 font-mono">portulong-sistema</span> no PyPI
                   </h2>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    O pacote está 100% configurado para a versão <strong className="text-slate-200">1.0.28</strong>. Pode publicar tanto pela linha de comando quanto automaticamente via GitHub Actions ao fazer push!
+                    O pacote está 100% configurado para a versão <strong className="text-slate-200">1.0.29</strong>. Pode publicar tanto pela linha de comando quanto automaticamente via GitHub Actions ao fazer push!
                   </p>
                 </div>
 
@@ -680,9 +909,9 @@ export default function App() {
                   <div className="space-y-2 text-xs">
                     <div className="text-slate-300 font-medium">Basta rodar no seu Git:</div>
                     <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800 overflow-x-auto">
-                      <span>git add . && git commit -m "Publicar v1.0.28" && git push origin main</span>
+                      <span>git add . && git commit -m "Publicar v1.0.29" && git push origin main</span>
                       <button 
-                        onClick={() => copiarTexto('git add . && git commit -m "Publicar v1.0.28" && git push origin main', 'cmdgit')}
+                        onClick={() => copiarTexto('git add . && git commit -m "Publicar v1.0.29" && git push origin main', 'cmdgit')}
                         className="hover:text-white shrink-0 ml-2 cursor-pointer"
                       >
                         {copiado === 'cmdgit' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -925,7 +1154,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-slate-400">
           <span className="hidden sm:inline">Servidor: <strong className="text-slate-200 font-mono">0.0.0.0:3000</strong></span>
-          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.27</strong></span>
+          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.29</strong></span>
           <span className="hidden xs:inline">PyPI: <strong className="text-emerald-400 font-mono">portulong-sistema</strong></span>
         </div>
       </footer>

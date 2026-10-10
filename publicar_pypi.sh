@@ -2,7 +2,7 @@
 # Script para publicar Portulong no PyPI
 set -e
 
-echo "🚀 A preparar publicação de Portulong v1.0.28 no PyPI..."
+echo "🚀 A preparar publicação de Portulong v1.0.29 no PyPI..."
 
 # 1. Instalar ferramentas de build
 python -m pip install --upgrade pip build twine
@@ -16,7 +16,7 @@ python -m build
 # 4. Verificar pacote gerado
 twine check dist/*
 
-echo "✅ Pacote v1.0.28 gerado em dist/ com sucesso!"
+echo "✅ Pacote v1.0.29 gerado em dist/ com sucesso!"
 echo "📤 A enviar para o PyPI..."
 
 # 5. Enviar para o PyPI (solicitará token ou usará TWINE_PASSWORD)

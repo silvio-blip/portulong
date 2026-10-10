@@ -1,0 +1,30 @@
+# Bot Discord 100% em Portulong (Português de Portugal)
+importar discord
+importar ambiente
+
+ambiente.carregar_ambiente(".env")
+token = ambiente.obter_ambiente("DISCORD_TOKEN", "SEU_TOKEN_AQUI")
+
+# Criar instância do bot com prefixo personalizado
+bot = discord.CriarBot(prefixo="!")
+
+# Evento: Quando o bot estiver online e pronto
+ao bot.quando_pronto:
+    funcao ao_conectar():
+        escrever("🤖 Bot conectado com sucesso ao Discord!")
+
+# Comando por prefixo: !ola
+comando bot.comando("ola"):
+    funcao responder_ola(ctx):
+        ctx.responder("Olá! Sou um bot construído 100% em Portulong! 🇵🇹")
+
+# Comando de Barra (Slash Command): /ajuda
+barra bot.comando_barra("ajuda", "Mostra a lista de comandos do bot"):
+    funcao responder_ajuda(ctx):
+        emb = discord.Incorporado("Comandos Portulong", "Aqui estão os comandos disponíveis:", "#5865F2")
+        emb.adicionar_campo("!ola", "Responde com uma saudação amigável.")
+        emb.adicionar_campo("/ajuda", "Exibe este painel de ajuda.")
+        ctx.responder("Comandos:", emb)
+
+escrever("Comandos configurados. A iniciar bot...")
+bot.iniciar(token)
