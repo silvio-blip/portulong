@@ -39,16 +39,8 @@ jobs:
       - name: Verificar integridade dos pacotes
         run: twine check dist/*
 
-      - name: Enviar para o PyPI via Token
-        if: ${{ secrets.PYPI_API_TOKEN != '' }}
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload --skip-existing dist/*
-
-      - name: Enviar para o PyPI via Trusted Publishing (OIDC)
-        if: ${{ secrets.PYPI_API_TOKEN == '' }}
+      - name: Publicar no PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
-          print-hash: true

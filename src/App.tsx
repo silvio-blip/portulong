@@ -16,7 +16,10 @@ import {
   Download,
   FileCode2,
   CheckCircle,
-  HelpCircle
+  Smartphone,
+  Tablet,
+  Laptop,
+  Maximize2
 } from 'lucide-react';
 import { EXEMPLOS } from './exemplos';
 import { Empretador } from './compiler/portulong';
@@ -24,7 +27,16 @@ import { Empretador } from './compiler/portulong';
 export default function App() {
   const [exemploSelecionado, setExemploSelecionado] = useState<string>(EXEMPLOS[0].id);
   const [codigo, setCodigo] = useState<string>(EXEMPLOS[0].codigo);
+  
+  // Painel Ativo no Mobile: 'editor' ou 'preview'
+  const [abaMobile, setAbaMobile] = useState<'editor' | 'preview'>('editor');
+
+  // Abas do Painel Direito
   const [abaDireita, setAbaDireita] = useState<'preview' | 'html' | 'api' | 'pypi' | 'sistema' | 'docs'>('preview');
+
+  // Modo de visualização do iframe: 'desktop' | 'tablet' | 'mobile'
+  const [dispositivoPreview, setDispositivoPreview] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+
   const [htmlCompilado, setHtmlCompilado] = useState<string>('');
   const [compilando, setCompilando] = useState<boolean>(false);
   const [copiado, setCopiado] = useState<string | null>(null);
@@ -127,37 +139,65 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  const inserirSnippet = (snippet: string) => {
+    setCodigo(prev => prev + '\n' + snippet);
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      {/* Header */}
-      <header className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between shadow-md select-none shrink-0">
-        <div className="flex items-center gap-3">
+    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
+      {/* Barra de Topo Principal */}
+      <header className="bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 shadow-sm shrink-0 z-30">
+        {/* Identificação da Linguagem */}
+        <div className="flex items-center gap-2.5">
           <img 
             src="/imagens/Portulong.png" 
             alt="Portulong" 
-            className="w-9 h-9 rounded-lg border border-slate-700 shadow-sm object-cover" 
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-slate-700 shadow-sm object-cover" 
           />
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-bold text-lg text-white tracking-tight">Portulong</h1>
-              <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded">
-                100% PT-PT
+              <span className="font-extrabold text-base sm:text-lg text-white tracking-tight">Portulong</span>
+              <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                100% PT
               </span>
-              <span className="text-[11px] text-slate-400 font-mono">v1.0.25</span>
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">v1.0.25</span>
             </div>
-            <p className="text-xs text-slate-400 hidden sm:block">
-              Linguagem de programação em Português de Portugal para a Web
+            <p className="text-[11px] text-slate-400 hidden md:block">
+              Linguagem em Português para Frontend e Backend Web
             </p>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          {/* Example Dropdown */}
+        {/* Alternador Mobile (Editor vs Preview) */}
+        <div className="flex lg:hidden bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
+          <button
+            onClick={() => setAbaMobile('editor')}
+            className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+              abaMobile === 'editor' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Código (.ptg)
+          </button>
+          <button
+            onClick={() => {
+              setAbaMobile('preview');
+              compilar();
+            }}
+            className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+              abaMobile === 'preview' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Visualização
+          </button>
+        </div>
+
+        {/* Botões de Ação Superiores */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Seletor de Exemplos */}
           <select 
             value={exemploSelecionado}
             onChange={(e) => handleSelecionarExemplo(e.target.value)}
-            className="bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="bg-slate-800 text-slate-200 text-xs rounded-lg px-2 sm:px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[140px] sm:max-w-none cursor-pointer"
           >
             {EXEMPLOS.map(ex => (
               <option key={ex.id} value={ex.id}>
@@ -166,25 +206,33 @@ export default function App() {
             ))}
           </select>
 
+          {/* Botão Executar (Run) */}
           <button
-            onClick={() => compilar()}
+            onClick={() => {
+              compilar();
+              if (window.innerWidth < 1024) {
+                setAbaMobile('preview');
+              }
+            }}
             disabled={compilando}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition active:scale-95 disabled:opacity-50 cursor-pointer"
-            title="Executar código Portulong"
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition active:scale-95 disabled:opacity-50 cursor-pointer"
+            title="Executar código (Ctrl + Enter)"
           >
-            <Play className={`w-3.5 h-3.5 ${compilando ? 'animate-spin' : ''}`} />
-            <span>Executar</span>
+            <Play className={`w-3.5 h-3.5 fill-current ${compilando ? 'animate-spin' : ''}`} />
+            <span className="font-bold">Executar</span>
           </button>
 
+          {/* Baixar Arquivo .ptg */}
           <button
             onClick={() => descarregarArquivo(codigo, `${exemploSelecionado}.ptg`, 'text/plain;charset=utf-8')}
-            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
             title="Descarregar arquivo .ptg para a sua máquina"
           >
             <Download className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Baixar .ptg</span>
           </button>
 
+          {/* Repor Código */}
           <button
             onClick={() => {
               const currentEx = EXEMPLOS.find(e => e.id === exemploSelecionado);
@@ -193,46 +241,59 @@ export default function App() {
                 compilar(currentEx.codigo);
               }
             }}
-            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
-            title="Repor código do exemplo"
+            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs px-2 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
+            title="Repor código padrão"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden lg:inline">Repor</span>
           </button>
 
+          {/* Abrir em Aba Inteira */}
           <a
             href="/preview"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition"
-            title="Abrir página compilada diretamente em tela cheia"
+            className="hidden sm:flex items-center gap-1 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition"
+            title="Abrir em ecrã inteiro no navegador"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span className="hidden lg:inline">Aba Inteira</span>
           </a>
         </div>
       </header>
 
-      {/* Main Workspace Layout */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        {/* Left Side: Code Editor */}
-        <div className="w-full md:w-1/2 flex flex-col border-b md:border-b-0 md:border-r border-slate-800 bg-slate-900/60">
-          <div className="bg-slate-900/90 px-3 py-2 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
+      {/* Área Central Dividida com Suporte Responsivo e Scroll Fluido */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        {/* Painel Esquerdo: Editor de Código */}
+        <div className={`w-full lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/50 ${
+          abaMobile === 'editor' ? 'flex h-full' : 'hidden lg:flex'
+        }`}>
+          {/* Cabeçalho do Editor */}
+          <div className="bg-slate-900/90 px-3.5 py-2 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
             <div className="flex items-center gap-2">
-              <FileCode2 className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="font-mono font-medium text-slate-300">
+              <FileCode2 className="w-4 h-4 text-indigo-400" />
+              <span className="font-mono font-semibold text-slate-200">
                 {exemploSelecionado}.ptg
               </span>
-              <span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] text-slate-400">
-                Código Portulong
+              <span className="bg-slate-800/80 px-2 py-0.5 rounded text-[10px] text-slate-400 font-mono">
+                Portulong
               </span>
             </div>
-            <div className="text-[11px] text-slate-500">
-              {codigo.split('\n').length} linhas
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-slate-500 font-mono">
+                {codigo.split('\n').length} linhas
+              </span>
+              <button
+                onClick={() => copiarTexto(codigo, 'editor')}
+                className="hover:text-slate-200 transition cursor-pointer flex items-center gap-1"
+                title="Copiar código"
+              >
+                {copiado === 'editor' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                <span className="text-[11px]">{copiado === 'editor' ? 'Copiado!' : 'Copiar'}</span>
+              </button>
             </div>
           </div>
 
-          <div className="flex-1 relative flex">
+          {/* Área do Textarea com Rolagem Suave */}
+          <div className="flex-1 relative overflow-hidden bg-slate-950">
             <textarea
               value={codigo}
               onChange={(e) => setCodigo(e.target.value)}
@@ -243,62 +304,92 @@ export default function App() {
                 }
               }}
               spellCheck={false}
-              className="w-full h-full bg-slate-950 p-4 font-mono text-sm leading-relaxed text-indigo-100 resize-none focus:outline-none selection:bg-indigo-900 selection:text-white"
+              className="w-full h-full p-4 font-mono text-sm leading-relaxed text-indigo-50 bg-slate-950 resize-none focus:outline-none selection:bg-indigo-900 selection:text-white overflow-y-auto"
               placeholder="Escreva código em Portulong (.ptg) aqui..."
             />
           </div>
 
-          {/* Quick Syntax Pill Helpers */}
-          <div className="p-2.5 bg-slate-900/80 border-t border-slate-800 text-[11px] flex flex-wrap items-center gap-1.5 text-slate-400">
-            <span className="font-medium text-slate-300 mr-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-400" /> Sintaxe 100% PT:
+          {/* Barra Inferior com Atalhos de Sintaxe Clicáveis */}
+          <div className="p-2 bg-slate-900/90 border-t border-slate-800 text-[11px] flex items-center gap-1.5 overflow-x-auto shrink-0 select-none">
+            <span className="font-medium text-slate-400 mr-1 flex items-center gap-1 shrink-0">
+              <Sparkles className="w-3 h-3 text-amber-400" /> Inserir:
             </span>
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">pagina</code>
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">cabecalho</code>
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">paragrafo</code>
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">botao</code>
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">caixa / fim_caixa</code>
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-300">estilo:</code>
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300">script:</code>
-            <code className="bg-slate-800 px-1.5 py-0.5 rounded text-emerald-300">rota GET/POST</code>
+            <button 
+              onClick={() => inserirSnippet('cabecalho "Novo Titulo"')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + cabecalho
+            </button>
+            <button 
+              onClick={() => inserirSnippet('botao "Clique Aqui" acao "alerta(\'Ola!\')"')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + botao
+            </button>
+            <button 
+              onClick={() => inserirSnippet('caixa "painel":\n    paragrafo "Conteudo"\nfim_caixa')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-indigo-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + caixa
+            </button>
+            <button 
+              onClick={() => inserirSnippet('estilo:\nbody { fundo: #f8fafc; espacamento: 20px; }')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-amber-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + estilo
+            </button>
+            <button 
+              onClick={() => inserirSnippet('script:\nfuncao minhaFuncao():\n    alerta("Ola mundo!")')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-cyan-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + script
+            </button>
+            <button 
+              onClick={() => inserirSnippet('rota GET /api/dados:\n    resposta = {"status": "ok"}')}
+              className="bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-emerald-300 font-mono shrink-0 transition cursor-pointer"
+            >
+              + rota
+            </button>
           </div>
         </div>
 
-        {/* Right Side: Execution & Previews */}
-        <div className="w-full md:w-1/2 flex flex-col bg-slate-950">
-          {/* Sub Navigation Bar */}
-          <div className="bg-slate-900 px-3 py-2 border-b border-slate-800 flex items-center justify-between text-xs overflow-x-auto">
-            <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
+        {/* Painel Direito: Navegador, HTML, API e Manuais */}
+        <div className={`w-full lg:w-1/2 flex flex-col bg-slate-950 ${
+          abaMobile === 'preview' ? 'flex h-full' : 'hidden lg:flex'
+        }`}>
+          {/* Barra de Abas do Painel Direito */}
+          <div className="bg-slate-900 px-3 py-1.5 border-b border-slate-800 flex items-center justify-between text-xs overflow-x-auto shrink-0 gap-2">
+            <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800 shrink-0">
               <button
                 onClick={() => setAbaDireita('preview')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition font-medium cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition font-medium cursor-pointer ${
                   abaDireita === 'preview'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>Navegador (Live)</span>
+                <span>Navegador</span>
               </button>
               <button
                 onClick={() => setAbaDireita('html')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition font-medium cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition font-medium cursor-pointer ${
                   abaDireita === 'html'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
-                <span>HTML Gerado</span>
+                <span>HTML</span>
               </button>
               <button
                 onClick={() => {
                   setAbaDireita('api');
                   carregarUsuarios();
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition font-medium cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition font-medium cursor-pointer ${
                   abaDireita === 'api'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -307,43 +398,70 @@ export default function App() {
               </button>
               <button
                 onClick={() => setAbaDireita('pypi')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition font-medium cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition font-medium cursor-pointer ${
                   abaDireita === 'pypi'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <Package className="w-3.5 h-3.5" />
-                <span>Publicar no PyPI</span>
+                <span>PyPI</span>
               </button>
               <button
                 onClick={() => setAbaDireita('sistema')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition font-medium cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition font-medium cursor-pointer ${
                   abaDireita === 'sistema'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <Monitor className="w-3.5 h-3.5" />
-                <span>Windows / Linux</span>
+                <span>Windows/Linux</span>
               </button>
               <button
                 onClick={() => setAbaDireita('docs')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition font-medium cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition font-medium cursor-pointer ${
                   abaDireita === 'docs'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>Dicionário PT</span>
+                <span>Manual</span>
               </button>
             </div>
+
+            {/* Controles Especiais da Aba Ativa */}
+            {abaDireita === 'preview' && (
+              <div className="hidden sm:flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-slate-400 shrink-0">
+                <button
+                  onClick={() => setDispositivoPreview('desktop')}
+                  className={`p-1 rounded cursor-pointer ${dispositivoPreview === 'desktop' ? 'bg-slate-800 text-white' : 'hover:text-slate-200'}`}
+                  title="Vista Computador"
+                >
+                  <Laptop className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setDispositivoPreview('tablet')}
+                  className={`p-1 rounded cursor-pointer ${dispositivoPreview === 'tablet' ? 'bg-slate-800 text-white' : 'hover:text-slate-200'}`}
+                  title="Vista Tablet (768px)"
+                >
+                  <Tablet className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setDispositivoPreview('mobile')}
+                  className={`p-1 rounded cursor-pointer ${dispositivoPreview === 'mobile' ? 'bg-slate-800 text-white' : 'hover:text-slate-200'}`}
+                  title="Vista Telemóvel (375px)"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             {abaDireita === 'html' && (
               <button
                 onClick={() => copiarTexto(htmlCompilado, 'html')}
-                className="flex items-center gap-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition"
+                className="flex items-center gap-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition cursor-pointer shrink-0"
               >
                 {copiado === 'html' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                 <span>{copiado === 'html' ? 'Copiado!' : 'Copiar'}</span>
@@ -351,39 +469,50 @@ export default function App() {
             )}
           </div>
 
-          {/* Right Pane Content */}
-          <div className="flex-1 relative overflow-auto">
+          {/* Conteúdo com Scroll Próprio e Fluido */}
+          <div className="flex-1 relative overflow-y-auto overflow-x-hidden bg-slate-950">
+            {/* Visualizador do Navegador */}
             {abaDireita === 'preview' && (
-              <div className="w-full h-full bg-white relative">
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={htmlCompilado}
-                  title="Portulong Preview"
-                  sandbox="allow-scripts allow-forms allow-same-origin allow-modals"
-                  className="w-full h-full border-none"
-                />
+              <div className="w-full h-full flex justify-center items-stretch bg-slate-900/60 p-0 sm:p-2 overflow-auto">
+                <div 
+                  className={`bg-white transition-all duration-300 h-full shadow-2xl relative ${
+                    dispositivoPreview === 'desktop' ? 'w-full rounded-none sm:rounded-lg' :
+                    dispositivoPreview === 'tablet' ? 'w-[768px] rounded-lg border-4 border-slate-800 my-auto h-[95%]' :
+                    'w-[375px] rounded-lg border-4 border-slate-800 my-auto h-[95%]'
+                  }`}
+                >
+                  <iframe
+                    ref={iframeRef}
+                    srcDoc={htmlCompilado}
+                    title="Portulong Preview"
+                    sandbox="allow-scripts allow-forms allow-same-origin allow-modals"
+                    className="w-full h-full border-none rounded-inherit"
+                  />
+                </div>
               </div>
             )}
 
+            {/* Código HTML Gerado com Scroll Total */}
             {abaDireita === 'html' && (
               <div className="p-4 font-mono text-xs text-slate-300 leading-relaxed overflow-auto h-full bg-slate-950">
                 <pre className="whitespace-pre-wrap">{htmlCompilado}</pre>
               </div>
             )}
 
+            {/* Testador de Rotas REST em Python */}
             {abaDireita === 'api' && (
-              <div className="p-5 overflow-auto h-full space-y-6">
+              <div className="p-4 sm:p-6 overflow-y-auto h-full space-y-6 max-w-3xl">
                 <div>
                   <h3 className="text-base font-bold text-white flex items-center gap-2 mb-1">
                     <Server className="w-4 h-4 text-emerald-400" />
-                    Servidor HTTP Integrado & Rotas REST em Python
+                    Servidor HTTP Integrado & Rotas REST
                   </h3>
                   <p className="text-xs text-slate-400">
-                    O portulong inclui um servidor HTTP com suporte nativo a rotas REST definidas no código com <code className="text-indigo-400">rota METODO caminho:</code>
+                    O servidor nativo processa rotas Python configuradas diretamente com <code className="text-indigo-400">rota METODO caminho:</code>
                   </p>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="bg-emerald-500/20 text-emerald-400 text-xs font-mono font-bold px-2 py-0.5 rounded">
@@ -405,13 +534,13 @@ export default function App() {
                     <div className="text-[11px] text-slate-500 mb-1.5 uppercase tracking-wider font-semibold">
                       Resposta Atual (JSON):
                     </div>
-                    <pre className="font-mono text-xs text-emerald-300">
+                    <pre className="font-mono text-xs text-emerald-300 overflow-x-auto">
                       {JSON.stringify({ usuarios: usuariosApi }, null, 2)}
                     </pre>
                   </div>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3 shadow-sm">
                   <div className="flex items-center gap-2">
                     <span className="bg-blue-500/20 text-blue-400 text-xs font-mono font-bold px-2 py-0.5 rounded">
                       POST
@@ -419,17 +548,17 @@ export default function App() {
                     <code className="text-sm font-mono text-slate-200">/api/usuario</code>
                   </div>
                   
-                  <form onSubmit={handleCriarUsuario} className="flex gap-2">
+                  <form onSubmit={handleCriarUsuario} className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       value={novoUsuarioNome}
                       onChange={(e) => setNovoUsuarioNome(e.target.value)}
-                      placeholder="Nome do novo utilizador (ex: Carlos)"
-                      className="flex-1 bg-slate-950 border border-slate-700 text-slate-100 text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      placeholder="Nome do novo utilizador (ex: Carlos Silva)"
+                      className="flex-1 bg-slate-950 border border-slate-700 text-slate-100 text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                     <button
                       type="submit"
-                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition cursor-pointer"
+                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition cursor-pointer"
                     >
                       Adicionar
                     </button>
@@ -438,196 +567,149 @@ export default function App() {
               </div>
             )}
 
+            {/* Aba PyPI: Publicação e GitHub Actions */}
             {abaDireita === 'pypi' && (
-              <div className="p-6 overflow-auto h-full text-sm text-slate-300 space-y-6 max-w-3xl">
+              <div className="p-4 sm:p-6 overflow-y-auto h-full text-sm text-slate-300 space-y-6 max-w-3xl">
                 <div>
                   <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-2">
                     <Package className="w-5 h-5 text-indigo-400" />
-                    Publicar o Portulong no PyPI (Python Package Index)
+                    Publicar <span className="text-emerald-400 font-mono">portulong-sistema</span> no PyPI
                   </h2>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    A estrutura do pacote está <strong>100% pronta e configurada</strong> para ser enviada para o PyPI. Qualquer pessoa no mundo poderá instalar com <code className="text-emerald-400 font-mono">pip install portulong-sistema</code>.
+                    O pacote está 100% configurado para a versão <strong className="text-slate-200">1.0.25</strong>. Pode publicar tanto pela linha de comando quanto automaticamente via GitHub Actions ao fazer push!
                   </p>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3 shadow-sm">
                   <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    Passo a Passo de Envio para o PyPI
+                    <Terminal className="w-4 h-4 text-emerald-400" />
+                    Publicação Automática via GitHub Actions
                   </h3>
+                  <p className="text-xs text-slate-400">
+                    O arquivo <code className="text-indigo-300">.github/workflows/publish.yml</code> já está pronto. Ao fazer push para a branch <code className="text-slate-200 font-mono">main</code>, a compilação e publicação iniciam imediatamente!
+                  </p>
+                  <div className="space-y-2 text-xs">
+                    <div className="text-slate-300 font-medium">Basta rodar no seu Git:</div>
+                    <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800 overflow-x-auto">
+                      <span>git add . && git commit -m "Publicar v1.0.25" && git push origin main</span>
+                      <button 
+                        onClick={() => copiarTexto('git add . && git commit -m "Publicar v1.0.25" && git push origin main', 'cmdgit')}
+                        className="hover:text-white shrink-0 ml-2 cursor-pointer"
+                      >
+                        {copiado === 'cmdgit' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3 shadow-sm">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-400" />
+                    Publicação Manual Direta no Terminal
+                  </h3>
                   <div className="space-y-3 text-xs">
                     <div>
-                      <div className="text-slate-300 font-medium mb-1">1. Instalar as ferramentas oficiais de empacotamento:</div>
-                      <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800">
+                      <div className="text-slate-400 mb-1">1. Instalar ferramentas de compilação:</div>
+                      <div className="flex items-center justify-between bg-slate-950 p-2 rounded font-mono text-indigo-300 border border-slate-800">
                         <span>pip install build twine</span>
-                        <button 
-                          onClick={() => copiarTexto('pip install build twine', 'cmd1')}
-                          className="hover:text-white"
-                        >
-                          {copiado === 'cmd1' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        <button onClick={() => copiarTexto('pip install build twine', 'p1')} className="hover:text-white cursor-pointer">
+                          {copiado === 'p1' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </div>
-
                     <div>
-                      <div className="text-slate-300 font-medium mb-1">2. Gerar os pacotes de distribuição (.tar.gz e .whl):</div>
-                      <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800">
+                      <div className="text-slate-400 mb-1">2. Gerar pacotes de distribuição:</div>
+                      <div className="flex items-center justify-between bg-slate-950 p-2 rounded font-mono text-indigo-300 border border-slate-800">
                         <span>python -m build</span>
-                        <button 
-                          onClick={() => copiarTexto('python -m build', 'cmd2')}
-                          className="hover:text-white"
-                        >
-                          {copiado === 'cmd2' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        <button onClick={() => copiarTexto('python -m build', 'p2')} className="hover:text-white cursor-pointer">
+                          {copiado === 'p2' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </div>
-
                     <div>
-                      <div className="text-slate-300 font-medium mb-1">3. Enviar para o PyPI oficial:</div>
-                      <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800">
+                      <div className="text-slate-400 mb-1">3. Enviar para o PyPI:</div>
+                      <div className="flex items-center justify-between bg-slate-950 p-2 rounded font-mono text-indigo-300 border border-slate-800">
                         <span>twine upload dist/*</span>
-                        <button 
-                          onClick={() => copiarTexto('twine upload dist/*', 'cmd3')}
-                          className="hover:text-white"
-                        >
-                          {copiado === 'cmd3' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        <button onClick={() => copiarTexto('twine upload dist/*', 'p3')} className="hover:text-white cursor-pointer">
+                          {copiado === 'p3' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-2">
-                  <h4 className="font-semibold text-white">Arquivos de Publicação Incluídos no Repositório:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-slate-400">
-                    <li><strong className="text-slate-200">setup.py</strong>: Metadados, scripts de console (<code className="text-indigo-300">ptg</code>, <code className="text-indigo-300">portulong</code>) e pacote.</li>
-                    <li><strong className="text-slate-200">pyproject.toml</strong>: Especificação moderna PEP 517 / PEP 621.</li>
-                    <li><strong className="text-slate-200">MANIFEST.in</strong>: Inclui os ícones PNG e ICO e exemplos na distribuição.</li>
-                    <li><strong className="text-slate-200">.github/workflows/publish.yml</strong>: Envio automático pelo GitHub Actions!</li>
-                    <li><strong className="text-slate-200">portulong/</strong>: O interpretador completo, CLI e instalador.</li>
-                  </ul>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 text-xs">
-                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-indigo-400" />
-                    Como Publicar Automaticamente via GitHub Actions
-                  </h3>
-                  <p className="text-slate-400">
-                    O arquivo <code className="text-indigo-300">.github/workflows/publish.yml</code> já está configurado no repositório. Para publicar automaticamente:
-                  </p>
-                  <ol className="list-decimal list-inside space-y-2 text-slate-300">
-                    <li>No PyPI (<a href="https://pypi.org/manage/account/token/" target="_blank" rel="noreferrer" className="text-indigo-400 underline">pypi.org</a>), crie um <strong>API Token</strong>.</li>
-                    <li>No GitHub, aceda a <strong>Settings → Secrets and variables → Actions</strong> e adicione o secret <code className="text-emerald-400">PYPI_API_TOKEN</code> com o valor do token.</li>
-                    <li>Crie uma nova tag ou release:
-                      <div className="flex items-center justify-between bg-slate-950 p-2 rounded font-mono text-indigo-300 mt-1 border border-slate-800">
-                        <span>git tag v1.0.25 && git push origin v1.0.25</span>
-                        <button 
-                          onClick={() => copiarTexto('git tag v1.0.25 && git push origin v1.0.25', 'cmdtag')}
-                          className="hover:text-white"
-                        >
-                          {copiado === 'cmdtag' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </li>
-                    <li>Ou clique no botão <strong>"Run workflow"</strong> na aba <strong>Actions</strong> do GitHub!</li>
-                  </ol>
-                </div>
               </div>
             )}
 
+            {/* Aba Sistema Operacional (Windows / Linux) */}
             {abaDireita === 'sistema' && (
-              <div className="p-6 overflow-auto h-full text-sm text-slate-300 space-y-6 max-w-3xl">
+              <div className="p-4 sm:p-6 overflow-y-auto h-full text-sm text-slate-300 space-y-6 max-w-3xl">
                 <div>
                   <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-2">
                     <Monitor className="w-5 h-5 text-indigo-400" />
                     Execução Nativa no Windows & Linux
                   </h2>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    O Portulong foi configurado para que os usuários possam rodar os arquivos <code className="text-indigo-300">.ptg</code> sem precisar de abrir o terminal!
+                    Com o comando <code className="text-emerald-400 font-mono">ptg config</code>, todos os arquivos <code className="text-indigo-300 font-mono">.ptg</code> mostram o ícone oficial em tempo real e executam por duplo clique sem abrir terminal!
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
-                    <h3 className="font-bold text-white flex items-center gap-2">
-                      <span className="text-lg">🪟</span> No Windows
-                    </h3>
-                    <ul className="space-y-2 text-slate-400">
-                      <li className="flex items-start gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <span><strong>Ícone Oficial:</strong> O instalador associa o arquivo <code className="text-slate-200">Portulong.ico</code> a todos os arquivos <code className="text-slate-200">.ptg</code> no Windows Explorer.</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <span><strong>Duplo Clique:</strong> Ao clicar duas vezes num arquivo <code className="text-slate-200">.ptg</code>, ele executa e abre diretamente no navegador!</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <span><strong>Menu de Contexto:</strong> Clique com o botão direito e escolha <code className="text-slate-200">▶ Executar com Portulong</code>.</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
-                    <h3 className="font-bold text-white flex items-center gap-2">
-                      <span className="text-lg">🐧</span> No Linux
-                    </h3>
-                    <ul className="space-y-2 text-slate-400">
-                      <li className="flex items-start gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <span><strong>Ícone Oficial:</strong> Instalado em <code className="text-slate-200">hicolor/128x128/apps/portulong.png</code> e associado ao tipo MIME.</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <span><strong>Arquivo .desktop:</strong> Integração no GNOME, KDE, XFCE com menu e abertura padrão.</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <span><strong>Duplo Clique:</strong> Abre e executa a aplicação sem terminal.</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-xs space-y-3 shadow-sm">
                   <h3 className="font-bold text-white flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-400" />
-                    Comando de Configuração em Tempo Real: <code className="text-indigo-300 font-mono">ptg config</code>
+                    Configuração em Tempo Real: <code className="text-indigo-300 font-mono">ptg config</code>
                   </h3>
                   <p className="text-slate-400">
-                    Basta executar este comando no terminal uma única vez. Ele configura as associações, atualiza o cache de ícones do Windows e do Linux instantaneamente e ativa a extensão do VS Code sem precisar de reiniciar o computador nem o editor!
+                    Atualiza o cache do Windows Explorer e do Linux imediatamente com notificação de broadcast do sistema, sem necessidade de reiniciar a máquina nem o editor:
                   </p>
                   <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800">
                     <span>ptg config</span>
                     <button 
-                      onClick={() => copiarTexto('ptg config', 'cmdconfig')}
-                      className="hover:text-white"
+                      onClick={() => copiarTexto('ptg config', 'cmdcfg')}
+                      className="hover:text-white cursor-pointer"
                     >
-                      {copiado === 'cmdconfig' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiado === 'cmdcfg' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
-                  <h3 className="font-bold text-white flex items-center gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-xs space-y-2.5 shadow-sm">
+                    <h4 className="font-bold text-white flex items-center gap-1.5">
+                      <span>🪟</span> No Windows
+                    </h4>
+                    <p className="text-slate-400">
+                      O arquivo <code className="text-slate-200">Portulong.ico</code> é associado no Registro à extensão <code className="text-slate-200">.ptg</code>. Clicar 2x abre diretamente no navegador!
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-xs space-y-2.5 shadow-sm">
+                    <h4 className="font-bold text-white flex items-center gap-1.5">
+                      <span>🐧</span> No Linux
+                    </h4>
+                    <p className="text-slate-400">
+                      Instalação em <code className="text-slate-200">icons/hicolor</code> com MIME Type <code className="text-slate-200">application/x-ptg</code> e arquivo <code className="text-slate-200">.desktop</code>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-xs space-y-3 shadow-sm">
+                  <h4 className="font-bold text-white flex items-center gap-2">
                     <FileCode2 className="w-4 h-4 text-blue-400" />
-                    Botão de Run no VS Code (Como no Python!)
-                  </h3>
+                    Botão de Run no VS Code (Como no Python)
+                  </h4>
                   <p className="text-slate-400">
-                    O Portulong inclui uma extensão nativa para o VS Code que adiciona o botão ▶ <strong>Executar Portulong</strong> na barra de ferramentas do editor. Basta abrir qualquer arquivo <code className="text-slate-200">.ptg</code> e clicar no botão de Play no canto superior direito para executar no terminal integrado!
+                    A extensão instalada pelo comando adiciona o botão de Play ▶ no cabeçalho do VS Code. Clicar no botão roda o arquivo no terminal integrado e abre a página!
                   </p>
                   <div className="flex items-center gap-3 bg-slate-950 p-3 rounded-lg border border-slate-800">
                     <img 
                       src="/imagens/Portulong.png" 
                       alt="Ícone Portulong" 
-                      className="w-10 h-10 rounded-lg shadow-sm border border-slate-700" 
+                      className="w-10 h-10 rounded-lg shadow-sm border border-slate-700 shrink-0" 
                     />
-                    <div className="space-y-0.5 flex-1">
-                      <div className="text-white font-medium">Ícone Oficial dos Arquivos .ptg</div>
-                      <div className="text-slate-400 text-[11px] font-mono break-all">
-                        Link Direto: <a href="https://i.imgur.com/CCsXVnb.png" target="_blank" rel="noreferrer" className="text-indigo-400 underline">https://i.imgur.com/CCsXVnb.png</a>
+                    <div className="space-y-0.5 flex-1 overflow-hidden">
+                      <div className="text-white font-medium">Ícone Oficial do Portulong</div>
+                      <div className="text-slate-400 text-[11px] font-mono truncate">
+                        Link Imgur: <a href="https://i.imgur.com/CCsXVnb.png" target="_blank" rel="noreferrer" className="text-indigo-400 underline">https://i.imgur.com/CCsXVnb.png</a>
                       </div>
                     </div>
                   </div>
@@ -635,8 +717,9 @@ export default function App() {
               </div>
             )}
 
+            {/* Aba Dicionário e Manual PT-PT */}
             {abaDireita === 'docs' && (
-              <div className="p-6 overflow-auto h-full text-sm text-slate-300 space-y-6 max-w-3xl">
+              <div className="p-4 sm:p-6 overflow-y-auto h-full text-sm text-slate-300 space-y-6 max-w-3xl">
                 <div>
                   <h2 className="text-xl font-bold text-white mb-2">Dicionário e Manual Portulong 100% PT-PT</h2>
                   <p className="text-slate-400 text-xs leading-relaxed">
@@ -737,33 +820,24 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-
-                <div>
-                  <h3 className="text-base font-semibold text-indigo-300 mb-2">Controlo e Scripts (JavaScript em PT)</h3>
-                  <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
-                    <div><span className="text-cyan-400">funcao</span> calcular(a, b):</div>
-                    <div className="pl-4"><span className="text-cyan-400">se</span> a &gt; b:</div>
-                    <div className="pl-8"><span className="text-cyan-400">retornar</span> a</div>
-                    <div className="pl-4"><span className="text-cyan-400">senao</span>:</div>
-                    <div className="pl-8"><span className="text-cyan-400">retornar</span> b</div>
-                  </div>
-                </div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Footer Status Bar */}
-      <footer className="bg-slate-900 border-t border-slate-800 px-4 py-1.5 text-xs text-slate-400 flex items-center justify-between select-none shrink-0">
+      {/* Barra de Rodapé Limpa */}
+      <footer className="bg-slate-900 border-t border-slate-800 px-3 sm:px-4 py-1.5 text-xs text-slate-400 flex items-center justify-between select-none shrink-0 z-20">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-          <span className="text-slate-300 font-mono text-[11px]">{statusMsg}</span>
+          <span className="text-slate-300 font-mono text-[11px] truncate max-w-[200px] sm:max-w-none">
+            {statusMsg}
+          </span>
         </div>
-        <div className="flex items-center gap-3 text-[11px] text-slate-400">
-          <span>Servidor: <strong className="text-slate-200 font-mono">0.0.0.0:3000</strong></span>
+        <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-slate-400">
+          <span className="hidden sm:inline">Servidor: <strong className="text-slate-200 font-mono">0.0.0.0:3000</strong></span>
           <span>Versão: <strong className="text-indigo-400 font-mono">1.0.25</strong></span>
-          <span>PyPI: <strong className="text-emerald-400 font-mono">Pronto</strong></span>
+          <span className="hidden xs:inline">PyPI: <strong className="text-emerald-400 font-mono">portulong-sistema</strong></span>
         </div>
       </footer>
     </div>
