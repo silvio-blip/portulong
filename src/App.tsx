@@ -1189,7 +1189,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-slate-400">
           <span className="hidden sm:inline">Servidor: <strong className="text-slate-200 font-mono">0.0.0.0:3000</strong></span>
-          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.30</strong></span>
+          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.31</strong></span>
           <span className="hidden xs:inline">PyPI: <strong className="text-emerald-400 font-mono">portulong-sistema</strong></span>
         </div>
       </footer>

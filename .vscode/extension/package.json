@@ -1,0 +1,47 @@
+{
+  "name": "portulong-vscode",
+  "displayName": "Portulong",
+  "description": "Suporte nativo para linguagem Portulong",
+  "version": "1.0.31",
+  "publisher": "silvio",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "portulong",
+        "aliases": [
+          "Portulong",
+          "ptg"
+        ],
+        "extensions": [
+          ".ptg"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "portulong",
+        "scopeName": "source.ptg",
+        "path": "./syntaxes/portulong.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "portulong.run",
+        "title": "Executar Ficheiro Portulong"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "portulong.run",
+          "group": "navigation",
+          "when": "resourceLangId == portulong"
+        }
+      ]
+    }
+  }
+}

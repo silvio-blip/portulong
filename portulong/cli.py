@@ -52,7 +52,7 @@ def main():
     args = parser.parse_args()
 
     if not args.arquivo:
-        print("Portulong v1.0.30 • Linguagem 100% PT-PT")
+        print("Portulong v1.0.31 • Linguagem 100% PT-PT")
         print("Uso: ptg <ficheiro.ptg> [--servidor] [--porta <numero>]")
         print("     ptg config      (configura ambiente, cores, ícones e VS Code)")
         print("     ptg instalar    (instala dependências e pacotes como Discord)")
@@ -79,7 +79,7 @@ def main():
 
     if cmd in ["ajuda", "help", "manual"]:
         print("""
-📖 Manual Oficial do Portulong v1.0.30 (100% PT-PT)
+📖 Manual Oficial do Portulong v1.0.31 (100% PT-PT)
 --------------------------------------------------
 Comandos CLI:
   ptg <ficheiro.ptg>          Executa e interpreta um ficheiro .ptg
@@ -103,7 +103,7 @@ Sintaxe Básica (.ptg):
         sys.exit(0)
 
     if cmd in ["atualizar", "update"]:
-        print("🔄 A verificar atualizações para Portulong v1.0.30...")
+        print("🔄 A verificar atualizações para Portulong v1.0.31...")
         import subprocess
         subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "portulong-sistema"])
         sys.exit(0)
