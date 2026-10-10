@@ -8,24 +8,25 @@ export interface ExemploPortulong {
 export const EXEMPLOS: ExemploPortulong[] = [
   {
     id: "sistema_completo",
-    nome: "Sistema Completo (Frontend + Backend)",
-    descricao: "Exemplo completo com rotas REST em Python, componentes, estilização em português e manipulação dinâmica.",
+    nome: "Sistema Completo (100% PT)",
+    descricao: "Exemplo completo com Frontend, Backend REST, Estilos e Scripts 100% em Português sem nenhuma palavra em inglês.",
     codigo: `pagina "Sistema Completo Portulong"
 
-# Rota de Servidor Backend (Python)
+# Rota de Servidor Backend (Python 100% em Português)
 rota GET /api/usuarios:
     resposta = {"usuarios": [{"id": 1, "nome": "João"}, {"id": 2, "nome": "Maria"}]}
 
 rota POST /api/usuario:
-    nome = dados.get("nome", "")
-    resposta = {"sucesso": true, "mensagem": "Utilizador " + nome + " criado com sucesso!"}
+    nome_usuario = dados.get("nome", "")
+    resposta = {"sucesso": verdadeiro, "mensagem": "Utilizador " + nome_usuario + " criado com sucesso!"}
 
-# Componentes Reutilizáveis
+# Componentes Reutilizáveis (Sintaxe 100% Portulong)
 componente cabecalho_sistema:
-<div class="barra-superior">
-    <h1>Portal Portulong</h1>
-    <p>Frontend + Backend 100% em Português de Portugal</p>
-</div>
+caixa "barra-superior":
+    titulo1 "Portal Portulong"
+    paragrafo "Frontend + Backend 100% em Português de Portugal"
+fim_caixa
+fim_componente
 
 cabecalho_sistema
 
@@ -36,21 +37,22 @@ caixa "container":
     caixa "cartao":
         titulo2 "Utilizadores Registados"
         paragrafo "Dados fornecidos pelo servidor nativo via rota REST."
-        botao "Carregar Utilizadores" acao "carregarUsuarios()"
+        botao "Carregar Utilizadores" acao "carregar_usuarios()"
         caixa "lista-caixa":
-            <ul id="lista-usuarios" style="list-style: none; padding: 0; margin-top: 15px;"></ul>
+            lista "lista-usuarios"
+            fim_lista
         fim_caixa
     fim_caixa
 
     caixa "cartao":
         titulo2 "Adicionar Novo Utilizador"
         campo texto "novo-usuario"
-        botao "Criar no Servidor" acao "criarUsuario()"
+        botao "Criar no Servidor" acao "criar_usuario()"
     fim_caixa
 fim_caixa
 
 estilo:
-body { fundo: #f8fafc; fonte-familia: system-ui, sans-serif; margem: 0; espacamento: 20px; }
+corpo { fundo: #f8fafc; fonte-familia: sans-serif; margem: 0; espacamento: 20px; }
 .barra-superior { fundo: #0f172a; cor: branco; espacamento: 20px; borda-arredondada: 12px; margem-base: 25px; }
 .barra-superior h1 { margem: 0 0 5px 0; tamanho-fonte: 24px; cor: #60a5fa; }
 .barra-superior p { margem: 0; cor: #94a3b8; tamanho-fonte: 14px; }
@@ -58,50 +60,36 @@ body { fundo: #f8fafc; fonte-familia: system-ui, sans-serif; margem: 0; espacame
 .cartao { fundo: branco; borda-arredondada: 10px; espacamento: 20px; sombra: 0 4px 12px rgba(0,0,0,0.06); }
 button { fundo: #2563eb; cor: branco; borda: nenhum; espacamento: 10px 20px; borda-arredondada: 6px; cursor: ponteiro; tamanho-fonte: 14px; peso-fonte: 600; transicao: 0.2s; }
 input { espacamento: 10px 14px; margem-direita: 10px; borda: 1px solido #cbd5e1; borda-arredondada: 6px; tamanho-fonte: 14px; }
+ul { estilo-lista: nenhum; espacamento: 0; margem-topo: 15px; }
+li { espacamento: 10px; borda-base: 1px solido #f1f5f9; exibicao: flexivel; justificar-conteudo: espaco-entre; }
 
 script:
-funcao carregarUsuarios():
-    fetch('/api/usuarios')
-        .then(r => r.json())
-        .then(dados => {
-            var lista = document.getElementById('lista-usuarios')
-            lista.innerHTML = ''
-            dados.usuarios.forEach(u => {
-                var li = document.createElement('li')
-                li.style.padding = '10px'
-                li.style.borderBottom = '1px solid #f1f5f9'
-                li.style.display = 'flex'
-                li.style.justifyContent = 'space-between'
-                li.innerHTML = '<strong>' + u.nome + '</strong> <span style="color:#64748b">ID: #' + u.id + '</span>'
-                lista.appendChild(li)
-            })
-        })
+funcao carregar_usuarios():
+    pedir_dados('/api/usuarios', funcao(dados):
+        limpar_elemento('lista-usuarios')
+        para cada u em dados.usuarios:
+            adicionar_item('lista-usuarios', '<strong>' + u.nome + '</strong> <span style="color:#64748b">ID: #' + u.id + '</span>')
+    )
 
-funcao criarUsuario():
-    var nome = document.getElementById('novo-usuario').value
+funcao criar_usuario():
+    var nome = obter_valor('novo-usuario')
     se !nome:
         alerta('Por favor digite um nome!')
         retornar
-    fetch('/api/usuario', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({nome: nome})
-    })
-    .then(r => r.json())
-    .then(dados => {
+    enviar_dados('/api/usuario', {"nome": nome}, funcao(dados):
         alerta(dados.mensagem)
-        document.getElementById('novo-usuario').value = ''
-        carregarUsuarios()
-    })
+        definir_valor('novo-usuario', '')
+        carregar_usuarios()
+    )
 
 servidor:
     porta 3000
-    host localhost
+    computador local
 `,
   },
   {
     id: "ola_mundo",
-    nome: "Página Simples (ola_mundo.ptg)",
+    nome: "Página Simples (100% PT)",
     descricao: "Exemplo básico com tags, estilização PT e botão interativo.",
     codigo: `pagina "Minha Primeira Pagina"
 
@@ -115,7 +103,7 @@ caixa "painel":
 fim_caixa
 
 estilo:
-body { fundo: #f0fdf4; espacamento: 40px; fonte-familia: system-ui, sans-serif; }
+corpo { fundo: #f0fdf4; espacamento: 40px; fonte-familia: system-ui, sans-serif; }
 h1 { cor: #166534; margem-base: 15px; }
 p { cor: #374151; tamanho-fonte: 16px; }
 .painel { fundo: branco; espacamento: 25px; borda-arredondada: 12px; largura-maxima: 500px; sombra: 0 4px 12px rgba(0,0,0,0.06); }
@@ -128,12 +116,12 @@ funcao alerta(mensagem):
   },
   {
     id: "interativo",
-    nome: "Contador Interativo (interativo.ptg)",
-    descricao: "Exemplo interativo com estado dinâmico em JavaScript traduzido do Portulong.",
+    nome: "Contador Interativo (100% PT)",
+    descricao: "Exemplo interativo com estado dinâmico traduzido para Português.",
     codigo: `pagina "Contador Portulong"
 
 cabecalho "Contador em Tempo Real"
-paragrafo "Demonstração de funções e controlo de fluxo em Português."
+paragrafo "Demonstração de funções e controlo de fluxo 100% em Português."
 
 caixa "cartao":
     titulo2 "Valor Atual:"
@@ -149,7 +137,7 @@ caixa "cartao":
 fim_caixa
 
 estilo:
-body { fundo: #f8fafc; espacamento: 30px; fonte-familia: sans-serif; }
+corpo { fundo: #f8fafc; espacamento: 30px; fonte-familia: sans-serif; }
 .cartao { fundo: branco; espacamento: 25px; borda-arredondada: 12px; largura-maxima: 350px; sombra: 0 4px 15px rgba(0,0,0,0.08); alinhamento-texto: centro; }
 .display p { tamanho-fonte: 52px; cor: #2563eb; margem: 10px 0; peso-fonte: negrito; }
 .botoes { exibicao: flexivel; intervalo: 10px; justificar-conteudo: centro; }
@@ -160,15 +148,11 @@ var contador = 0
 
 funcao alterar(delta):
     contador += delta
-    var el = document.querySelector('.display p')
-    se el:
-        el.textContent = contador
+    definir_texto('display', contador)
 
 funcao zerar():
     contador = 0
-    var el = document.querySelector('.display p')
-    se el:
-        el.textContent = 0
+    definir_texto('display', 0)
 `,
   },
 ];

@@ -37,14 +37,15 @@ ptg config
 
 | Comando | Descrição |
 |---------|-----------|
+| `ptg arquivo.ptg` | Executa o arquivo `.ptg` nativamente em memória (SEM gerar nenhum HTML no disco) |
+| `ptg atualizar` | Atualiza para a última versão do PyPI (`pip install --upgrade portulong-sistema`) |
 | `ptg config` | Configura tudo 100% em tempo real (ícones dos arquivos, duplo clique e botão Run) |
-| `ptg arquivo.ptg` | Executa o arquivo `.ptg` e abre automaticamente no navegador |
-| `ptg instalar` | Sinónimo de `ptg config` |
 | `ptg novo meu_app.ptg` | Cria um novo arquivo pronto com modelo em português |
-| `ptg compilar arquivo.ptg` | Compila o arquivo `.ptg` para um arquivo `.html` independente |
 | `ptg vscode` | Instala a extensão oficial do Portulong no VS Code com botão de Run |
 | `ptg versao` | Mostra a versão instalada do Portulong |
 | `ptg ajuda` | Mostra o manual completo com todos os comandos |
+
+> ⚡ **Execução 100% Nativa em Memória**: O Portulong **não polui o seu disco com nenhum arquivo HTML**. Ao rodar `ptg arquivo.ptg`, o motor processa e executa tudo diretamente na memória RAM em tempo real!
 
 ---
 

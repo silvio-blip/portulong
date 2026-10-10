@@ -46,20 +46,19 @@ def mostrar_ajuda():
 Linguagem de programação para web 100% em Português.
 
 COMANDOS:
-  ptg <arquivo.ptg>            Executa o arquivo e abre no navegador
+  ptg <arquivo.ptg>            Executa o arquivo 100% nativo em memória (sem gerar nenhum HTML no disco)
+  ptg atualizar (ou update)    Atualiza para a versão mais recente do PyPI
   ptg config (ou instalar)     Configura ícones dos arquivos, duplo clique e botão Run em tempo real
-  ptg compilar <arquivo.ptg>   Compila o arquivo para HTML puro
-  ptg novo <nome.ptg>          Cria um novo arquivo modelo
+  ptg novo <nome.ptg>          Cria um novo arquivo modelo .ptg
   ptg vscode                   Instala extensão com botão de Run no VS Code
   ptg versao                   Mostra a versão instalada
   ptg ajuda                    Mostra esta ajuda
 
 EXEMPLOS:
-  ptg config
   ptg meu_app.ptg
+  ptg atualizar
+  ptg config
   ptg novo inicio.ptg
-  ptg compilar meu_app.ptg app.html
-  ptg instalar
 """)
 
 def verificar_auto_configuracao():
@@ -83,6 +82,22 @@ def main():
 
     if arg in ('versao', 'version', '-v', '--version'):
         print(f"Portulong versão {__version__} (100% PT-PT)")
+        return
+
+    if arg in ('atualizar', 'update', 'upgrade'):
+        print("🔄 A atualizar portulong-sistema para a versão mais recente do PyPI...")
+        try:
+            import subprocess
+            res = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "portulong-sistema"], check=False)
+            if res.returncode == 0:
+                print("✅ portulong-sistema atualizado com sucesso!")
+                print("⚡ A reconfigurar ícones e extensão em tempo real...")
+                instalar_tudo()
+            else:
+                print("⚠️ Para atualizar manualmente execute:")
+                print("pip install --upgrade portulong-sistema")
+        except Exception as e:
+            print(f"❌ Erro ao atualizar: {e}")
         return
 
     if arg in ('instalar', 'install', 'config'):

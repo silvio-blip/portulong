@@ -1,6 +1,6 @@
 /**
  * Portulong Compiler - Interpretação e compilação de código .ptg (100% PT-PT)
- * Traduz a sintaxe Portulong para HTML5, CSS3 e JavaScript.
+ * Traduz a sintaxe Portulong para HTML5, CSS3 e JavaScript nativamente em memória.
  */
 
 export interface CompileResult {
@@ -21,11 +21,13 @@ export class Empretador {
   rotas: Record<string, { metodo: string; codigo: string }> = {};
   componentes: Record<string, string> = {};
   porta: number = 3000;
-  host: string = "localhost";
+  host: string = "0.0.0.0";
 
   // Tradução de CSS em Português para CSS padrão
   traduzirCSS(linha: string): string {
     let css = linha;
+    css = css.replace(/^\s*corpo\b/i, "body");
+
     const mapaPropriedades: [RegExp, string][] = [
       [/\bfundo\s*:/gi, "background:"],
       [/\bcor-fundo\s*:/gi, "background-color:"],
@@ -58,10 +60,15 @@ export class Empretador {
       [/\bespacamento-esquerda\s*:/gi, "padding-left:"],
       [/\bespacamento-direita\s*:/gi, "padding-right:"],
       [/\bborda\s*:/gi, "border:"],
+      [/\bborda-base\s*:/gi, "border-bottom:"],
+      [/\bborda-topo\s*:/gi, "border-top:"],
+      [/\bborda-esquerda\s*:/gi, "border-left:"],
+      [/\bborda-direita\s*:/gi, "border-right:"],
       [/\bborda-arredondada\s*:/gi, "border-radius:"],
       [/\bborda-cor\s*:/gi, "border-color:"],
       [/\bborda-largura\s*:/gi, "border-width:"],
       [/\bborda-estilo\s*:/gi, "border-style:"],
+      [/\bestilo-lista\s*:/gi, "list-style:"],
       [/\bsombra\s*:/gi, "box-shadow:"],
       [/\bsombra-texto\s*:/gi, "text-shadow:"],
       [/\bopacidade\s*:/gi, "opacity:"],
@@ -77,13 +84,13 @@ export class Empretador {
       [/\bintervalo\s*:/gi, "gap:"],
       [/\bjustificar-conteudo\s*:/gi, "justify-content:"],
       [/\balinhar-itens\s*:/gi, "align-items:"],
+      [/\bflex-direcao\s*:/gi, "flex-direction:"],
     ];
 
     for (const [padrao, substituto] of mapaPropriedades) {
       css = css.replace(padrao, substituto);
     }
 
-    // Tradução de valores comuns em PT
     css = css.replace(/:\s*branco\b/gi, ": white");
     css = css.replace(/:\s*preto\b/gi, ": black");
     css = css.replace(/:\s*vermelho\b/gi, ": red");
@@ -98,30 +105,42 @@ export class Empretador {
     css = css.replace(/:\s*grade\b/gi, ": grid");
     css = css.replace(/:\s*bloqueio\b/gi, ": block");
     css = css.replace(/:\s*nenhum\b/gi, ": none");
+    css = css.replace(/:\s*coluna\b/gi, ": column");
+    css = css.replace(/:\s*linha\b/gi, ": row");
+    css = css.replace(/:\s*espaco-entre\b/gi, ": space-between");
+    css = css.replace(/:\s*espaco-ao-redor\b/gi, ": space-around");
+    css = css.replace(/:\s*negrito\b/gi, ": bold");
+    css = css.replace(/:\s*normal\b/gi, ": normal");
 
     return css;
   }
 
-  // Tradução de Script PT (funcao, se, senao, enquanto, para, retornar, alerta)
   traduzirScript(linhas: string[]): string {
     const jsLinhas: string[] = [];
     const indentStack: number[] = [];
 
     for (let i = 0; i < linhas.length; i++) {
       const rawLinha = linhas[i];
-      const trimmed = rawLinha.trim();
+      let trimmed = rawLinha.trim();
 
       if (!trimmed || trimmed.startsWith("#")) {
         continue;
       }
 
-      // Check indentation level
       const indent = rawLinha.search(/\S|$/);
 
-      // Close open blocks if indentation decreased
       while (indentStack.length > 0 && indent <= indentStack[indentStack.length - 1]) {
         indentStack.pop();
         jsLinhas.push("}");
+      }
+
+      // para cada item em colecao:
+      const matchParaCada = trimmed.match(/^para\s+cada\s+([a-zA-Z0-9_]+)\s+em\s+(.*?)\s*:$/);
+      if (matchParaCada) {
+        const [, itemVar, colecao] = matchParaCada;
+        jsLinhas.push(`(${colecao} || []).forEach(function(${itemVar}) {`);
+        indentStack.push(indent);
+        continue;
       }
 
       // funcao nome(args):
@@ -129,6 +148,14 @@ export class Empretador {
       if (matchFuncao) {
         const [, nome, args] = matchFuncao;
         jsLinhas.push(`function ${nome}(${args}) {`);
+        indentStack.push(indent);
+        continue;
+      }
+
+      // funcao anonima como callback: funcao(dados):
+      if (/funcao\s*\((.*?)\)\s*:/.test(trimmed)) {
+        trimmed = trimmed.replace(/funcao\s*\((.*?)\)\s*:/, "function($1) {");
+        jsLinhas.push(trimmed);
         indentStack.push(indent);
         continue;
       }
@@ -173,15 +200,24 @@ export class Empretador {
         continue;
       }
 
-      // Inline translation helpers
+      // Helpers e palavras-chave em Português
       let processed = trimmed;
+      processed = processed.replace(/\bverdadeiro\b/g, "true");
+      processed = processed.replace(/\bfalso\b/g, "false");
+      processed = processed.replace(/\bnulo\b/g, "null");
       processed = processed.replace(/\bretornar\s+(.*)/, "return $1;");
-      processed = processed.replace(/\balerta\s*\(/g, "alert(");
+      processed = processed.replace(/\balerta\s*\(/g, "alerta(");
       processed = processed.replace(/\bescrever\s*\(/g, "console.log(");
+
+      processed = processed.replace(/\bobter_valor\s*\((.*?)\)/g, "__obter_valor($1)");
+      processed = processed.replace(/\bdefinir_valor\s*\((.*?),\s*(.*?)\)/g, "__definir_valor($1, $2)");
       processed = processed.replace(/\bobter_elemento\s*\((.*?)\)/g, "document.getElementById($1)");
-      processed = processed.replace(/\bobter_valor\s*\((.*?)\)/g, "document.getElementById($1).value");
-      processed = processed.replace(/\bdefinir_texto\s*\((.*?),\s*(.*?)\)/g, "document.getElementById($1).textContent = $2");
-      processed = processed.replace(/\bdefinir_html\s*\((.*?),\s*(.*?)\)/g, "document.getElementById($1).innerHTML = $2");
+      processed = processed.replace(/\bdefinir_texto\s*\((.*?),\s*(.*?)\)/g, "__definir_texto($1, $2)");
+      processed = processed.replace(/\bdefinir_conteudo\s*\((.*?),\s*(.*?)\)/g, "__definir_conteudo($1, $2)");
+      processed = processed.replace(/\blimpar_elemento\s*\((.*?)\)/g, "__limpar_elemento($1)");
+      processed = processed.replace(/\badicionar_item\s*\((.*?),\s*(.*?)\)/g, "__adicionar_item($1, $2)");
+      processed = processed.replace(/\bpedir_dados\s*\((.*?),\s*/g, "__pedir_dados($1, ");
+      processed = processed.replace(/\benviar_dados\s*\((.*?),\s*(.*?),\s*/g, "__enviar_dados($1, $2, ");
 
       jsLinhas.push(processed);
     }
@@ -197,7 +233,9 @@ export class Empretador {
   salvarBloco(secao: string, conteudo: string[]) {
     if (secao.startsWith("componente_")) {
       const nome = secao.replace("componente_", "");
-      this.componentes[nome] = conteudo.join("\n");
+      const interpretadorInterno = new Empretador();
+      interpretadorInterno.empretar(conteudo.join("\n"));
+      this.componentes[nome] = interpretadorInterno.elementos.join("\n");
     } else if (secao.startsWith("rota_")) {
       const partes = secao.replace("rota_", "").split("_");
       const metodo = partes[0];
@@ -279,9 +317,11 @@ export class Empretador {
       } else if (secaoAtual === "servidor") {
         if (linha.startsWith("porta ")) {
           this.porta = parseInt(linha.replace("porta ", "").trim(), 10) || 3000;
-        } else if (linha.startsWith("host ")) {
-          this.host = linha.replace("host ", "").trim();
+        } else if (linha.startsWith("host ") || linha.includes("computador") || linha.includes("anfitriao")) {
+          this.host = "0.0.0.0";
         }
+      } else if (secaoAtual && (secaoAtual.startsWith("componente_") || secaoAtual.startsWith("rota_"))) {
+        blocoAtual.push(linhas[i]);
       } else {
         // Elementos de interface em Português
         if (linha.startsWith("cabecalho ") || linha.startsWith("titulo1 ")) {
@@ -323,6 +363,15 @@ export class Empretador {
           this.elementos.push(`<div class="${classe}">`);
         } else if (linha === "fim_caixa" || linha === "fim_div") {
           this.elementos.push("</div>");
+        } else if (linha.startsWith("lista ") || linha.startsWith("lista:")) {
+          const id = linha.replace("lista", "").replace(/:$/, "").trim().replace(/^["']|["']$/g, "");
+          const idAttr = id ? ` id="${id}"` : "";
+          this.elementos.push(`<ul${idAttr}>`);
+        } else if (linha === "fim_lista") {
+          this.elementos.push("</ul>");
+        } else if (linha.startsWith("item ")) {
+          const txt = linha.replace("item ", "").trim().replace(/^["']|["']$/g, "");
+          this.elementos.push(`<li>${txt}</li>`);
         } else if (linha.startsWith("imagem ")) {
           const partes = linha.replace("imagem ", "").split(" descricao ");
           const src = partes[0].trim().replace(/^["']|["']$/g, "");
@@ -339,10 +388,8 @@ export class Empretador {
           this.elementos.push("<hr>");
         } else if (this.componentes[linha]) {
           this.elementos.push(this.componentes[linha]);
-        } else if (secaoAtual && !["estilo", "script", "servidor"].includes(secaoAtual)) {
-          blocoAtual.push(linhas[i]);
         } else {
-          this.elementos.push(linhas[i]);
+          this.elementos.push(linha);
         }
       }
     }
@@ -359,17 +406,6 @@ export class Empretador {
     const css = this.estilos.join("\n");
     const js = this.traduzirScript(this.funcoes);
 
-    let componentesJs = "";
-    for (const [nome, codigo] of Object.entries(this.componentes)) {
-      componentesJs += `window.componente_${nome} = ${JSON.stringify(codigo)};\n`;
-    }
-
-    let rotasJs = "";
-    for (const [caminho, info] of Object.entries(this.rotas)) {
-      rotasJs += `window.rota_${info.metodo.toLowerCase()}_${caminho.replace(/[\/\\]/g, "_")} = ${JSON.stringify(info.codigo)};\n`;
-    }
-
-    // Barra de Execução Nativa do Portulong com Botão de Run (▶ Executar)
     const barraPortulong = `
       <div id="portulong-runner-bar" style="position:fixed;top:12px;right:12px;z-index:999999;display:flex;align-items:center;gap:8px;background:#0f172a;color:#f8fafc;padding:6px 12px;border-radius:10px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.3);border:1px solid #334155;font-family:system-ui,-apple-system,sans-serif;font-size:12px;user-select:none;">
         <img src="/imagens/Portulong.png" width="28" height="28" style="border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.2);" alt="Portulong">
@@ -381,34 +417,72 @@ export class Empretador {
       </div>
     `;
 
-    // Toast alert shim so alerts work elegantly in sandboxed iframes
-    const alertShim = `
-      (function() {
-        if (!window.__portulongAlertOriginal) {
-          window.__portulongAlertOriginal = window.alert;
-          window.alert = function(msg) {
-            console.log('[Portulong Alert]:', msg);
-            try {
-              let t = document.getElementById('ptg-toast-alert');
-              if (!t) {
-                t = document.createElement('div');
-                t.id = 'ptg-toast-alert';
-                t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#f8fafc;padding:12px 24px;border-radius:8px;font-family:system-ui,sans-serif;font-size:14px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.3);z-index:99999;border:1px solid #475569;transition:all 0.3s ease;opacity:0;';
-                document.body.appendChild(t);
-              }
-              t.textContent = msg;
-              t.style.opacity = '1';
-              t.style.transform = 'translateX(-50%) translateY(0)';
-              setTimeout(() => {
-                t.style.opacity = '0';
-                t.style.transform = 'translateX(-50%) translateY(10px)';
-              }, 3500);
-            } catch (e) {
-              window.__portulongAlertOriginal(msg);
-            }
-          };
+    // Helpers nativos do Portulong no cliente (100% PT)
+    const helpersPt = `
+      function __obter_valor(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : '';
+      }
+      function __definir_valor(id, valor) {
+        var el = document.getElementById(id);
+        if (el) el.value = valor;
+      }
+      function __definir_texto(id, texto) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = texto;
+      }
+      function __definir_conteudo(id, html) {
+        var el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+      }
+      function __limpar_elemento(id) {
+        var el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+      }
+      function __adicionar_item(id, conteudo) {
+        var el = document.getElementById(id);
+        if (el) {
+          var li = document.createElement('li');
+          li.innerHTML = conteudo;
+          el.appendChild(li);
         }
-      })();
+      }
+      function __pedir_dados(url, ao_receber) {
+        fetch(url)
+          .then(function(r) { return r.json(); })
+          .then(function(dados) { if (ao_receber) ao_receber(dados); })
+          .catch(function(err) { console.error('Erro pedir_dados:', err); });
+      }
+      function __enviar_dados(url, dados, ao_receber) {
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) { if (ao_receber) ao_receber(res); })
+        .catch(function(err) { console.error('Erro enviar_dados:', err); });
+      }
+      function alerta(msg) {
+        try {
+          let t = document.getElementById('ptg-toast-alert');
+          if (!t) {
+            t = document.createElement('div');
+            t.id = 'ptg-toast-alert';
+            t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#f8fafc;padding:12px 24px;border-radius:8px;font-family:system-ui,sans-serif;font-size:14px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.3);z-index:99999;border:1px solid #475569;transition:all 0.3s ease;opacity:0;';
+            document.body.appendChild(t);
+          }
+          t.textContent = msg;
+          t.style.opacity = '1';
+          t.style.transform = 'translateX(-50%) translateY(0)';
+          setTimeout(() => {
+            t.style.opacity = '0';
+            t.style.transform = 'translateX(-50%) translateY(10px)';
+          }, 3500);
+        } catch(e) {
+          window.alert(msg);
+        }
+      }
     `;
 
     return `<!DOCTYPE html>
@@ -427,9 +501,7 @@ export class Empretador {
   ${barraPortulong}
   ${corpo}
   <script>
-    ${alertShim}
-    ${componentesJs}
-    ${rotasJs}
+    ${helpersPt}
     ${js}
   </script>
 </body>

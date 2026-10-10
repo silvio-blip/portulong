@@ -3,7 +3,7 @@ Portulong - Linguagem de programação em Português de Portugal para a Web.
 Permite criar páginas, aplicações completas e servidores com sintaxe 100% em português.
 """
 
-__version__ = "1.0.25"
+__version__ = "1.0.26"
 __author__ = "Silvio"
 __license__ = "MIT"
 

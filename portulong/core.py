@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Portulong Core - Interpretador e Servidor 100% em Português
-Traduz arquivos .ptg para HTML5, CSS3, JavaScript e executa rotas de servidor integradas.
+Executa código .ptg nativamente em memória RAM sem gerar arquivos HTML no disco.
+Frontend, Backend, Estilos e Scripts 100% em Português de Portugal.
 """
 
 import os
@@ -10,10 +11,8 @@ import sys
 import json
 import base64
 import webbrowser
-import threading
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
 
 PACOTE_DIR = Path(__file__).parent
 ICONE_PNG = PACOTE_DIR / "imagens" / "Portulong.png"
@@ -51,10 +50,15 @@ MAPA_CSS_PROPRIEDADES = {
     r'\bespacamento-esquerda\s*:': 'padding-left:',
     r'\bespacamento-direita\s*:': 'padding-right:',
     r'\bborda\s*:': 'border:',
+    r'\bborda-base\s*:': 'border-bottom:',
+    r'\bborda-topo\s*:': 'border-top:',
+    r'\bborda-esquerda\s*:': 'border-left:',
+    r'\bborda-direita\s*:': 'border-right:',
     r'\bborda-arredondada\s*:': 'border-radius:',
     r'\bborda-cor\s*:': 'border-color:',
     r'\bborda-largura\s*:': 'border-width:',
     r'\bborda-estilo\s*:': 'border-style:',
+    r'\bestilo-lista\s*:': 'list-style:',
     r'\bsombra\s*:': 'box-shadow:',
     r'\bsombra-texto\s*:': 'text-shadow:',
     r'\bopacidade\s*:': 'opacity:',
@@ -100,10 +104,16 @@ MAPA_CSS_VALORES = {
     r':\s*absoluto\b': ': absolute',
     r':\s*relativo\b': ': relative',
     r':\s*fixo\b': ': fixed',
+    r':\s*coluna\b': ': column',
+    r':\s*linha\b': ': row',
+    r':\s*espaco-entre\b': ': space-between',
+    r':\s*espaco-ao-redor\b': ': space-around',
+    r':\s*negrito\b': ': bold',
+    r':\s*normal\b': ': normal',
 }
 
 class Empretador:
-    """Interpretador e compilador do Portulong"""
+    """Interpretador e compilador nativo do Portulong"""
     
     def __init__(self):
         self.titulo = "Aplicação Portulong"
@@ -114,7 +124,7 @@ class Empretador:
         self.rotas = {}
         self.componentes = {}
         self.porta = 3000
-        self.host = "localhost"
+        self.host = "0.0.0.0"
         self.icone_base64 = self._carregar_icone()
 
     def _carregar_icone(self):
@@ -126,7 +136,9 @@ class Empretador:
         return ""
 
     def traduzir_css(self, linha):
-        """Traduz propriedades e valores de estilo em português para CSS"""
+        """Traduz seletores, propriedades e valores de estilo em português para CSS"""
+        # Seletor 'corpo' para 'body'
+        linha = re.sub(r'^\s*corpo\b', 'body', linha)
         for padrao, subst in MAPA_CSS_PROPRIEDADES.items():
             linha = re.sub(padrao, subst, linha, flags=re.IGNORECASE)
         for padrao, subst in MAPA_CSS_VALORES.items():
@@ -134,7 +146,7 @@ class Empretador:
         return linha
 
     def traduzir_script(self, linhas):
-        """Traduz bloco de script em português para JavaScript"""
+        """Traduz bloco de script em português para JavaScript nativo"""
         js_linhas = []
         pilha_indentacao = []
 
@@ -143,19 +155,32 @@ class Empretador:
             if not trimmed or trimmed.startswith("#"):
                 continue
 
-            # Nível de indentação
             indent = len(raw_linha) - len(raw_linha.lstrip())
 
-            # Fechar blocos abertos se a indentação diminuiu
             while pilha_indentacao and indent <= pilha_indentacao[-1]:
                 pilha_indentacao.pop()
                 js_linhas.append("    " * len(pilha_indentacao) + "}")
+
+            # para cada item em colecao:
+            m_para_cada = re.match(r"^para\s+cada\s+([a-zA-Z0-9_]+)\s+em\s+(.*?)\s*:$", trimmed)
+            if m_para_cada:
+                item_var, colecao = m_para_cada.groups()
+                js_linhas.append("    " * len(pilha_indentacao) + f"({colecao} || []).forEach(function({item_var}) {{")
+                pilha_indentacao.append(indent)
+                continue
 
             # funcao nome(args):
             m_funcao = re.match(r"^funcao\s+([a-zA-Z0-9_]+)\s*\((.*?)\)\s*:$", trimmed)
             if m_funcao:
                 nome, args = m_funcao.groups()
                 js_linhas.append("    " * len(pilha_indentacao) + f"function {nome}({args}) {{")
+                pilha_indentacao.append(indent)
+                continue
+
+            # funcao anonima como argumento: funcao(dados):
+            if re.search(r'funcao\s*\((.*?)\)\s*:', trimmed):
+                trimmed = re.sub(r'funcao\s*\((.*?)\)\s*:', r'function(\1) {', trimmed)
+                js_linhas.append("    " * len(pilha_indentacao) + trimmed)
                 pilha_indentacao.append(indent)
                 continue
 
@@ -197,15 +222,25 @@ class Empretador:
                 pilha_indentacao.append(indent)
                 continue
 
-            # Tradução de comandos pontuais
+            # Tradução de palavras-chave e helpers 100% em Português
             linha_js = trimmed
+            linha_js = re.sub(r'\bverdadeiro\b', 'true', linha_js)
+            linha_js = re.sub(r'\bfalso\b', 'false', linha_js)
+            linha_js = re.sub(r'\bnulo\b', 'null', linha_js)
             linha_js = re.sub(r'\bretornar\s+(.*)', r'return \1;', linha_js)
-            linha_js = re.sub(r'\balerta\s*\(', 'alert(', linha_js)
+            linha_js = re.sub(r'\balerta\s*\(', 'alerta(', linha_js)
             linha_js = re.sub(r'\bescrever\s*\(', 'console.log(', linha_js)
+
+            # Helpers DOM e Requisições em Português
+            linha_js = re.sub(r'\bobter_valor\s*\((.*?)\)', r'__obter_valor(\1)', linha_js)
+            linha_js = re.sub(r'\bdefinir_valor\s*\((.*?),\s*(.*?)\)', r'__definir_valor(\1, \2)', linha_js)
             linha_js = re.sub(r'\bobter_elemento\s*\((.*?)\)', r'document.getElementById(\1)', linha_js)
-            linha_js = re.sub(r'\bobter_valor\s*\((.*?)\)', r'document.getElementById(\1).value', linha_js)
-            linha_js = re.sub(r'\bdefinir_texto\s*\((.*?),\s*(.*?)\)', r'document.getElementById(\1).textContent = \2', linha_js)
-            linha_js = re.sub(r'\bdefinir_html\s*\((.*?),\s*(.*?)\)', r'document.getElementById(\1).innerHTML = \2', linha_js)
+            linha_js = re.sub(r'\bdefinir_texto\s*\((.*?),\s*(.*?)\)', r'__definir_texto(\1, \2)', linha_js)
+            linha_js = re.sub(r'\bdefinir_conteudo\s*\((.*?),\s*(.*?)\)', r'__definir_conteudo(\1, \2)', linha_js)
+            linha_js = re.sub(r'\blimpar_elemento\s*\((.*?)\)', r'__limpar_elemento(\1)', linha_js)
+            linha_js = re.sub(r'\badicionar_item\s*\((.*?),\s*(.*?)\)', r'__adicionar_item(\1, \2)', linha_js)
+            linha_js = re.sub(r'\bpedir_dados\s*\((.*?),\s*', r'__pedir_dados(\1, ', linha_js)
+            linha_js = re.sub(r'\benviar_dados\s*\((.*?),\s*(.*?),\s*', r'__enviar_dados(\1, \2, ', linha_js)
 
             js_linhas.append("    " * len(pilha_indentacao) + linha_js)
 
@@ -218,7 +253,12 @@ class Empretador:
     def salvar_bloco(self, secao, conteudo):
         if secao.startswith('componente_'):
             nome = secao.replace('componente_', '')
-            self.componentes[nome] = '\n'.join(conteudo)
+            # O conteúdo do componente é processado como elementos Portulong
+            interpretador_interno = Empretador()
+            html_comp = interpretador_interno.empretar('\n'.join(conteudo))
+            # Extrair apenas os elementos gerados
+            corpo_comp = '\n'.join(interpretador_interno.elementos)
+            self.componentes[nome] = corpo_comp
         elif secao.startswith('rota_'):
             partes = secao.replace('rota_', '').split('_')
             metodo = partes[0]
@@ -226,7 +266,7 @@ class Empretador:
             self.rotas[caminho] = {'metodo': metodo, 'codigo': '\n'.join(conteudo)}
 
     def empretar(self, codigo):
-        """Interpreta o código Portulong e gera o HTML final"""
+        """Interpreta o código Portulong e gera a página em memória"""
         self.elementos = []
         self.estilos = []
         self.funcoes = []
@@ -243,7 +283,7 @@ class Empretador:
             if not linha_limpa or linha_limpa.startswith('#'):
                 continue
 
-            # Diretivas principais
+            # Seções principais
             if linha_limpa.startswith('pagina '):
                 self.titulo = linha_limpa.replace('pagina ', '').strip().strip('"').strip("'")
             elif linha_limpa.startswith('importar '):
@@ -293,10 +333,14 @@ class Empretador:
                         self.porta = int(linha_limpa.replace('porta ', '').strip())
                     except ValueError:
                         pass
-                elif linha_limpa.startswith('host '):
-                    self.host = linha_limpa.replace('host ', '').strip()
+                elif linha_limpa.startswith('host ') or 'computador' in linha_limpa or 'anfitriao' in linha_limpa:
+                    self.host = "0.0.0.0"
+            elif secao_atual and secao_atual.startswith('componente_'):
+                bloco_atual.append(linha)
+            elif secao_atual and secao_atual.startswith('rota_'):
+                bloco_atual.append(linha)
             else:
-                # Comandos de interface (HTML em Português)
+                # Comandos de interface 100% em Português
                 if linha_limpa.startswith('cabecalho ') or linha_limpa.startswith('titulo1 '):
                     txt = re.sub(r'^(cabecalho|titulo1)\s+', '', linha_limpa).strip().strip('"').strip("'")
                     self.elementos.append(f'<h1>{txt}</h1>')
@@ -333,6 +377,15 @@ class Empretador:
                     self.elementos.append(f'<div class="{cls}">')
                 elif linha_limpa in ('fim_caixa', 'fim_div'):
                     self.elementos.append('</div>')
+                elif linha_limpa.startswith('lista ') or linha_limpa.startswith('lista:'):
+                    ident = linha_limpa.replace('lista', '').strip(':').strip().strip('"').strip("'")
+                    id_attr = f' id="{ident}"' if ident else ''
+                    self.elementos.append(f'<ul{id_attr}>')
+                elif linha_limpa == 'fim_lista':
+                    self.elementos.append('</ul>')
+                elif linha_limpa.startswith('item '):
+                    txt = linha_limpa.replace('item ', '').strip().strip('"').strip("'")
+                    self.elementos.append(f'<li>{txt}</li>')
                 elif linha_limpa.startswith('imagem '):
                     partes = linha_limpa.replace('imagem ', '').split(' descricao ')
                     src = partes[0].strip().strip('"').strip("'")
@@ -349,8 +402,6 @@ class Empretador:
                     self.elementos.append('<hr>')
                 elif linha_limpa in self.componentes:
                     self.elementos.append(self.componentes[linha_limpa])
-                elif secao_atual and secao_atual not in ['estilo', 'script', 'servidor']:
-                    bloco_atual.append(linha)
                 else:
                     self.elementos.append(linha)
 
@@ -363,17 +414,6 @@ class Empretador:
         corpo = '\n'.join(self.elementos)
         css = '\n'.join(self.estilos)
         js = self.traduzir_script(self.funcoes)
-
-        componentes_js = ""
-        for nome, codigo in self.componentes.items():
-            codigo_esc = codigo.replace('`', '\\`')
-            componentes_js += f"window.componente_{nome} = `{codigo_esc}`;\n"
-
-        rotas_js = ""
-        for caminho, info in self.rotas.items():
-            rot_nome = caminho.replace('/', '_').strip('_')
-            cod_esc = info['codigo'].replace('`', '\\`')
-            rotas_js += f"window.rota_{info['metodo'].lower()}_{rot_nome} = `{cod_esc}`;\n"
 
         icone_src = f"data:image/png;base64,{self.icone_base64}" if self.icone_base64 else "/imagens/Portulong.png"
 
@@ -388,6 +428,58 @@ class Empretador:
             </button>
             <span style="display:inline-block;width:8px;height:8px;background:#22c55e;border-radius:50%;" title="Servidor Ligado"></span>
         </div>
+        """
+
+        # Biblioteca de funções nativas 100% em Português no JavaScript
+        helpers_pt = """
+        // Biblioteca Nativa do Portulong em Português
+        function __obter_valor(id) {
+            var el = document.getElementById(id);
+            return el ? el.value : '';
+        }
+        function __definir_valor(id, valor) {
+            var el = document.getElementById(id);
+            if (el) el.value = valor;
+        }
+        function __definir_texto(id, texto) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = texto;
+        }
+        function __definir_conteudo(id, html) {
+            var el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        }
+        function __limpar_elemento(id) {
+            var el = document.getElementById(id);
+            if (el) el.innerHTML = '';
+        }
+        function __adicionar_item(id, conteudo) {
+            var el = document.getElementById(id);
+            if (el) {
+                var li = document.createElement('li');
+                li.innerHTML = conteudo;
+                el.appendChild(li);
+            }
+        }
+        function __pedir_dados(url, ao_receber) {
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(dados) { if (ao_receber) ao_receber(dados); })
+                .catch(function(err) { console.error('Erro pedir_dados:', err); });
+        }
+        function __enviar_dados(url, dados, ao_receber) {
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) { if (ao_receber) ao_receber(res); })
+            .catch(function(err) { console.error('Erro enviar_dados:', err); });
+        }
+        function alerta(msg) {
+            window.alert(msg);
+        }
         """
 
         html = f"""<!DOCTYPE html>
@@ -410,8 +502,7 @@ class Empretador:
   {barra_portulong}
   {corpo}
   <script>
-    {componentes_js}
-    {rotas_js}
+    {helpers_pt}
     {js}
   </script>
 </body>
@@ -452,7 +543,14 @@ class ServidorPortulong(BaseHTTPRequestHandler):
             try:
                 dados = json.loads(dados_brutos) if dados_brutos else {}
                 codigo = info_rota.get('codigo', '')
-                contexto = {'dados': dados, 'resposta': {}, 'json': json}
+                contexto = {
+                    'dados': dados,
+                    'resposta': {},
+                    'verdadeiro': True,
+                    'falso': False,
+                    'nulo': None,
+                    'json': json
+                }
                 exec(codigo, {'__builtins__': __builtins__, 'json': json}, contexto)
                 resultado = contexto.get('resposta', {})
 
@@ -474,8 +572,8 @@ class ServidorPortulong(BaseHTTPRequestHandler):
         pass
 
 
-def servir(html, rotas=None, porta=3000, host='localhost', abrir_navegador=True):
-    """Inicia o servidor HTTP nativo do Portulong e abre o navegador"""
+def servir(html, rotas=None, porta=3000, host='0.0.0.0', abrir_navegador=True):
+    """Inicia o servidor HTTP nativo do Portulong e abre o navegador em qualquer ambiente"""
     ServidorPortulong.html_content = html
     if rotas:
         ServidorPortulong.api_rotas = rotas
@@ -483,9 +581,9 @@ def servir(html, rotas=None, porta=3000, host='localhost', abrir_navegador=True)
     # Tentativa de alocar a porta ou a próxima porta livre
     porta_atual = porta
     servidor = None
-    for tentativa in range(10):
+    for tentativa in range(20):
         try:
-            servidor = HTTPServer((host, porta_atual), ServidorPortulong)
+            servidor = HTTPServer(('0.0.0.0', porta_atual), ServidorPortulong)
             break
         except OSError:
             porta_atual += 1
@@ -494,13 +592,20 @@ def servir(html, rotas=None, porta=3000, host='localhost', abrir_navegador=True)
         print(f"❌ Não foi possível iniciar o servidor na porta {porta}")
         sys.exit(1)
 
-    url = f"http://{host}:{porta_atual}/"
-    print(f"🚀 Portulong ativo em: {url}")
+    url_local = f"http://localhost:{porta_atual}/"
+    url_rede = f"http://127.0.0.1:{porta_atual}/"
+    print("=" * 60)
+    print(f"🚀 Portulong rodando 100% nativo em memória!")
+    print(f"👉 Aceda em: {url_local}")
     print("💡 Pressione Ctrl+C para encerrar o servidor.")
+    print("=" * 60)
 
     if abrir_navegador:
         try:
-            webbrowser.open(url)
+            if sys.platform.startswith('linux') and not os.environ.get('DISPLAY') and not os.environ.get('WAYLAND_DISPLAY'):
+                pass
+            else:
+                webbrowser.open(url_local)
         except Exception:
             pass
 
@@ -512,7 +617,7 @@ def servir(html, rotas=None, porta=3000, host='localhost', abrir_navegador=True)
 
 
 def compilar_arquivo(caminho_ptg, caminho_saida=None):
-    """Compila um arquivo .ptg para HTML standalone"""
+    """Interpreta um arquivo .ptg nativamente em memória"""
     caminho = Path(caminho_ptg)
     if not caminho.exists():
         raise FileNotFoundError(f"Arquivo não encontrado: {caminho_ptg}")
@@ -520,9 +625,4 @@ def compilar_arquivo(caminho_ptg, caminho_saida=None):
     codigo = caminho.read_text(encoding='utf-8')
     interpretador = Empretador()
     html = interpretador.empretar(codigo)
-
-    if caminho_saida:
-        saida = Path(caminho_saida)
-        saida.write_text(html, encoding='utf-8')
-        print(f"✅ Compilado para: {saida.resolve()}")
     return html
