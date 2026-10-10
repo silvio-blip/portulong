@@ -1,17 +1,14 @@
-#!/usr/bin/env python3
-"""
-Portulong Erros - Tratamento amigável de erros de sintaxe em Português de Portugal.
-"""
-
-class ErroSintaxePortulong(Exception):
+class PortulongErro(Exception):
+    """Classe base para erros da linguagem Portulong."""
     pass
 
-def relatar_erro_sintaxe(linha_num, texto_linha, mensagem):
-    print("\n" + "=" * 60)
-    print(f"❌ ERRO DE SINTAXE EM PORTULONG [Linha {linha_num}]")
-    print("=" * 60)
-    print(f"  > {texto_linha}")
-    print("-" * 60)
-    print(f"💡 Causa: {mensagem}")
-    print("=" * 60 + "\n")
-    raise ErroSintaxePortulong(f"Erro na linha {linha_num}: {mensagem}")
+class ErroSintaxe(PortulongErro):
+    """Erro de sintaxe no código Portulong (.ptg)."""
+    def __init__(self, mensagem, linha=None):
+        self.mensagem = mensagem
+        self.linha = linha
+        super().__init__(f"Erro de Sintaxe (linha {linha}): {mensagem}" if linha else f"Erro de Sintaxe: {mensagem}")
+
+class ErroServidor(PortulongErro):
+    """Erro ao iniciar ou executar o servidor Portulong."""
+    pass

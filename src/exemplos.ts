@@ -7,6 +7,21 @@ export interface ExemploPortulong {
 
 export const EXEMPLOS: ExemploPortulong[] = [
   {
+    id: "terminal_simples",
+    nome: "Script de Terminal (escrever)",
+    descricao: "Execução direta de comandos e escrita no terminal (como no Python).",
+    codigo: `escrever("ola tudo ?")
+escrever("Bem-vindo ao Portulong no terminal!")
+
+var contador = 1
+enquanto contador <= 3:
+    escrever("Executando passo número: " + contador)
+    contador += 1
+
+escrever("Finalizado com sucesso 100% em Português!")
+`,
+  },
+  {
     id: "sistema_completo",
     nome: "Sistema Completo (100% PT)",
     descricao: "Exemplo completo com Frontend, Backend REST, Estilos e Scripts 100% em Português sem nenhuma palavra em inglês.",

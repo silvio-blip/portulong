@@ -32,7 +32,7 @@ export default function App() {
   const [abaMobile, setAbaMobile] = useState<'editor' | 'preview'>('editor');
 
   // Abas do Painel Direito
-  const [abaDireita, setAbaDireita] = useState<'preview' | 'html' | 'api' | 'pypi' | 'sistema' | 'docs'>('preview');
+  const [abaDireita, setAbaDireita] = useState<'preview' | 'terminal' | 'html' | 'api' | 'pypi' | 'sistema' | 'docs'>('preview');
 
   // Modo de visualização do iframe: 'desktop' | 'tablet' | 'mobile'
   const [dispositivoPreview, setDispositivoPreview] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
@@ -44,13 +44,27 @@ export default function App() {
   const [carregandoApi, setCarregandoApi] = useState<boolean>(false);
   const [novoUsuarioNome, setNovoUsuarioNome] = useState<string>('');
   const [statusMsg, setStatusMsg] = useState<string>('Pronto para executar');
+  const [logsConsole, setLogsConsole] = useState<string[]>([]);
 
   const compiler = useMemo(() => new Empretador(), []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Escutar logs do Portulong enviados pelo iframe
+  useEffect(() => {
+    const escutarLogs = (e: MessageEvent) => {
+      if (e.data?.type === 'PORTULONG_CONSOLE_LOG') {
+        const txt = String(e.data.texto);
+        setLogsConsole(prev => [...prev, txt]);
+      }
+    };
+    window.addEventListener('message', escutarLogs);
+    return () => window.removeEventListener('message', escutarLogs);
+  }, []);
+
   // Compilar código
   const compilar = (codigoFonte: string = codigo) => {
     setCompilando(true);
+    setLogsConsole([]);
     try {
       const resultadoHtml = compiler.empretar(codigoFonte);
       setHtmlCompilado(resultadoHtml);
@@ -160,7 +174,7 @@ export default function App() {
               <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider">
                 100% PT
               </span>
-              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">v1.0.27</span>
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">v1.0.28</span>
             </div>
             <p className="text-[11px] text-slate-400 hidden md:block">
               Linguagem em Português para Frontend e Backend Web
@@ -372,6 +386,22 @@ export default function App() {
                 <span>Navegador</span>
               </button>
               <button
+                onClick={() => setAbaDireita('terminal')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition font-medium cursor-pointer ${
+                  abaDireita === 'terminal'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>Terminal</span>
+                {logsConsole.length > 0 && (
+                  <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-mono px-1.5 py-0.2 rounded font-bold">
+                    {logsConsole.length}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={() => setAbaDireita('html')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition font-medium cursor-pointer ${
                   abaDireita === 'html'
@@ -492,6 +522,58 @@ export default function App() {
               </div>
             )}
 
+            {/* Painel de Saída de Terminal / Consola */}
+            {abaDireita === 'terminal' && (
+              <div className="p-4 sm:p-6 font-mono text-xs text-slate-200 leading-relaxed overflow-auto h-full bg-slate-950 flex flex-col">
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-emerald-400" />
+                    <span className="font-semibold text-white text-sm">Terminal Portulong</span>
+                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
+                      escrever(...) nativo
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => compilar()}
+                      className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded transition flex items-center gap-1 cursor-pointer font-sans"
+                    >
+                      <Play className="w-3 h-3 fill-current" />
+                      Reexecutar
+                    </button>
+                    <button
+                      onClick={() => setLogsConsole([])}
+                      className="text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded border border-slate-700 cursor-pointer font-sans"
+                    >
+                      Limpar
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 bg-slate-900/90 rounded-xl border border-slate-800 p-4 font-mono text-sm overflow-auto shadow-inner flex flex-col">
+                  <div className="text-slate-500 text-xs mb-3 flex items-center justify-between">
+                    <span>// Saída de comandos em Português de Portugal</span>
+                    <span>v1.0.28</span>
+                  </div>
+                  
+                  <div className="space-y-1.5 flex-1">
+                    {logsConsole.length === 0 ? (
+                      <div className="text-slate-500 italic p-3 bg-slate-950/40 rounded border border-slate-850">
+                        Nenhuma mensagem impressa. Escreva instruções como <code className="text-emerald-400">escrever("ola mundo")</code> e clique em <strong>Executar</strong>.
+                      </div>
+                    ) : (
+                      logsConsole.map((msg, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-slate-200 font-mono text-sm bg-slate-950/60 p-2 rounded border border-slate-800/60">
+                          <span className="text-emerald-400 font-bold select-none">&gt;</span>
+                          <span className="text-emerald-300 font-medium whitespace-pre-wrap">{msg}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Código HTML Gerado em Memória com Scroll Total */}
             {abaDireita === 'html' && (
               <div className="p-4 font-mono text-xs text-slate-300 leading-relaxed overflow-auto h-full bg-slate-950">
@@ -580,7 +662,7 @@ export default function App() {
                     Publicar <span className="text-emerald-400 font-mono">portulong-sistema</span> no PyPI
                   </h2>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    O pacote está 100% configurado para a versão <strong className="text-slate-200">1.0.27</strong>. Pode publicar tanto pela linha de comando quanto automaticamente via GitHub Actions ao fazer push!
+                    O pacote está 100% configurado para a versão <strong className="text-slate-200">1.0.28</strong>. Pode publicar tanto pela linha de comando quanto automaticamente via GitHub Actions ao fazer push!
                   </p>
                 </div>
 
@@ -595,9 +677,9 @@ export default function App() {
                   <div className="space-y-2 text-xs">
                     <div className="text-slate-300 font-medium">Basta rodar no seu Git:</div>
                     <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800 overflow-x-auto">
-                      <span>git add . && git commit -m "Publicar v1.0.27" && git push origin main</span>
+                      <span>git add . && git commit -m "Publicar v1.0.28" && git push origin main</span>
                       <button 
-                        onClick={() => copiarTexto('git add . && git commit -m "Publicar v1.0.27" && git push origin main', 'cmdgit')}
+                        onClick={() => copiarTexto('git add . && git commit -m "Publicar v1.0.28" && git push origin main', 'cmdgit')}
                         className="hover:text-white shrink-0 ml-2 cursor-pointer"
                       >
                         {copiado === 'cmdgit' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}

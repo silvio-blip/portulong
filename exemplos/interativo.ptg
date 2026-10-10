@@ -1,39 +1,35 @@
-pagina "Contador e Calculadora em Portulong"
+pagina "Contador Portulong"
 
-cabecalho "Contador Interativo em Portulong"
-paragrafo "Exemplo demonstrando manipulacao do estado e funcoes 100% em Portugues."
+cabecalho "Contador em Tempo Real"
+paragrafo "Demonstração de funções e controlo de fluxo 100% em Português."
 
 caixa "cartao":
-    titulo2 "Valor do Contador:"
-    caixa "mostrador":
+    titulo2 "Valor Atual:"
+    caixa "display":
         paragrafo "0"
     fim_caixa
     
     caixa "botoes":
         botao "- Diminuir" acao "alterar(-1)"
         botao "+ Aumentar" acao "alterar(1)"
-        botao "Reiniciar" acao "reiniciar()"
+        botao "Zerar" acao "zerar()"
     fim_caixa
 fim_caixa
 
 estilo:
-body { fundo: #f0fdf4; espacamento: 30px; fonte-familia: system-ui, sans-serif; }
-.cartao { fundo: branco; espacamento: 25px; borda-arredondada: 12px; largura-maxima: 380px; sombra: 0 4px 15px rgba(0,0,0,0.06); alinhamento-texto: centro; }
-.mostrador p { tamanho-fonte: 48px; cor: #15803d; margem: 15px 0; peso-fonte: negrito; }
+corpo { fundo: #f8fafc; espacamento: 30px; fonte-familia: sans-serif; }
+.cartao { fundo: branco; espacamento: 25px; borda-arredondada: 12px; largura-maxima: 350px; sombra: 0 4px 15px rgba(0,0,0,0.08); alinhamento-texto: centro; }
+.display p { tamanho-fonte: 52px; cor: #2563eb; margem: 10px 0; peso-fonte: negrito; }
 .botoes { exibicao: flexivel; intervalo: 10px; justificar-conteudo: centro; }
-button { fundo: #16a34a; cor: branco; espacamento: 10px 18px; borda: nenhum; borda-arredondada: 6px; cursor: ponteiro; tamanho-fonte: 14px; }
+button { fundo: #2563eb; cor: branco; espacamento: 10px 18px; borda: nenhum; borda-arredondada: 6px; cursor: ponteiro; peso-fonte: 600; }
 
 script:
 var contador = 0
 
 funcao alterar(delta):
     contador += delta
-    var el = document.querySelector('.mostrador p')
-    se el:
-        el.textContent = contador
+    definir_texto('display', contador)
 
-funcao reiniciar():
+funcao zerar():
     contador = 0
-    var el = document.querySelector('.mostrador p')
-    se el:
-        el.textContent = 0
+    definir_texto('display', 0)

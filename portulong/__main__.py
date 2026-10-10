@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
-"""Ponto de entrada quando executado via `python -m portulong`"""
+from .cli import main
 
-import sys
-from portulong.cli import main
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

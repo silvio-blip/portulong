@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Empretador } from './src/compiler/portulong.js';
 import { EXEMPLOS } from './src/exemplos.js';
@@ -84,7 +85,7 @@ app.post('/api/compile', (req, res) => {
 // Portulong version endpoint (ptg version)
 app.get('/api/version', (req, res) => {
   res.json({
-    versao: "1.0.26",
+    versao: "1.0.28",
     pacote: "portulong-sistema",
     linguagem: "Português de Portugal (PT-PT)",
     estado: "operacional",
@@ -118,9 +119,24 @@ async function startServer() {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'spa',
+      appType: 'custom',
     });
     app.use(vite.middlewares);
+
+    app.get('*', async (req, res, next) => {
+      const url = req.originalUrl;
+      if (url.startsWith('/api') || url.startsWith('/preview')) {
+        return next();
+      }
+      try {
+        let template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(template);
+      } catch (e: any) {
+        if (vite) vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
   } else {
     app.use(express.static(path.join(__dirname, 'dist')));
     app.get('*', (req, res) => {

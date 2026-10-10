@@ -22,6 +22,8 @@ export class Empretador {
   componentes: Record<string, string> = {};
   porta: number = 3000;
   host: string = "0.0.0.0";
+  temComandosConsola: boolean = false;
+  exibirBarra: boolean = false;
 
   // Tradução de CSS em Português para CSS padrão
   traduzirCSS(linha: string): string {
@@ -207,7 +209,18 @@ export class Empretador {
       processed = processed.replace(/\bnulo\b/g, "null");
       processed = processed.replace(/\bretornar\s+(.*)/, "return $1;");
       processed = processed.replace(/\balerta\s*\(/g, "alerta(");
-      processed = processed.replace(/\bescrever\s*\(/g, "console.log(");
+
+      // Tratamento de escrever / imprimir (tanto escrever(...) como escrever "...")
+      if (/^(escrever|imprimir)\s*\((.*?)\)$/.test(processed)) {
+        processed = processed.replace(/^(escrever|imprimir)\s*\((.*?)\)$/, "__escrever($2);");
+        this.temComandosConsola = true;
+      } else if (/^(escrever|imprimir)\s+(.*)$/.test(processed)) {
+        processed = processed.replace(/^(escrever|imprimir)\s+(.*)$/, "__escrever($2);");
+        this.temComandosConsola = true;
+      } else {
+        processed = processed.replace(/\bescrever\s*\(/g, "__escrever(");
+        processed = processed.replace(/\bimprimir\s*\(/g, "__escrever(");
+      }
 
       processed = processed.replace(/\bobter_valor\s*\((.*?)\)/g, "__obter_valor($1)");
       processed = processed.replace(/\bdefinir_valor\s*\((.*?),\s*(.*?)\)/g, "__definir_valor($1, $2)");
@@ -254,6 +267,7 @@ export class Empretador {
     this.imports = [];
     this.rotas = {};
     this.componentes = {};
+    this.temComandosConsola = false;
 
     const linhas = codigo.split("\n");
     let secaoAtual: string | null = null;
@@ -323,6 +337,28 @@ export class Empretador {
       } else if (secaoAtual && (secaoAtual.startsWith("componente_") || secaoAtual.startsWith("rota_"))) {
         blocoAtual.push(linhas[i]);
       } else {
+        // DETEÇÃO INTELIGENTE DE COMANDOS DE SCRIPT / TERMINAL (mesmo fora de "script:")
+        if (
+          linha.startsWith("escrever(") || 
+          linha.startsWith("escrever ") || 
+          linha.startsWith("imprimir(") || 
+          linha.startsWith("imprimir ") ||
+          linha.startsWith("var ") ||
+          linha.startsWith("let ") ||
+          linha.startsWith("const ") ||
+          linha.startsWith("funcao ") ||
+          linha.startsWith("se ") ||
+          linha.startsWith("para ") ||
+          linha.startsWith("enquanto ") ||
+          linha.startsWith("alerta(")
+        ) {
+          this.funcoes.push(linhas[i]);
+          if (linha.startsWith("escrever") || linha.startsWith("imprimir")) {
+            this.temComandosConsola = true;
+          }
+          continue;
+        }
+
         // Elementos de interface em Português
         if (linha.startsWith("cabecalho ") || linha.startsWith("titulo1 ")) {
           const texto = linha.replace(/^(cabecalho|titulo1)\s+/, "").trim().replace(/^["']|["']$/g, "");
@@ -391,7 +427,12 @@ export class Empretador {
         } else if (this.componentes[linha]) {
           this.elementos.push(this.componentes[linha]);
         } else {
-          this.elementos.push(linha);
+          // Não coloca códigos ou linhas soltas diretamente como HTML
+          if (linha.includes("(") && linha.includes(")")) {
+            this.funcoes.push(linhas[i]);
+          } else {
+            this.elementos.push(`<p class="ptg-texto-geral">${linha}</p>`);
+          }
         }
       }
     }
@@ -404,6 +445,7 @@ export class Empretador {
   }
 
   gerarHtml(exibirBarra: boolean = false): string {
+    const temUI = this.elementos.length > 0;
     const corpo = this.elementos.join("\n");
     const css = this.estilos.join("\n");
     const js = this.traduzirScript(this.funcoes);
@@ -419,9 +461,62 @@ export class Empretador {
       </div>
     ` : '';
 
+    // Caixa de Terminal Embutida
+    const terminalBox = `
+      <div id="portulong-terminal-box" style="${temUI ? 'margin-top:25px;' : 'min-height:95vh;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;'}">
+        <div style="width:100%;max-width:${temUI ? '100%' : '760px'};background:#090d16;border:1px solid #1e293b;border-radius:12px;overflow:hidden;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);font-family:system-ui,-apple-system,sans-serif;">
+          <!-- Barra Superior do Terminal -->
+          <div style="background:#0f172a;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:11px;height:11px;border-radius:50%;background:#ef4444;display:inline-block;"></span>
+              <span style="width:11px;height:11px;border-radius:50%;background:#eab308;display:inline-block;"></span>
+              <span style="width:11px;height:11px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+              <span style="margin-left:8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;font-weight:700;color:#e2e8f0;">
+                Terminal Portulong • Saída de Execução
+              </span>
+            </div>
+            <span style="font-size:11px;color:#94a3b8;font-family:ui-monospace,monospace;background:#1e293b;padding:2px 8px;border-radius:4px;border:1px solid #334155;">
+              100% PT-PT
+            </span>
+          </div>
+          <!-- Área de Saída de Linhas do Terminal -->
+          <div id="portulong-terminal-output" style="padding:16px 20px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:14px;line-height:1.6;color:#38bdf8;background:#020617;min-height:${temUI ? '80px' : '180px'};white-space:pre-wrap;">
+            <div style="color:#64748b;font-size:12px;margin-bottom:8px;">[Portulong] Programa iniciado com sucesso.</div>
+          </div>
+          <!-- Rodapé do Terminal -->
+          <div style="background:#090d16;padding:6px 16px;border-top:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#64748b;font-family:ui-monospace,monospace;">
+            <span>● Pronto</span>
+            <span>v1.0.28</span>
+          </div>
+        </div>
+      </div>
+    `;
 
     // Helpers nativos do Portulong no cliente (100% PT)
     const helpersPt = `
+      function __escrever(msg) {
+        var str = (msg !== undefined && msg !== null) 
+          ? (typeof msg === 'object' ? JSON.stringify(msg, null, 2) : String(msg)) 
+          : '';
+        console.log('[Portulong]', str);
+
+        // Notificar janela-mãe se estiver em iframe (Playground Web)
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'PORTULONG_CONSOLE_LOG', texto: str }, '*');
+          }
+        } catch(e) {}
+
+        // Inserir linha visual no Terminal do ecrã
+        var termOut = document.getElementById('portulong-terminal-output');
+        if (termOut) {
+          var line = document.createElement('div');
+          line.style.cssText = 'color:#38bdf8;margin-bottom:4px;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;';
+          line.textContent = '> ' + str;
+          termOut.appendChild(line);
+        }
+      }
+
       function __obter_valor(id) {
         var el = document.getElementById(id);
         return el ? el.value : '';
@@ -488,6 +583,13 @@ export class Empretador {
       }
     `;
 
+    // Se não há elementos UI visíveis (apenas scripts como escrever(...)), exibe a Consola em destaque
+    const conteudoCorpo = temUI 
+      ? `${barraPortulong}\n${corpo}\n${this.temComandosConsola ? terminalBox : ''}` 
+      : `${barraPortulong}\n${terminalBox}`;
+
+    const fundoPadrao = temUI ? 'background:#f8fafc;color:#0f172a;' : 'background:#030712;color:#f8fafc;';
+
     return `<!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -496,13 +598,12 @@ export class Empretador {
   <title>${this.titulo}</title>
   <link rel="icon" type="image/png" href="/imagens/Portulong.png">
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: ${temUI ? '20px' : '0'}; ${fundoPadrao} }
     ${css}
   </style>
 </head>
 <body>
-  ${barraPortulong}
-  ${corpo}
+  ${conteudoCorpo}
   <script>
     ${helpersPt}
     ${js}

@@ -1,0 +1,9 @@
+escrever("ola tudo ?")
+escrever("Bem-vindo ao Portulong no terminal!")
+
+var contador = 1
+enquanto contador <= 3:
+    escrever("Executando passo número: " + contador)
+    contador += 1
+
+escrever("Finalizado com sucesso 100% em Português!")

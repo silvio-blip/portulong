@@ -1,46 +1,26 @@
 name: Publicar no PyPI
 
 on:
-  push:
-    branches:
-      - main
-      - master
-    tags:
-      - 'v*'
   release:
     types: [published]
-  workflow_dispatch:
 
 jobs:
-  publish:
-    name: Compilar e Enviar para o PyPI
+  deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
     steps:
-      - name: Descarregar código (Checkout)
-        uses: actions/checkout@v4
-
-      - name: Configurar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Instalar dependências de compilação
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
-
-      - name: Gerar pacotes de distribuição (.tar.gz e .whl)
-        run: python -m build
-
-      - name: Verificar integridade dos pacotes
-        run: twine check dist/*
-
-      - name: Publicar no PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          skip-existing: true
+    - uses: actions/checkout@v4
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Instalar dependências de build
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    - name: Construir pacote
+      run: python -m build
+    - name: Publicar no PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: twine upload dist/*

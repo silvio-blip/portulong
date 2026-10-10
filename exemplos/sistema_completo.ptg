@@ -1,6 +1,5 @@
 pagina "Sistema Completo Portulong"
 
-# Rota de Servidor Backend (Python 100% em Português)
 rota GET /api/usuarios:
     resposta = {"usuarios": [{"id": 1, "nome": "João"}, {"id": 2, "nome": "Maria"}]}
 
@@ -8,28 +7,15 @@ rota POST /api/usuario:
     nome_usuario = dados.get("nome", "")
     resposta = {"sucesso": verdadeiro, "mensagem": "Utilizador " + nome_usuario + " criado com sucesso!"}
 
-# Componentes Reutilizáveis (Sintaxe 100% Portulong)
-componente cabecalho_sistema:
-caixa "barra-superior":
-    titulo1 "Portal Portulong"
-    paragrafo "Frontend + Backend 100% em Português de Portugal"
-fim_caixa
-fim_componente
-
-cabecalho_sistema
-
 cabecalho "Painel de Controlo"
 paragrafo "Esta aplicação demonstra como criar um sistema web completo num só arquivo .ptg."
 
 caixa "container":
     caixa "cartao":
         titulo2 "Utilizadores Registados"
-        paragrafo "Dados fornecidos pelo servidor nativo via rota REST."
         botao "Carregar Utilizadores" acao "carregar_usuarios()"
-        caixa "lista-caixa":
-            lista "lista-usuarios"
-            fim_lista
-        fim_caixa
+        lista "lista-usuarios"
+        fim_lista
     fim_caixa
 
     caixa "cartao":
@@ -41,22 +27,17 @@ fim_caixa
 
 estilo:
 corpo { fundo: #f8fafc; fonte-familia: sans-serif; margem: 0; espacamento: 20px; }
-.barra-superior { fundo: #0f172a; cor: branco; espacamento: 20px; borda-arredondada: 12px; margem-base: 25px; }
-.barra-superior h1 { margem: 0 0 5px 0; tamanho-fonte: 24px; cor: #60a5fa; }
-.barra-superior p { margem: 0; cor: #94a3b8; tamanho-fonte: 14px; }
 .container { largura-maxima: 800px; margem: 0 auto; exibicao: flexivel; flex-direcao: coluna; intervalo: 20px; }
 .cartao { fundo: branco; borda-arredondada: 10px; espacamento: 20px; sombra: 0 4px 12px rgba(0,0,0,0.06); }
-button { fundo: #2563eb; cor: branco; borda: nenhum; espacamento: 10px 20px; borda-arredondada: 6px; cursor: ponteiro; tamanho-fonte: 14px; peso-fonte: 600; transicao: 0.2s; }
-input { espacamento: 10px 14px; margem-direita: 10px; borda: 1px solido #cbd5e1; borda-arredondada: 6px; tamanho-fonte: 14px; }
-ul { estilo-lista: nenhum; espacamento: 0; margem-topo: 15px; }
-li { espacamento: 10px; borda-base: 1px solido #f1f5f9; exibicao: flexivel; justificar-conteudo: espaco-entre; }
+button { fundo: #2563eb; cor: branco; borda: nenhum; espacamento: 10px 20px; borda-arredondada: 6px; cursor: ponteiro; }
+input { espacamento: 10px 14px; margem-direita: 10px; borda: 1px solido #cbd5e1; borda-arredondada: 6px; }
 
 script:
 funcao carregar_usuarios():
     pedir_dados('/api/usuarios', funcao(dados):
         limpar_elemento('lista-usuarios')
         para cada u em dados.usuarios:
-            adicionar_item('lista-usuarios', '<strong>' + u.nome + '</strong> <span style="color:#64748b">ID: #' + u.id + '</span>')
+            adicionar_item('lista-usuarios', '<strong>' + u.nome + '</strong>')
     )
 
 funcao criar_usuario():

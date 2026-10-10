@@ -1,165 +1,106 @@
-#!/usr/bin/env python3
-"""
-Linha de Comando (CLI) Oficial do Portulong
-Comandos 100% em Português
-"""
-
-import os
 import sys
-from pathlib import Path
-from . import __version__
-from .core import Empretador, servir, compilar_arquivo
-from .instalador import instalar_tudo
-from .vscode import instalar_extensao_vscode
+import os
+import argparse
+import http.server
+import socketserver
+import json
+from .core import PortulongCompilador
 
-MODELO_NOVO = """pagina "Meu Novo Projeto"
+class PortulongHTTPHandler(http.server.SimpleHTTPRequestHandler):
+    html_conteudo = ""
+    rotas_api = {}
 
-cabecalho "Ola, Portulong!"
-paragrafo "Esta pagina foi criada 100% em Portugues."
+    def do_GET(self):
+        if self.path == "/" or self.path == "/index.html":
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(self.html_conteudo.encode("utf-8"))
+        elif self.path in self.rotas_api:
+            self.send_response(200)
+            self.send_header("Content-type", "application/json; charset=utf-8")
+            self.end_headers()
+            resposta = {"usuarios": [{"id": 1, "nome": "João"}, {"id": 2, "nome": "Maria"}]}
+            self.wfile.write(json.dumps(resposta, ensure_ascii=False).encode("utf-8"))
+        else:
+            super().do_GET()
 
-caixa "cartao":
-    titulo2 "Funcionalidades"
-    paragrafo "HTML, CSS, JavaScript e Python num so arquivo!"
-    botao "Clique para Testar" acao "alerta('Portulong em acao!')"
-fim_caixa
-
-estilo:
-body { fundo: #f1f5f9; espacamento: 30px; fonte-familia: sans-serif; }
-.cartao { fundo: branco; espacamento: 24px; borda-arredondada: 12px; sombra: 0 4px 12px rgba(0,0,0,0.08); largura-maxima: 500px; }
-button { fundo: #2563eb; cor: branco; espacamento: 10px 20px; borda: nenhum; borda-arredondada: 6px; cursor: ponteiro; }
-
-script:
-funcao alerta(msg):
-    alerta(msg)
-
-servidor:
-    porta 3000
-    host localhost
-"""
-
-def mostrar_ajuda():
-    print(f"""
-╔══════════════════════════════════════════════════════════════╗
-║               PORTULONG {__version__} - LINGUAGEM PT-PT              ║
-╚══════════════════════════════════════════════════════════════╝
-
-Linguagem de programação para web 100% em Português.
-
-COMANDOS:
-  ptg <arquivo.ptg>            Executa o arquivo 100% nativo em memória (sem gerar nenhum HTML no disco)
-  ptg atualizar (ou update)    Atualiza para a versão mais recente do PyPI
-  ptg config (ou instalar)     Configura ícones dos arquivos, duplo clique e botão Run em tempo real
-  ptg novo <nome.ptg>          Cria um novo arquivo modelo .ptg
-  ptg vscode                   Instala extensão com botão de Run no VS Code
-  ptg versao                   Mostra a versão instalada
-  ptg ajuda                    Mostra esta ajuda
-
-EXEMPLOS:
-  ptg meu_app.ptg
-  ptg atualizar
-  ptg config
-  ptg novo inicio.ptg
-""")
-
-def verificar_auto_configuracao():
-    marcador = Path.home() / ".config" / "portulong" / "configurado"
-    if not marcador.exists():
-        try:
-            instalar_tudo()
-        except Exception:
-            pass
+    def do_POST(self):
+        if self.path in self.rotas_api:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                dados = json.loads(post_data.decode('utf-8'))
+            except Exception:
+                dados = {}
+            
+            self.send_response(200)
+            self.send_header("Content-type", "application/json; charset=utf-8")
+            self.end_headers()
+            resposta = {"sucesso": True, "mensagem": f"Operação realizada com sucesso para: {dados.get('nome', 'Utilizador')}"}
+            self.wfile.write(json.dumps(resposta, ensure_ascii=False).encode("utf-8"))
+        else:
+            self.send_response(404)
+            self.end_headers()
 
 def main():
-    if len(sys.argv) < 2:
-        mostrar_ajuda()
-        return
+    parser = argparse.ArgumentParser(description="Portulong CLI - Linguagem em Português de Portugal")
+    parser.add_argument("arquivo", nargs="?", help="Ficheiro .ptg a executar")
+    parser.add_argument("--servidor", action="store_true", help="Forçar início do servidor web integrado")
+    parser.add_argument("--porta", type=int, default=3000, help="Porta do servidor")
 
-    arg = sys.argv[1].lower()
+    args = parser.parse_args()
 
-    if arg in ('ajuda', 'help', '-h', '--help'):
-        mostrar_ajuda()
-        return
+    if not args.arquivo:
+        print("Portulong v1.0.28 • Linguagem 100% PT-PT")
+        print("Uso: ptg <ficheiro.ptg> [--servidor] [--porta <numero>]")
+        sys.exit(0)
 
-    if arg in ('versao', 'version', '-v', '--version'):
-        print(f"Portulong versão {__version__} (100% PT-PT)")
-        return
+    caminho = args.arquivo
+    if not os.path.exists(caminho):
+        print(f"Erro: Ficheiro '{caminho}' não encontrado.")
+        sys.exit(1)
 
-    if arg in ('atualizar', 'update', 'upgrade'):
-        print("🔄 A atualizar portulong-sistema para a versão mais recente do PyPI...")
-        try:
-            import subprocess
-            res = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "portulong-sistema"], check=False)
-            if res.returncode == 0:
-                print("✅ portulong-sistema atualizado com sucesso!")
-                print("⚡ A reconfigurar ícones e extensão em tempo real...")
-                instalar_tudo()
-            else:
-                print("⚠️ Para atualizar manualmente execute:")
-                print("pip install --upgrade portulong-sistema")
-        except Exception as e:
-            print(f"❌ Erro ao atualizar: {e}")
-        return
+    print(f"📁 A carregar e executar Portulong: {caminho} ...")
+    with open(caminho, "r", encoding="utf-8") as f:
+        codigo = f.read()
 
-    if arg in ('instalar', 'install', 'config'):
-        instalar_tudo()
-        return
+    compilador = PortulongCompilador()
+    html = compilador.compilar(codigo)
 
-    if arg == 'vscode':
-        instalar_extensao_vscode()
-        return
+    # 1. Executar comandos diretamente no terminal (ex: escrever("..."), bots, etc.)
+    print("--- [Início da Execução no Terminal] ---")
+    compilador.executar_terminal()
+    print("--- [Fim da Execução no Terminal] ---")
 
-    if arg == 'novo':
-        nome = sys.argv[2] if len(sys.argv) > 2 else "meu_projeto.ptg"
-        if not nome.endswith('.ptg'):
-            nome += '.ptg'
-        arq = Path(nome)
-        if arq.exists():
-            print(f"⚠️ O arquivo {nome} já existe.")
-        else:
-            arq.write_text(MODELO_NOVO, encoding='utf-8')
-            print(f"✅ Arquivo criado: {nome}")
-            print(f"👉 Para executar: ptg {nome}")
-        return
-
-    if arg == 'compilar':
-        if len(sys.argv) < 3:
-            print("❌ Uso: ptg compilar <arquivo.ptg> [saida.html]")
-            return
-        origem = sys.argv[2]
-        saida = sys.argv[3] if len(sys.argv) > 3 else origem.replace('.ptg', '.html')
-        try:
-            compilar_arquivo(origem, saida)
-        except Exception as e:
-            print(f"❌ Erro na compilação: {e}")
-        return
-
-    # Caso padrão: assumir arquivo .ptg
-    caminho_arquivo = sys.argv[1]
-    if not caminho_arquivo.endswith('.ptg'):
-        print(f"⚠️ O arquivo deve ter a extensão .ptg (recebido: {caminho_arquivo})")
-        mostrar_ajuda()
-        return
-
-    caminho = Path(caminho_arquivo)
-    if not caminho.exists():
-        print(f"❌ Arquivo não encontrado: {caminho_arquivo}")
-        return
-
-    # Configuração silenciosa na primeira execução
-    verificar_auto_configuracao()
-
-    print(f"📂 A executar Portulong: {caminho.resolve()} ...")
+    # Guardar versão compilada em memória / ficheiro de pré-visualização
+    nome_saida = "saida_portulong.html"
     try:
-        codigo = caminho.read_text(encoding='utf-8')
-        interpretador = Empretador()
-        html = interpretador.empretar(codigo)
-        
-        # Iniciar servidor apenas se o script pedir
-        servir(html, interpretador.rotas, interpretador.porta, interpretador.host, 
-               servidor_necessario=interpretador.servidor_necessario)
-               
-    except Exception as e:
-        print(f"❌ Erro ao executar: {e}")
+        with open(nome_saida, "w", encoding="utf-8") as f:
+            f.write(html)
+    except Exception:
+        pass
 
-if __name__ == '__main__':
+    print(f"✅ Compilação web bem-sucedida! Título: {compilador.titulo}")
+
+    deve_iniciar_servidor = args.servidor or compilador.tem_servidor
+    porta = args.porta if args.porta != 3000 else compilador.porta
+
+    if deve_iniciar_servidor:
+        print(f"🚀 A iniciar Servidor Integrado Portulong em http://localhost:{porta} ...")
+        PortulongHTTPHandler.html_conteudo = html
+        PortulongHTTPHandler.rotas_api = {c: r["codigo"] for c, r in compilador.rotas.items()}
+        
+        try:
+            with socketserver.TCPServer((compilador.host, porta), PortulongHTTPHandler) as httpd:
+                print(f"✨ Servidor Portulong ativo! Pressione Ctrl+C para parar.")
+                httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\n🛑 Servidor Portulong parado pelo utilizador.")
+        except Exception as e:
+            print(f"❌ Erro ao iniciar servidor: {e}")
+    else:
+        print("⚡ Modo sem bloco de servidor. Use --servidor para iniciar o servidor web.")
+
+if __name__ == "__main__":
     main()

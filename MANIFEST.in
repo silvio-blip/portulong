@@ -1,5 +1,0 @@
-include README.md
-include LICENSE
-include *.vsix
-recursive-include portulong/imagens *
-recursive-include exemplos *

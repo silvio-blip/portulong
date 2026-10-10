@@ -1,15 +1,25 @@
-pagina "Ola, Mundo em Portulong"
+pagina "Minha Primeira Pagina"
 
-cabecalho "Ola, Mundo em Portulong!"
-paragrafo "Esta pagina foi criada 100% em Portugues de Portugal."
-botao "Carregar Saudacao" acao "alerta('Ola do Portulong! Tudo funciona nativamente no seu computador.')"
+cabecalho "Olá, Mundo em Portulong!"
+paragrafo "Criado com sintaxe 100% em Português de Portugal."
+
+caixa "painel":
+    titulo2 "Bem-vindo ao Portulong"
+    paragrafo "Uma linguagem moderna e simplificada para desenvolvimento web."
+    botao "Clique Aqui para Testar" acao "alerta('Olá do Portulong! O código está a correr perfeitamente.')"
+fim_caixa
 
 estilo:
-body { fundo: #f8fafc; espacamento: 40px; fonte-familia: sans-serif; }
-h1 { cor: #1e3a8a; margem-base: 15px; }
-p { cor: #334155; tamanho-fonte: 18px; }
-button { fundo: #2563eb; cor: branco; espacamento: 12px 24px; borda: nenhum; borda-arredondada: 8px; cursor: ponteiro; tamanho-fonte: 16px; sombra: 0 4px 6px rgba(0,0,0,0.1); }
+corpo { fundo: #f0fdf4; espacamento: 40px; fonte-familia: system-ui, sans-serif; }
+h1 { cor: #166534; margem-base: 15px; }
+p { cor: #374151; tamanho-fonte: 16px; }
+.painel { fundo: branco; espacamento: 25px; borda-arredondada: 12px; largura-maxima: 500px; sombra: 0 4px 12px rgba(0,0,0,0.06); }
+button { fundo: #16a34a; cor: branco; espacamento: 12px 24px; borda: nenhum; borda-arredondada: 8px; cursor: ponteiro; tamanho-fonte: 15px; peso-fonte: 600; }
 
 script:
 funcao alerta(mensagem):
     alerta(mensagem)
+
+servidor:
+    porta 3000
+    computador local
