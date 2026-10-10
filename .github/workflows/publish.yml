@@ -9,10 +9,6 @@ on:
     types: [published]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
   publicar:
     name: Compilar e Enviar para PyPI
@@ -37,16 +33,9 @@ jobs:
       - name: Validar integridade dos pacotes
         run: twine check dist/*
 
-      - name: Publicar no PyPI (com Token)
-        if: env.TWINE_PASSWORD != ''
+      - name: Publicar no PyPI
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           twine upload --skip-existing dist/*
-
-      - name: Publicar no PyPI (Trusted Publishing / OIDC)
-        if: env.TWINE_PASSWORD == ''
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          skip-existing: true
