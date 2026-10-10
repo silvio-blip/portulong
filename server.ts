@@ -84,8 +84,8 @@ app.post('/api/compile', (req, res) => {
 // Portulong version endpoint (ptg version)
 app.get('/api/version', (req, res) => {
   res.json({
-    versao: "1.2.0",
-    pacote: "portulong",
+    versao: "1.0.25",
+    pacote: "portulong-sistema",
     linguagem: "Português de Portugal (PT-PT)",
     estado: "operacional",
   });

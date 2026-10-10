@@ -22,13 +22,13 @@ Linguagem de programação em **Português de Portugal** para criar páginas e a
 Para instalar o Portulong em qualquer máquina:
 
 ```bash
-pip install portulong
+pip install portulong-sistema
 ```
 
-Após instalar, configure o sistema (ícones, duplo clique e VS Code):
+Após instalar, configure o sistema em tempo real (ícones, duplo clique e VS Code sem reiniciar):
 
 ```bash
-ptg instalar
+ptg config
 ```
 
 ---
@@ -37,8 +37,9 @@ ptg instalar
 
 | Comando | Descrição |
 |---------|-----------|
+| `ptg config` | Configura tudo 100% em tempo real (ícones dos arquivos, duplo clique e botão Run) |
 | `ptg arquivo.ptg` | Executa o arquivo `.ptg` e abre automaticamente no navegador |
-| `ptg instalar` | Configura o sistema operacional (ícone dos arquivos, duplo clique e VS Code) |
+| `ptg instalar` | Sinónimo de `ptg config` |
 | `ptg novo meu_app.ptg` | Cria um novo arquivo pronto com modelo em português |
 | `ptg compilar arquivo.ptg` | Compila o arquivo `.ptg` para um arquivo `.html` independente |
 | `ptg vscode` | Instala a extensão oficial do Portulong no VS Code com botão de Run |
@@ -66,7 +67,7 @@ Se você for o desenvolvedor do Portulong e quiser enviar uma nova versão para 
    twine upload dist/*
    ```
 
-Pronto! Qualquer pessoa no mundo poderá instalar com `pip install portulong`.
+Pronto! Qualquer pessoa no mundo poderá instalar com `pip install portulong-sistema`.
 
 ---
 

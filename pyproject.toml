@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "portulong"
-version = "1.2.0"
+name = "portulong-sistema"
+version = "1.0.25"
 authors = [
   { name="Silvio", email="silviok5000@gmail.com" },
 ]

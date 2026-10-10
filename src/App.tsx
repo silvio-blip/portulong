@@ -143,7 +143,7 @@ export default function App() {
               <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded">
                 100% PT-PT
               </span>
-              <span className="text-[11px] text-slate-400 font-mono">v1.2.0</span>
+              <span className="text-[11px] text-slate-400 font-mono">v1.0.25</span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
               Linguagem de programação em Português de Portugal para a Web
@@ -446,7 +446,7 @@ export default function App() {
                     Publicar o Portulong no PyPI (Python Package Index)
                   </h2>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    A estrutura do pacote está <strong>100% pronta e configurada</strong> para ser enviada para o PyPI. Qualquer pessoa no mundo poderá instalar com <code className="text-emerald-400 font-mono">pip install portulong</code>.
+                    A estrutura do pacote está <strong>100% pronta e configurada</strong> para ser enviada para o PyPI. Qualquer pessoa no mundo poderá instalar com <code className="text-emerald-400 font-mono">pip install portulong-sistema</code>.
                   </p>
                 </div>
 
@@ -504,8 +504,35 @@ export default function App() {
                     <li><strong className="text-slate-200">setup.py</strong>: Metadados, scripts de console (<code className="text-indigo-300">ptg</code>, <code className="text-indigo-300">portulong</code>) e pacote.</li>
                     <li><strong className="text-slate-200">pyproject.toml</strong>: Especificação moderna PEP 517 / PEP 621.</li>
                     <li><strong className="text-slate-200">MANIFEST.in</strong>: Inclui os ícones PNG e ICO e exemplos na distribuição.</li>
+                    <li><strong className="text-slate-200">.github/workflows/publish.yml</strong>: Envio automático pelo GitHub Actions!</li>
                     <li><strong className="text-slate-200">portulong/</strong>: O interpretador completo, CLI e instalador.</li>
                   </ul>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 text-xs">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-indigo-400" />
+                    Como Publicar Automaticamente via GitHub Actions
+                  </h3>
+                  <p className="text-slate-400">
+                    O arquivo <code className="text-indigo-300">.github/workflows/publish.yml</code> já está configurado no repositório. Para publicar automaticamente:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 text-slate-300">
+                    <li>No PyPI (<a href="https://pypi.org/manage/account/token/" target="_blank" rel="noreferrer" className="text-indigo-400 underline">pypi.org</a>), crie um <strong>API Token</strong>.</li>
+                    <li>No GitHub, aceda a <strong>Settings → Secrets and variables → Actions</strong> e adicione o secret <code className="text-emerald-400">PYPI_API_TOKEN</code> com o valor do token.</li>
+                    <li>Crie uma nova tag ou release:
+                      <div className="flex items-center justify-between bg-slate-950 p-2 rounded font-mono text-indigo-300 mt-1 border border-slate-800">
+                        <span>git tag v1.0.25 && git push origin v1.0.25</span>
+                        <button 
+                          onClick={() => copiarTexto('git tag v1.0.25 && git push origin v1.0.25', 'cmdtag')}
+                          className="hover:text-white"
+                        >
+                          {copiado === 'cmdtag' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </li>
+                    <li>Ou clique no botão <strong>"Run workflow"</strong> na aba <strong>Actions</strong> do GitHub!</li>
+                  </ol>
                 </div>
               </div>
             )}
@@ -566,20 +593,43 @@ export default function App() {
 
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
                   <h3 className="font-bold text-white flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    Comando de Configuração em Tempo Real: <code className="text-indigo-300 font-mono">ptg config</code>
+                  </h3>
+                  <p className="text-slate-400">
+                    Basta executar este comando no terminal uma única vez. Ele configura as associações, atualiza o cache de ícones do Windows e do Linux instantaneamente e ativa a extensão do VS Code sem precisar de reiniciar o computador nem o editor!
+                  </p>
+                  <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800">
+                    <span>ptg config</span>
+                    <button 
+                      onClick={() => copiarTexto('ptg config', 'cmdconfig')}
+                      className="hover:text-white"
+                    >
+                      {copiado === 'cmdconfig' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
+                  <h3 className="font-bold text-white flex items-center gap-2">
                     <FileCode2 className="w-4 h-4 text-blue-400" />
                     Botão de Run no VS Code (Como no Python!)
                   </h3>
                   <p className="text-slate-400">
-                    O Portulong inclui uma extensão nativa para o VS Code que adiciona o botão ▶ <strong>Executar Portulong</strong> na barra de ferramentas do editor. Basta abrir qualquer arquivo <code className="text-slate-200">.ptg</code> e clicar no botão de Play no canto superior direito!
+                    O Portulong inclui uma extensão nativa para o VS Code que adiciona o botão ▶ <strong>Executar Portulong</strong> na barra de ferramentas do editor. Basta abrir qualquer arquivo <code className="text-slate-200">.ptg</code> e clicar no botão de Play no canto superior direito para executar no terminal integrado!
                   </p>
-                  <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded font-mono text-indigo-300 border border-slate-800">
-                    <span>ptg vscode</span>
-                    <button 
-                      onClick={() => copiarTexto('ptg vscode', 'cmdvscode')}
-                      className="hover:text-white"
-                    >
-                      {copiado === 'cmdvscode' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
+                  <div className="flex items-center gap-3 bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <img 
+                      src="/imagens/Portulong.png" 
+                      alt="Ícone Portulong" 
+                      className="w-10 h-10 rounded-lg shadow-sm border border-slate-700" 
+                    />
+                    <div className="space-y-0.5 flex-1">
+                      <div className="text-white font-medium">Ícone Oficial dos Arquivos .ptg</div>
+                      <div className="text-slate-400 text-[11px] font-mono break-all">
+                        Link Direto: <a href="https://i.imgur.com/CCsXVnb.png" target="_blank" rel="noreferrer" className="text-indigo-400 underline">https://i.imgur.com/CCsXVnb.png</a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -712,7 +762,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-3 text-[11px] text-slate-400">
           <span>Servidor: <strong className="text-slate-200 font-mono">0.0.0.0:3000</strong></span>
-          <span>Versão: <strong className="text-indigo-400 font-mono">1.2.0</strong></span>
+          <span>Versão: <strong className="text-indigo-400 font-mono">1.0.25</strong></span>
           <span>PyPI: <strong className="text-emerald-400 font-mono">Pronto</strong></span>
         </div>
       </footer>

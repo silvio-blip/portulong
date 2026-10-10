@@ -47,7 +47,7 @@ Linguagem de programação para web 100% em Português.
 
 COMANDOS:
   ptg <arquivo.ptg>            Executa o arquivo e abre no navegador
-  ptg instalar (ou install)    Configura ícones, duplo clique e VS Code
+  ptg config (ou instalar)     Configura ícones dos arquivos, duplo clique e botão Run em tempo real
   ptg compilar <arquivo.ptg>   Compila o arquivo para HTML puro
   ptg novo <nome.ptg>          Cria um novo arquivo modelo
   ptg vscode                   Instala extensão com botão de Run no VS Code
@@ -55,6 +55,7 @@ COMANDOS:
   ptg ajuda                    Mostra esta ajuda
 
 EXEMPLOS:
+  ptg config
   ptg meu_app.ptg
   ptg novo inicio.ptg
   ptg compilar meu_app.ptg app.html
